@@ -34,7 +34,7 @@ namespace GameServer
         public static void Log(string LOG)
         {
 #if (DEDICATED)
-            Console.WriteLine(LOG);
+            Logger.Log(LOG);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
 #endif
@@ -56,7 +56,7 @@ namespace GameServer
             /// <param name="_endPoint">The IPEndPoint instance of the newly connected client.</param>
             public void Connect(IPEndPoint _endPoint)
             {
-                Console.WriteLine($"Incoming connection from {_endPoint.Address}...");
+                Log($"Incoming connection from {_endPoint.Address}...");
                 endPoint = _endPoint;
                 ServerSend.Welcome(id, Server.MaxPlayers);
             }

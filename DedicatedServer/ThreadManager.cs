@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MelonLoader;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,13 +11,22 @@ namespace GameServer
         public static readonly List<Action> executeCopiedOnMainThread = new List<Action>();
         public static bool actionToExecuteOnMainThread = false;
 
+        public static void Log(string TXT)
+        {
+#if (!DEDICATED)
+            MelonLogger.Msg(TXT);
+#else
+            Logger.Log(TXT);
+#endif
+        }
+
         /// <summary>Sets an action to be executed on the main thread.</summary>
         /// <param name="_action">The action to be executed on the main thread.</param>
         public static void ExecuteOnMainThread(Action _action)
         {
             if (_action == null)
             {
-                Console.WriteLine("No action to execute on main thread!");
+                Log("No action to execute on main thread!");
                 return;
             }
 

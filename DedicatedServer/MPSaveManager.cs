@@ -22,17 +22,17 @@ namespace SkyCoop
         public static bool NoSaveAndLoad = false;
         public static void Log(string LOG)
         {
-            #if (DEDICATED)
-            Console.WriteLine("[MPSaveManager] " + LOG);
-            #else
+#if (DEDICATED)
+            Logger.Log("[MPSaveManager] " +LOG);
+#else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
             #endif
         }
         public static void Error(string LOG)
         {
-            #if (DEDICATED)
-            Console.WriteLine("[MPSaveManager] " + LOG);
-            #else
+#if (DEDICATED)
+            Logger.Log("[MPSaveManager] " +LOG);
+#else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Red, "[MPSaveManager] " + LOG);
             #endif
         }

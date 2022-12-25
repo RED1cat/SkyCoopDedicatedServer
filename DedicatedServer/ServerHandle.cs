@@ -18,10 +18,10 @@ namespace GameServer
 #if (!DEDICATED)
             MelonLogger.Msg(TXT);
 #else
-            Console.WriteLine(TXT);
+            Logger.Log(LOG);
 #endif
         }
-        
+
         public static void WelcomeReceived(int _fromClient, Packet _packet)
         {
             int _clientIdCheck = _packet.ReadInt();

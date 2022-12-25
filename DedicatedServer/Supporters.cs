@@ -187,7 +187,7 @@ namespace SkyCoop
 #if (!DEDICATED)
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
 #else
-            Console.WriteLine("[Supporters] " + LOG);
+            Logger.Log("[Supporters] " + LOG);
 #endif
         }
         public static void DebugLog(string LOG)
@@ -197,7 +197,7 @@ namespace SkyCoop
 #if (!DEDICATED)
                 MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
 #else
-                Console.WriteLine("[Supporters] " + LOG);
+                Logger.Log("[Supporters] " + LOG);
 #endif
             }
         }
@@ -206,7 +206,7 @@ namespace SkyCoop
 #if (!DEDICATED)
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
 #else
-            Console.WriteLine("[Supporters] " + LOG);
+            Logger.Log("[Supporters] " + LOG);
 #endif
         }
 

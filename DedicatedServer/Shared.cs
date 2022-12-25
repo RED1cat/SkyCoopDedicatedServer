@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GameServer;
-using System.Runtime;
 using System.Text.RegularExpressions;
 #if (!DEDICATED)
 using UnityEngine;
@@ -83,7 +82,7 @@ namespace SkyCoop
 #if (!DEDICATED)
             MelonLogger.Msg(TXT);
 #else
-            Console.WriteLine(TXT);
+            Logger.Log(TXT);
 #endif
         }
 

@@ -325,6 +325,15 @@ namespace GameServer
         private byte[] readableBuffer;
         private int readPos;
 
+        public static void Log(string TXT)
+        {
+#if (!DEDICATED)
+            MelonLogger.Msg(TXT);
+#else
+            Logger.Log(TXT);
+#endif
+        }
+
         /// <summary>Creates a new empty packet (without an ID).</summary>
         public Packet()
         {
@@ -919,7 +928,7 @@ namespace GameServer
 
                 if(readableBuffer == null)
                 {
-                    Console.WriteLine("Could not read value of type 'int'! readableBuffer is null!!!");
+                    Log("Could not read value of type 'int'! readableBuffer is null!!!");
                     return 0;
                 }
 
@@ -934,7 +943,7 @@ namespace GameServer
             else
             {
                 //throw new Exception("Could not read value of type 'int'!");
-                Console.WriteLine("Could not read value of type 'int'!");
+                Log("Could not read value of type 'int'!");
                 return 0;
             }
         }

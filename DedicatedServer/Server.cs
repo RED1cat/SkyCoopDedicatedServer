@@ -26,7 +26,7 @@ namespace GameServer
 #if (!DEDICATED)
             MelonLogger.Msg(TXT);
 #else
-            Console.WriteLine(TXT);
+            Logger.Log(TXT);
 #endif
         }
 
@@ -53,7 +53,7 @@ namespace GameServer
             Log("[SteamWorks.NET] Starting multiplayer...");
             InitializeServerData();
             UsingSteamWorks = true;
-            MyMod.InitAllPlayers(); // Prepare players objects based on amount of max players
+            Shared.InitAllPlayers(); // Prepare players objects based on amount of max players
             MyMod.iAmHost = true;
             MyMod.OverridedHourse = GameManager.GetTimeOfDayComponent().GetHour();
             MyMod.OverridedMinutes = GameManager.GetTimeOfDayComponent().GetMinutes();
