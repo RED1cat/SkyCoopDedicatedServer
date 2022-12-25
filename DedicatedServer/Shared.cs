@@ -1651,6 +1651,22 @@ namespace SkyCoop
                 ServerSend.SPAWNREGIONBANCHECK(GUID);
             }
         }
+        public static bool CheckSpawnRegionBanned(string GUID)
+        {
+            int CanBeUnbannedIn;
+            if (MyMod.BannedSpawnRegions.TryGetValue(GUID, out CanBeUnbannedIn))
+            {
+                if (MyMod.MinutesFromStartServer > CanBeUnbannedIn)
+                {
+                    MyMod.BannedSpawnRegions.Remove(GUID);
+                    return false;
+                } else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public static void ReviveRabbit(string GUID)
         {
             ServerSend.ANIMALDELETE(0, GUID);
@@ -1785,6 +1801,53 @@ namespace SkyCoop
                 ServerSend.XYZW(_from, new Quaternion(0, 0, 0, 0), false);
                 ServerSend.ANIMSTATE(_from, "Idle", false);
                 ServerSend.LEVELID(_from, 0, false);
+            }
+        }
+        public static void SendSlotData(int _forClient)
+        {
+            MelonLogger.Msg("Sending savedata for " + _forClient);
+            DataStr.SaveSlotSync SaveData = new DataStr.SaveSlotSync();
+            SaveData.m_Episode = (int)SaveGameSystem.m_CurrentEpisode;
+            SaveData.m_SaveSlotType = (int)SaveGameSystem.m_CurrentGameMode;
+            SaveData.m_Seed = GameManager.m_SceneTransitionData.m_GameRandomSeed;
+            SaveData.m_ExperienceMode = (int)ExperienceModeManager.s_CurrentModeType;
+            SaveData.m_Location = (int)RegionManager.GetCurrentRegion();
+            SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
+            SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;
+
+            if (ExperienceModeManager.s_CurrentModeType == ExperienceModeType.Custom)
+            {
+                SaveData.m_CustomExperienceStr = GameManager.GetExperienceModeManagerComponent().GetCurrentCustomModeString();
+            } else
+            {
+                SaveData.m_CustomExperienceStr = "";
+            }
+
+            using (Packet __packet = new Packet((int)ServerPackets.SAVEDATA))
+            {
+                ServerSend.SAVEDATA(_forClient, SaveData);
+            }
+        }
+        public static void ClientTryingLockDoor(string DoorKey, string KeySeed, string Scene, int Client)
+        {
+            string DoorGUID = DoorKey.Split('_')[1];
+            MPSaveManager.UseKeyStatus Status = MPSaveManager.AddLockedDoor(Scene, DoorKey, KeySeed);
+            if (Status == MPSaveManager.UseKeyStatus.Done)
+            {
+                ServerSend.ADDDOORLOCK(-1, DoorGUID, Scene);
+#if (!DEDICATED)
+                if (!MyMod.DedicatedServerAppMode && Scene == MyMod.level_guid)
+                {
+                    MyMod.AddLocksToDoorsByGUID(DoorGUID);
+                }
+#endif
+                ServerSend.DOORLOCKEDMSG(Client, "You locked this building!");
+            } else if (Status == MPSaveManager.UseKeyStatus.KeyUsed)
+            {
+                ServerSend.DOORLOCKEDMSG(Client, "This key already used for other door!");
+            } else if (Status == MPSaveManager.UseKeyStatus.DoorAlreadyLocked)
+            {
+                ServerSend.DOORLOCKEDMSG(Client, "This door is already locked!");
             }
         }
     }

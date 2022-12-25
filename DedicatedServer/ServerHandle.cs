@@ -73,7 +73,9 @@ namespace GameServer
             string SupporterID = _packet.ReadString();
             Supporters.SupporterBenefits ConfiguratedBenefits = _packet.ReadSupporterBenefits();
             MyMod.playersData[_fromClient].m_SupporterBenefits = Supporters.VerifyBenefitsWithConfig(SupporterID, ConfiguratedBenefits);
+#if (!DEDICATED)
             Supporters.ApplyFlairsForModel(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits.m_Flairs);
+#endif
 
             int ClientModsHash = _packet.ReadInt();
 
@@ -112,7 +114,7 @@ namespace GameServer
             ServerSend.LOOTEDHARVESTABLEALL(_fromClient);
             ServerSend.ALLSHELTERS(_fromClient);
 
-#if(!DEDICATED)
+#if (!DEDICATED)
             if (!MyMod.DedicatedServerAppMode)
             {
                 Log("[Init data] Client 0 -> Client " + _fromClient + " Data from host player object");
@@ -169,7 +171,7 @@ namespace GameServer
                 }
             }
 
-            MyMod.SendSlotData(_fromClient);
+            Shared.SendSlotData(_fromClient);
 #if (!DEDICATED)
             MyMod.NoHostResponceSeconds = 0;
             MyMod.NeedTryReconnect = false;
@@ -325,9 +327,7 @@ namespace GameServer
         }
         public static void GAMETIME(int _fromClient, Packet _packet)
         {
-            string got = _packet.ReadString();
 
-            uConsole.RunCommand("set_time " + got);
         }
         public static void LIGHTSOURCENAME(int _fromClient, Packet _packet)
         {
@@ -402,6 +402,7 @@ namespace GameServer
         }
         public static void PIMPSKILL(int _fromClient, Packet _packet)
         {
+#if (!DEDICATED)
             int SkillTypeId = _packet.ReadInt();
 
             if (SkillTypeId == 1)
@@ -414,6 +415,7 @@ namespace GameServer
                 GameManager.GetSkillsManager().IncrementPointsAndNotify(SkillType.Revolver, 1, SkillsManager.PointAssignmentMode.AssignOnlyInSandbox);
                 Log("Got remote skill upgrade Revolver");
             }
+#endif
         }
         public static void HARVESTINGANIMAL(int _fromClient, Packet _packet)
         {
@@ -450,7 +452,7 @@ namespace GameServer
         {
             DataStr.AnimalTrigger got = _packet.ReadAnimalTrigger();
 
-#if(!DEDICATED)
+#if (!DEDICATED)
 
             MyMod.SetAnimalTriggers(got);
 #endif
@@ -536,7 +538,7 @@ namespace GameServer
         public static void ANIMALDELETE(int _fromClient, Packet _packet)
         {
             string AnimalGuid = _packet.ReadString();
-#if(!DEDICATED)
+#if (!DEDICATED)
             MyMod.DeleteAnimal(AnimalGuid);
 #endif
             ServerSend.ANIMALDELETE(_fromClient, AnimalGuid);
@@ -643,7 +645,7 @@ namespace GameServer
         {
             int lvl = _packet.ReadInt();
 
-#if(!DEDICATED)
+#if (!DEDICATED)
 
             if(lvl == MyMod.levelid)
             {
@@ -730,7 +732,7 @@ namespace GameServer
         {
             bool IsDrink = _packet.ReadBool();
 
-#if(!DEDICATED)
+#if (!DEDICATED)
 
             if (MyMod.playersData[_fromClient] != null && MyMod.playersData[_fromClient].m_Levelid == MyMod.levelid && MyMod.playersData[_fromClient].m_LevelGuid == MyMod.level_guid)
             {
@@ -753,7 +755,7 @@ namespace GameServer
             
             if (MyMod.playersData[_fromClient] != null)
             {
-#if(!DEDICATED)
+#if (!DEDICATED)
 
                 if (!MyMod.DedicatedServerAppMode)
                 {
@@ -951,7 +953,9 @@ namespace GameServer
         }
         public static void CUSTOM(int _fromClient, Packet _packet)
         {
+#if (DEDICATED)
             API.CustomEventCallback(_packet, _fromClient);
+#endif
         }
         public static void VOICECHAT(int _fromClient, Packet _packet)
         {
@@ -1094,11 +1098,14 @@ namespace GameServer
             }
             SendAllOpenables(_fromClient, Scene);
             RequestAnimalCorpses(_fromClient, Scene);
-            
+
+
+#if (!DEDICATED)
             if(MyMod.CurrentCustomChalleng.m_Started && MyMod.CurrentChallengeRules.m_Name == "Lost in action")
             {
                 ServerSend.CAIRNS(_fromClient);
             }
+#endif
 
             foreach (DataStr.DeathContainerData create in MyMod.DeathCreates)
             {
@@ -1393,7 +1400,7 @@ namespace GameServer
         public static void SPAWNREGIONBANCHECK(int _fromClient, Packet _packet)
         {
             string GUID = _packet.ReadString();
-            bool Result = MyMod.CheckSpawnRegionBanned(GUID);
+            bool Result = Shared.CheckSpawnRegionBanned(GUID);
             ServerSend.SPAWNREGIONBANCHECK(GUID, Result, _fromClient);
         }
         public static void ADDDOORLOCK(int _fromClient, Packet _packet)
@@ -1401,7 +1408,7 @@ namespace GameServer
             string DoorKey = _packet.ReadString();
             string KeySeed = _packet.ReadString();
             string Scene = _packet.ReadString();
-            MyMod.ClientTryingLockDoor(DoorKey, KeySeed, Scene, _fromClient);
+            Shared.ClientTryingLockDoor(DoorKey, KeySeed, Scene, _fromClient);
         }
         public static void LOCKPICK(int _fromClient, Packet _packet)
         {
@@ -1481,7 +1488,7 @@ namespace GameServer
                 if(Low == "disconnect" || Low == "exit" || Low == "quit")
                 {
                     Server.clients[_fromClient].RCON = false;
-                    MyMod.ResetDataForSlot(_fromClient);
+                    Shared.ResetDataForSlot(_fromClient);
                     Log("RCON process disconnect");
                     Server.clients[_fromClient].udp.Disconnect();
                     return;
