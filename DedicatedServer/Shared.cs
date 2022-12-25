@@ -1822,6 +1822,7 @@ namespace SkyCoop
 #endif
             SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
             SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;
+#if(!DEDICATED)
             if (ExperienceModeManager.s_CurrentModeType == ExperienceModeType.Custom)
             {
                 SaveData.m_CustomExperienceStr = GameManager.GetExperienceModeManagerComponent().GetCurrentCustomModeString();
@@ -1829,6 +1830,7 @@ namespace SkyCoop
             {
                 SaveData.m_CustomExperienceStr = "";
             }
+#endif
 
             using (Packet __packet = new Packet((int)ServerPackets.SAVEDATA))
             {
