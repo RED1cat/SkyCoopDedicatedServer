@@ -596,20 +596,21 @@ namespace SkyCoop
                 LockedDoorsChanged = true;
             }
         }
+#if (!DEDICATED)
         public static void TryLockPick(string Scene, string DoorKey, int Picker)
         {
             System.Random RNG = new System.Random();
             bool Swear = true;
-            if(RNG.Next(0, 100) <= 47)
+            if (RNG.Next(0, 100) <= 47)
             {
                 Swear = false;
                 RemoveLockedDoor(Scene, DoorKey);
                 string GUID = DoorKey.Split('_')[1];
                 ServerSend.REMOVEDOORLOCK(-1, GUID, Scene);
-#if(!DEDICATED)
-                if(!MyMod.DedicatedServerAppMode)
+
+                if (!MyMod.DedicatedServerAppMode)
                 {
-                    if(MyMod.level_guid == Scene)
+                    if (MyMod.level_guid == Scene)
                     {
                         MyMod.RemoveLocksFromDoorsByGUID(GUID);
                     }
@@ -618,13 +619,26 @@ namespace SkyCoop
             if (Picker == 0)
             {
                 MyMod.SwearOnLockpickingDone = Swear;
-            }else{
+            } else
+            {
                 ServerSend.LOCKPICK(Picker, Swear);
             }
-#else
-            ServerSend.LOCKPICK(Picker, Swear);
-#endif
         }
+#else
+        public static void TryLockPick(string Scene, string DoorKey, int Picker)
+        {
+            System.Random RNG = new System.Random();
+            bool Swear = true;
+            if (RNG.Next(0, 100) <= 47)
+            {
+                Swear = false;
+                RemoveLockedDoor(Scene, DoorKey);
+                string GUID = DoorKey.Split('_')[1];
+                ServerSend.REMOVEDOORLOCK(-1, GUID, Scene);
+            }
+            ServerSend.LOCKPICK(Picker, Swear);
+        }
+#endif
 
         public static void SaveRecentStuff()
         {
