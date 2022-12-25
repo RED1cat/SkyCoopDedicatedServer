@@ -1532,6 +1532,8 @@ namespace SkyCoop
 #else
                 ServerSend.REMOVESHELTER(0, shelter, true);
 #endif
+
+
             }
         }
 

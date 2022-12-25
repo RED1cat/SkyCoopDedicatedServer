@@ -1,3 +1,3 @@
 ﻿
-using var game = new DedicatedServer.Game1();
+using var game = new SkyCoop.MyMod();
 game.Run();
