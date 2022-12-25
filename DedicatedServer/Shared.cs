@@ -1817,8 +1817,8 @@ namespace SkyCoop
             SaveData.m_Location = (int)RegionManager.GetCurrentRegion();
 #else
             SaveData.m_Seed = MPSaveManager.Seed;
-            SaveData.m_ExperienceMode = 2;
-            SaveData.m_Location = 0;
+            SaveData.m_ExperienceMode = ExperienceForDS;
+            SaveData.m_Location = StartingRegionDS;
 #endif
             SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
             SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;

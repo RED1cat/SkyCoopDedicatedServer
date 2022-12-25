@@ -27,7 +27,6 @@ namespace SkyCoop
             #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
             #endif
-
         }
         public static void Error(string LOG)
         {

@@ -31,6 +31,14 @@ namespace GameServer
                 return false;
             }  
         }
+        public static void Log(string LOG)
+        {
+#if (DEDICATED)
+            Console.WriteLine(LOG);
+#else
+            MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
+#endif
+        }
 
         public class UDP
         {
@@ -84,8 +92,8 @@ namespace GameServer
                         int _packetId = _packet.ReadInt();
                         if (MyMod.DebugTrafficCheck == true)
                         {
-                            MelonLoader.MelonLogger.Msg(ConsoleColor.Yellow, "[DebugTrafficCheck] Got packet ID " + _packetId);
-                            MelonLoader.MelonLogger.Msg(ConsoleColor.Yellow, "[DebugTrafficCheck] Packet contains " + _packet.ReturnSize() + " bytes");
+                            Log("[DebugTrafficCheck] Got packet ID " + _packetId);
+                            Log("[DebugTrafficCheck] Packet contains " + _packet.ReturnSize() + " bytes");
                         }
                         Server.packetHandlers[_packetId](id, _packet); // Call appropriate method to handle the packet
                     }
@@ -95,7 +103,7 @@ namespace GameServer
             /// <summary>Cleans up the UDP connection.</summary>
             public void Disconnect()
             {
-                MelonLoader.MelonLogger.Msg("[UDP] Disconnect an client.");
+                Log("[UDP] Disconnect an client.");
                 endPoint = null;
                 sid = "";
             }
