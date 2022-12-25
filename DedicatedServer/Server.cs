@@ -4,6 +4,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using SkyCoop;
+using MelonLoader;
 
 namespace GameServer
 {
@@ -18,19 +19,28 @@ namespace GameServer
         public static bool UsingSteamWorks = false;
         public static UdpClient udpListener;
 
+        public static void Log(string TXT)
+        {
+#if (!DEDICATED)
+            MelonLogger.Msg(TXT);
+#else
+            Console.WriteLine(TXT);
+#endif
+        }
+
         public static void Start(int _maxPlayers, int _port = 26950)
         {
             MaxPlayers = _maxPlayers;
             MyMod.MaxPlayers = MaxPlayers;
             Port = _port;
 
-            MelonLoader.MelonLogger.Msg("Starting server...");
+            Log("Starting server...");
             InitializeServerData();
 
             udpListener = new UdpClient(Port);
             udpListener.BeginReceive(UDPReceiveCallback, null);
 
-            MelonLoader.MelonLogger.Msg($"Server started on port {Port}.");
+            Log($"Server started on port {Port}.");
         }
         public static void StartSteam(int _maxPlayers, string[] whitelist = null)
         {
@@ -38,7 +48,7 @@ namespace GameServer
             MPSaveManager.LoadNonUnloadables();
             MaxPlayers = _maxPlayers;
             MyMod.MaxPlayers = MaxPlayers;
-            MelonLoader.MelonLogger.Msg("[SteamWorks.NET] Starting multiplayer...");
+            Log("[SteamWorks.NET] Starting multiplayer...");
             InitializeServerData();
             UsingSteamWorks = true;
             MyMod.InitAllPlayers(); // Prepare players objects based on amount of max players
@@ -59,7 +69,6 @@ namespace GameServer
 
         private static void UDPReceiveCallback(IAsyncResult _result)
         {
-            //MelonLoader.MelonLogger.Log("[UDP] UDPReceiveCallback");
             try
             {
                 IPEndPoint _clientEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -95,7 +104,7 @@ namespace GameServer
                         int freeSlot = 1;
                         bool ReConnection = false;
 
-                        MelonLoader.MelonLogger.Msg("[UDP] Checking all slots for " + _clientEndPoint.Address.ToString());
+                        Log("[UDP] Checking all slots for " + _clientEndPoint.Address.ToString());
 
                         for (int i = 1; i <= MaxPlayers; i++)
                         {
@@ -103,7 +112,7 @@ namespace GameServer
                             {
                                 ReConnection = true;
                                 clients[i].RCON = false;
-                                MelonLoader.MelonLogger.Msg("[UDP] Reconnecting " + _clientEndPoint.Address + " as client " + i);
+                                Log("[UDP] Reconnecting " + _clientEndPoint.Address + " as client " + i);
                                 clients[i].TimeOutTime = 0;
                                 clients[i].udp.endPoint = null;
                                 freeSlot = i;
@@ -112,13 +121,13 @@ namespace GameServer
                         }
                         if (ReConnection == false)
                         {
-                            MelonLoader.MelonLogger.Msg("[UDP] Got new connection " + _clientEndPoint.Address);
+                            Log("[UDP] Got new connection " + _clientEndPoint.Address);
                             for (int i = 1; i <= MaxPlayers; i++)
                             {
                                 if (clients[i].udp.endPoint == null)
                                 {
                                     clients[i].RCON = false;
-                                    MelonLoader.MelonLogger.Msg("[UDP] Here an empty slot " + i);
+                                    Log("[UDP] Here an empty slot " + i);
                                     freeSlot = i;
                                     break;
                                 }
@@ -127,7 +136,7 @@ namespace GameServer
                         _clientId = freeSlot;
                     }else if(_clientId == -1)
                     {
-                        MelonLoader.MelonLogger.Msg("[UDP] Attempt to get RCON access for " + _clientEndPoint.Address.ToString());
+                        Log("[UDP] Attempt to get RCON access for " + _clientEndPoint.Address.ToString());
                         int RCONSLOT = MaxPlayers+1;
                         if (clients[RCONSLOT].udp.endPoint == null)
                         {
@@ -135,13 +144,13 @@ namespace GameServer
                         }else{
                             if(clients[RCONSLOT].udp.endPoint.Address.ToString() == _clientEndPoint.Address.ToString())
                             {
-                                MelonLoader.MelonLogger.Msg("[UDP] RCON Operator reconnecting...");
+                                Log("[UDP] RCON Operator reconnecting...");
                                 _clientId = RCONSLOT;
                                 ServerSend.RCONCONNECTED(_clientId);
                                 return;
                             }
                             else{
-                                MelonLoader.MelonLogger.Msg("[UDP] RCON Slot currently busy");
+                                Log("[UDP] RCON Slot currently busy");
                                 ServerSend.KICKMESSAGE(_clientEndPoint, "RCON Operator slot is busy!");
                                 return;
                             }
@@ -168,7 +177,7 @@ namespace GameServer
             }
             catch (Exception _ex)
             {
-                MelonLoader.MelonLogger.Msg($"Error receiving UDP data: {_ex}");
+                Log($"Error receiving UDP data: {_ex}");
             }
         }
 
@@ -183,7 +192,7 @@ namespace GameServer
             }
             catch (Exception _ex)
             {
-                MelonLoader.MelonLogger.Msg($"Error sending data to {_clientEndPoint} via UDP: {_ex}");
+                Log($"Error sending data to {_clientEndPoint} via UDP: {_ex}");
             }
         }
         public static void SendP2PData(string _client, Packet _packet)
@@ -320,7 +329,7 @@ namespace GameServer
                 { (int)ClientPackets.KNOCKKNOCK, ServerHandle.KNOCKKNOCK},
                 { (int)ClientPackets.RESTART, ServerHandle.RESTART},
             };
-            MelonLoader.MelonLogger.Msg("Initialized packets.");
+            Log("Initialized packets.");
         }
     }
 }
