@@ -1974,7 +1974,6 @@ namespace SkyCoop
                 MyMod.KillConsole(); // Unregistering cheats if server not allow cheating for you
             }
 #else
-            MyMod.isRuning = true;
             MPSaveManager.LoadNonUnloadables();
             Server.Start(MyMod.MaxPlayers, port);
             MyMod.iAmHost = true;
@@ -1982,8 +1981,7 @@ namespace SkyCoop
             MyMod.OverridedMinutes = 30;
             MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
             InitAllPlayers(); // Prepare players objects based on amount of max players
-            Log("Server has been runned with InGame time: " + MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes + " seed " + MPSaveManager.Seed);
-            MyMod.NeedSyncTime = true;       
+            Log("Server has been runned with InGame time: " + MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes + " seed " + MPSaveManager.Seed);     
 #endif
         }
     }
