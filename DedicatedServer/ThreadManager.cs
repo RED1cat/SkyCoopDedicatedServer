@@ -1,7 +1,7 @@
-﻿using MelonLoader;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using SkyCoop;
 
 namespace GameServer
 {
@@ -14,7 +14,7 @@ namespace GameServer
         public static void Log(string TXT)
         {
 #if (!DEDICATED)
-            MelonLogger.Msg(TXT);
+            Console.WriteLine(TXT);
 #else
             Logger.Log(TXT);
 #endif
