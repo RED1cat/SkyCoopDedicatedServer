@@ -1815,13 +1815,13 @@ namespace SkyCoop
             SaveData.m_Seed = GameManager.m_SceneTransitionData.m_GameRandomSeed;
             SaveData.m_ExperienceMode = (int)ExperienceModeManager.s_CurrentModeType;
             SaveData.m_Location = (int)RegionManager.GetCurrentRegion();
+            SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
+            SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;
 #else
             SaveData.m_Seed = MPSaveManager.Seed;
             SaveData.m_ExperienceMode = ExperienceForDS;
             SaveData.m_Location = StartingRegionDS;
 #endif
-            SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
-            SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;
 #if(!DEDICATED)
             if (ExperienceModeManager.s_CurrentModeType == ExperienceModeType.Custom)
             {
@@ -1858,6 +1858,133 @@ namespace SkyCoop
             {
                 ServerSend.DOORLOCKEDMSG(Client, "This door is already locked!");
             }
+        }
+        public static void InitAllPlayers()
+        {
+            for (int i = 0; i < MyMod.MaxPlayers; i++)
+            {
+                if (MyMod.playersData.Count < MyMod.MaxPlayers)
+                {
+                    MyMod.playersData.Add(null);
+                }
+                if (MyMod.playersData[i] == null)
+                {
+                    MyMod.playersData[i] = new DataStr.MultiPlayerClientData();
+                }
+            }
+#if (!DEDICATED)
+            if (!MyMod.DedicatedServerAppMode)
+            {
+                if (MyMod.MyRadioAudio == null)
+                {
+                    GameObject LoadedAssets = MyMod.LoadedBundle.LoadAsset<GameObject>("MyRadio");
+                    MyMod.MyRadioAudio = GameObject.Instantiate(LoadedAssets);
+
+                    GameObject RadioAudio = MyMod.MyRadioAudio.transform.GetChild(1).gameObject;
+                    GameObject RadioBg = MyMod.MyRadioAudio.transform.GetChild(2).gameObject;
+                    RadioAudio.AddComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().aSource = RadioAudio.GetComponent<AudioSource>();
+                    RadioAudio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().aSourceBgNoise = RadioBg.GetComponent<AudioSource>();
+                    RadioAudio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().m_ID = -1;
+                    RadioAudio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().m_RadioFilter = true;
+                }
+                for (int i = 0; i < MyMod.MaxPlayers; i++)
+                {
+                    if (MyMod.players.Count < MyMod.MaxPlayers)
+                    {
+                        MyMod.players.Add(null);
+                    }
+                    if (MyMod.players[i] == null)
+                    {
+                        GameObject LoadedAssets = MyMod.LoadedBundle.LoadAsset<GameObject>("multiplayerPlayer");
+                        GameObject m_Player = GameObject.Instantiate(LoadedAssets);
+                        m_Player.AddComponent<Comps.MultiplayerPlayerAnimator>().m_Animer = m_Player.GetComponent<Animator>();
+                        m_Player.AddComponent<Comps.MultiplayerPlayerClothingManager>().m_Player = m_Player;
+
+                        Transform Speakers = m_Player.transform.GetChild(4);
+                        GameObject Generic = Speakers.GetChild(0).gameObject;
+                        GameObject Voice = Speakers.GetChild(1).gameObject;
+                        GameObject Radio = Speakers.GetChild(2).gameObject;
+                        GameObject RadioBg = Speakers.GetChild(3).gameObject;
+
+                        Voice.AddComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().aSource = Voice.GetComponent<AudioSource>();
+                        Voice.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().m_ID = i;
+
+                        Radio.AddComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().aSource = Radio.GetComponent<AudioSource>();
+                        Radio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().aSourceBgNoise = RadioBg.GetComponent<AudioSource>();
+                        Radio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().m_ID = i;
+                        Radio.GetComponent<Comps.MultiplayerPlayerVoiceChatPlayer>().m_RadioFilter = true;
+
+
+                        Comps.MultiplayerPlayer mP = m_Player.AddComponent<Comps.MultiplayerPlayer>();
+                        mP.m_Player = m_Player;
+                        mP.m_ID = i;
+
+                        MyMod.players[i] = m_Player;
+
+                        if (MyMod.playersData.Count > 0 && MyMod.playersData[i] != null)
+                        {
+                            m_Player.transform.position = MyMod.playersData[i].m_Position;
+                            m_Player.transform.rotation = MyMod.playersData[i].m_Rotation;
+                        }
+                        MyMod.ApplyDamageZones(m_Player, mP);
+                        m_Player.SetActive(false);
+
+                        mP.m_TorchIgniter = m_Player.transform.GetChild(3).GetChild(8).GetChild(0).GetChild(0).GetChild(0).GetChild(1).GetChild(0).GetChild(0).GetChild(0).GetChild(8).GetChild(1).gameObject; //Tourch Fire
+                        Supporters.ApplyFlairsForModel(i, MyMod.playersData[i].m_SupporterBenefits.m_Flairs);
+                    }
+                }
+
+                if (MyMod.MyPlayerDoll == null)
+                {
+                    GameObject LoadedAssets = MyMod.LoadedBundle.LoadAsset<GameObject>("multiplayerPlayer");
+                    GameObject m_Player = GameObject.Instantiate(LoadedAssets);
+                    m_Player.name = "MyPlayerDoll";
+                    MyMod.MyPlayerDoll = m_Player;
+                    MyMod.MyPlayerDoll.SetActive(false);
+                    Comps.MultiplayerPlayerAnimator Anim = m_Player.AddComponent<Comps.MultiplayerPlayerAnimator>();
+                    Anim.m_MyDoll = true;
+                    Anim.m_Animer = m_Player.GetComponent<Animator>();
+                    MyMod.DollCameraDummy = m_Player.transform.GetChild(3).GetChild(8).GetChild(0).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(0).gameObject;
+                    Supporters.ApplyFlairsForModel(m_Player, Supporters.ConfiguratedBenefits.m_Flairs, "I am");
+                }
+            }
+#endif
+        }
+
+        public static void HostAServer(int port = 26950)
+        {
+#if (!DEDICATED)
+
+            if (MyMod.iAmHost != true)
+            {
+                MyMod.isRuning = true;
+                MPSaveManager.LoadNonUnloadables();
+                Server.Start(MyMod.MaxPlayers, port);
+                MyMod.nextActionTime = Time.time;
+                MyMod.nextActionTimeAniamls = Time.time;
+                MyMod.iAmHost = true;
+                InitAllPlayers(); // Prepare players objects based on amount of max players
+                Log("Server has been runned with InGame time: " + GameManager.GetTimeOfDayComponent().GetHour() + ":" + GameManager.GetTimeOfDayComponent().GetMinutes() + " seed " + GameManager.m_SceneTransitionData.m_GameRandomSeed);
+                MyMod.OverridedHourse = GameManager.GetTimeOfDayComponent().GetHour();
+                MyMod.OverridedMinutes = GameManager.GetTimeOfDayComponent().GetMinutes();
+                MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
+                MyMod.NeedSyncTime = true;
+                MyMod.DisableOriginalAnimalSpawns(true);
+                MyMod.SetFixedSpawn();
+                MyMod.KillConsole(); // Unregistering cheats if server not allow cheating for you
+            }
+#else
+            MyMod.isRuning = true;
+            MPSaveManager.LoadNonUnloadables();
+            Server.Start(MyMod.MaxPlayers, port);
+            MyMod.iAmHost = true;
+            MyMod.OverridedHourse = 12;
+            MyMod.OverridedMinutes = 30;
+            MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
+            InitAllPlayers(); // Prepare players objects based on amount of max players
+            Log("Server has been runned with InGame time: " + MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes + " seed " + MPSaveManager.Seed);
+            MyMod.NeedSyncTime = true;       
+#endif
         }
     }
 }
