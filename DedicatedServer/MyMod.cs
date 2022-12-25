@@ -86,7 +86,7 @@ namespace SkyCoop
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+
             ResourceIndependent.Init();
             Server.Start(2);
             base.Initialize();
