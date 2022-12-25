@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using GameServer;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 
 namespace SkyCoop
 {
@@ -47,6 +49,9 @@ namespace SkyCoop
         public static string level_guid = "";
         public static List<DataStr.PickedGearSync> RecentlyPickedGears = new List<DataStr.PickedGearSync>();
         public static Dictionary<string, int> BannedSpawnRegions = new Dictionary<string, int>();
+        public static string NotificationString = "";
+        static float CurrentTime0 = 0f;
+        static float CurrentTime1 = 0f;
 
         public static string GetGearNameByID(int index)
         {
@@ -69,7 +74,8 @@ namespace SkyCoop
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
+            ResourceIndependent.Init();
+            Server.Start(2);
             base.Initialize();
         }
 
@@ -82,10 +88,22 @@ namespace SkyCoop
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
 
-            // TODO: Add your update logic here
+            Shared.OnUpdate();
+
+            CurrentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            CurrentTime1 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (CurrentTime0 >= 1f)
+            {
+                CurrentTime0 -= 1f;
+                Shared.EverySecond();
+            }
+            if (CurrentTime1 >= 5f)
+            {
+                CurrentTime1 -= 5f;
+                Shared.EveryInGameMinute();
+            }
 
             base.Update(gameTime);
         }
