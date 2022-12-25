@@ -18,7 +18,7 @@ namespace GameServer
 #if (!DEDICATED)
             MelonLogger.Msg(TXT);
 #else
-            Logger.Log(LOG);
+            Logger.Log(TXT);
 #endif
         }
 
