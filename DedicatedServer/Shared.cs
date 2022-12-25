@@ -196,7 +196,7 @@ namespace SkyCoop
                             RabbitsBuff.Add(new Vector3(0, 0, 0)); // Add request on rabbit on snare position
                         } else
                         {
-                            if (Utils.RollChance(ChanceToBreak))
+                            if (RollChance(ChanceToBreak))
                             {
                                 dat.m_Extra.m_Variant = 2; // Broken
                                 dat.m_Extra.m_GoalTime = -1; // So it won't reload itself.
@@ -571,25 +571,6 @@ namespace SkyCoop
 #else
                 SleepingHours.Add(0);
 
-
-                bool shouldBeControllerME = false;
-                if (MyMod.IsDead == false)
-                {
-                    shouldBeControllerME = ShouldbeAnimalController(MyMod.MyTicksOnScene, MyMod.levelid, 0);
-                } else
-                {
-                    shouldBeControllerME = false;
-                }
-
-                if (shouldBeControllerME != MyMod.AnimalsController)
-                {
-                    MyMod.AnimalsController = shouldBeControllerME;
-                    MyMod.DisableOriginalAnimalSpawns();
-                    if (MyMod.AnimalsController)
-                    {
-                        MyMod.SwitchToAnimalController();
-                    }
-                }
 #endif
                 for (int i = 1; i <= Server.MaxPlayers; i++)
                 {
@@ -668,7 +649,7 @@ namespace SkyCoop
 
 
                             Server.clients[i].RCON = false;
-                            MyMod.ResetDataForSlot(i);
+                            ResetDataForSlot(i);
                             Log("Client " + i + " processing disconnect");
                             Server.clients[i].udp.Disconnect();
                         }
@@ -1523,15 +1504,7 @@ namespace SkyCoop
 #else
                 ServerSend.REMOVESHELTER(0, shelter, true);
 #endif
-
-
-            } else
-            {
-                if (lvl == MyMod.levelid && lvlguid == MyMod.level_guid)
-                {
-                    MyMod.RemoveSnowShelterByOther(shelter);
-                }
-            }
+            } 
         }
 
 
@@ -1752,6 +1725,23 @@ namespace SkyCoop
                 {
                     BanSpawnRegion(RegionGUID);
                 }
+            }
+        }
+        public static void ResetDataForSlot(int _from)
+        {
+            if (_from != 0 && _from < MyMod.playersData.Count)
+            {
+                if (MyMod.playersData[_from] != null)
+                {
+                    MyMod.playersData[_from] = new DataStr.MultiPlayerClientData();
+                }
+                ServerSend.EQUIPMENT(_from, new DataStr.PlayerEquipmentData(), false);
+                ServerSend.LIGHTSOURCE(_from, false, false);
+                ServerSend.LIGHTSOURCENAME(_from, "", false);
+                ServerSend.XYZ(_from, new Vector3(0, 0, 0), false);
+                ServerSend.XYZW(_from, new Quaternion(0, 0, 0, 0), false);
+                ServerSend.ANIMSTATE(_from, "Idle", false);
+                ServerSend.LEVELID(_from, 0, false);
             }
         }
     }
