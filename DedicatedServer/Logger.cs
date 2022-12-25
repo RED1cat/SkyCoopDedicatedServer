@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace DedicatedServer
+namespace SkyCoop
 {
     public static class Logger
     {
