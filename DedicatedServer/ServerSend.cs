@@ -288,15 +288,6 @@ namespace GameServer
                 _packet.Write(_toClient);
 
                 int pSize = _packet.Length();
-
-                if (pSize > 1500)
-                {
-                    MelonLoader.MelonLogger.Msg("Packet reached limiet! Size of packet is " + pSize + "bytes");
-                }else{
-                    //MelonLoader.MelonLogger.Msg("Packet sent "+ pSize + "bytes");
-                }
-
-                //MelonLoader.MelonLogger.Msg("Limit is 1500bytes, slice split size is 1000bytes, final packet size is " + _packet.Length()+"bytes");
                 SendTCPData(_toClient, _packet);
             }
         }

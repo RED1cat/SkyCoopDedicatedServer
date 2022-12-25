@@ -505,41 +505,6 @@ namespace GameServer
             Write(weather.m_WeatherTransitionProxy);
             Write(weather.m_WindProxy);
         }
-        public void Write(StackableItem stackable)
-        {
-            Write(stackable.m_Units);
-        }
-        public void Write(FoodItem food)
-        {
-            Write(food.m_CaloriesTotal);
-            Write(food.m_CaloriesRemaining);
-            Write(food.m_HeatPercent);
-            Write(food.m_Packaged);
-            Write(food.m_Opened);
-        }
-        public void Write(WaterSupply water)
-        {
-            float save = water.m_VolumeInLiters;
-
-            if (save > 0.5f)
-            {
-                water.m_VolumeInLiters = 0.5f;
-                Write(water.m_VolumeInLiters);
-                water.m_VolumeInLiters = save;
-            }else
-            {
-                Write(water.m_VolumeInLiters);
-            }
-        }
-        public void Write(EvolveItem evo)
-        {
-            Write(evo.m_TimeSpentEvolvingGameHours);
-        }
-
-        public void Write(GearItem gear)
-        {
-            Write(gear.Serialize());
-        }
 
         public void Write(DataStr.GearItemDataPacket gear)
         {
@@ -565,35 +530,6 @@ namespace GameServer
             Write(shelter.m_LevelID);
             Write(shelter.m_LevelGUID);
         }
-
-        //public void Write(GearItem gear)
-        //{
-        //    Write(gear.m_GearName);
-        //    Write(gear.m_CurrentHP);
-        //    Write(gear.m_WeightKG);
-        //    if (gear.m_FoodItem != null)
-        //    {
-        //        Write(gear.m_FoodItem);
-        //    }else{
-        //        Write(new FoodItem());
-        //    }
-        //    if (gear.m_EvolveItem != null)
-        //    {
-        //        Write(gear.m_EvolveItem);
-        //    }else{
-        //        Write(new EvolveItem());
-        //    }
-        //    Write(gear.m_GearBreakConditionThreshold);
-        //    if (gear.m_WaterSupply != null)
-        //    {
-        //        Write(gear.m_WaterSupply);
-        //    }
-        //    else
-        //    {
-        //        Write(new WaterSupply());
-        //    }
-        //    //Write(gear.m_StackableItem);
-        //}
         public void Write(DataStr.AnimalSync obj)
         {
             Write(obj.m_position);
@@ -1121,82 +1057,6 @@ namespace GameServer
             weather.m_WindProxy = ReadString(_moveReadPos);
 
             return weather;
-        }
-
-        public StackableItem ReadStackable(bool _moveReadPos = true)
-        {
-            StackableItem stack = new StackableItem();
-            stack.m_Units = ReadInt(_moveReadPos);
-
-            return stack;
-        }
-        public FoodItem ReadFoodItem(bool _moveReadPos = true)
-        {
-            FoodItem food = new FoodItem();
-            food.m_CaloriesTotal = ReadFloat();
-            food.m_CaloriesRemaining = ReadFloat();
-            food.m_HeatPercent = ReadFloat();
-            food.m_Packaged = ReadBool();
-            food.m_Opened = ReadBool();
-
-            return food;
-        }
-        public WaterSupply ReadWater(bool _moveReadPos = true)
-        {
-            WaterSupply water = new WaterSupply();
-            water.m_VolumeInLiters = ReadFloat();
-
-            return water;
-        }
-        public EvolveItem ReadEvoItem(bool _moveReadPos = true)
-        {
-            EvolveItem evo = new EvolveItem();
-            evo.m_TimeSpentEvolvingGameHours = ReadFloat();
-
-            return evo;
-        }
-
-        public GearItem ReadGearSimple (bool _moveReadPos = true)
-        {
-            GearItem gear = new GearItem();
-
-            gear.m_GearName = ReadString();
-            gear.m_CurrentHP = ReadFloat();
-            gear.m_WeightKG = ReadFloat();
-            gear.m_FoodItem = ReadFoodItem();
-            gear.m_EvolveItem = ReadEvoItem();
-            gear.m_GearBreakConditionThreshold = ReadFloat();
-            gear.m_WaterSupply = ReadWater();
-            //gear.m_StackableItem = ReadStackable(_moveReadPos);
-
-            return gear;
-        }
-
-        public ObjectGuid ReadObjectGuid(bool _moveReadPos = true)
-        {
-            ObjectGuid objguid = new ObjectGuid();
-
-            objguid.m_Guid = ReadString();
-
-            return objguid;
-        }
-
-        public DataStr.AnimalSync ReadAnimal(bool _moveReadPos = true)
-        {
-            DataStr.AnimalSync obj = new DataStr.AnimalSync();
-            obj.m_position = ReadVector3();
-            obj.m_rotation = ReadQuaternion();
-            obj.m_guid = ReadString();
-            obj.m_name = ReadString();
-            obj.m_Hp = ReadFloat();
-            obj.m_Bleeding = ReadBool();
-
-            obj.m_Controller = ReadInt();
-            obj.m_ProxySave = ReadString();
-            obj.m_LevelD = ReadInt();
-            obj.m_SpawnRegionGUID = ReadString();
-
-            return obj;
         }
 
         public DataStr.AnimalAnimsSync ReadAnimalAnim(bool _moveReadPos = true)
