@@ -705,6 +705,49 @@ namespace SkyCoop
                 return false;
             }
         }
+
+        public static string GetLockSmithProduct(string GearName, int Tool)
+        {
+            if (GearName == "gear_scrapmetal")
+            {
+                if (Tool == 0)
+                {
+                    return "gear_sclockpick";
+                } else if (Tool == 1)
+                {
+                    return "gear_scsharpening";
+                }
+            } else if (GearName == "gear_scmetalblank")
+            {
+                if (Tool == 0)
+                {
+                    return "gear_scmetalblanksmall";
+                } else if (Tool == 1)
+                {
+                    return "gear_scmetalblank";
+                }
+            } else if (GearName == "gear_scmetalblanksmall")
+            {
+                if (Tool == 0)
+                {
+                    return "gear_scdoorkeytemp";
+                } else if (Tool == 1)
+                {
+                    return "gear_scmetalblanksmall";
+                }
+            } else if (GearName == "gear_scdoorkeytemp")
+            {
+                if (Tool == 0)
+                {
+                    return "broke";
+                } else if (Tool == 1)
+                {
+                    return "gear_scdoorkey";
+                }
+            }
+            return "broke";
+        }
+
         public static void ChangeOpenableThingState(string Scene, string GUID, bool state)
         {
             MyMod.OpenableThings.Remove(GUID);

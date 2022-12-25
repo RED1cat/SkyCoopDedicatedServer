@@ -346,7 +346,9 @@ namespace SkyCoop
             public int m_Type = 0;
             public string m_Message = "";
             public string m_By = "";
+#if (!DEDICATED)
             public UnityEngine.UI.Text m_TextObj = null;
+#endif
         }
         public class GearItemDataPacket
         {

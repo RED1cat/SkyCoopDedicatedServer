@@ -231,6 +231,7 @@ namespace SkyCoop
                 }
             }
         }
+#if (!DEDICATED)
         public static void AlignKey(GearItem key, string KeySeed, string Name)
         {
             if (key)
@@ -257,13 +258,14 @@ namespace SkyCoop
                 key.m_LocalizedDisplayName.m_LocalizationID = Name;
             }
         }
+#endif
 
         public static void ApplyToolOnBlank(int hash, int tool, string KeyName = "", string KeySeed = "")
         {
             LocksmithBlank Blank = GetBlank(hash);
             if (Blank != null)
             {
-                string Result = MyMod.GetLockSmithProduct(Blank.m_GearName.ToLower(), tool);
+                string Result = Shared.GetLockSmithProduct(Blank.m_GearName.ToLower(), tool);
                 Log("[ApplyToolOnBlank] "+ hash+" "+ Blank.m_GearName+" Tool "+tool);
                 Vector3 PlaceV3 = new Vector3(0,0,0);
                 Quaternion Rotation = new Quaternion(0,0,0,0);
@@ -604,6 +606,7 @@ namespace SkyCoop
                 RemoveLockedDoor(Scene, DoorKey);
                 string GUID = DoorKey.Split('_')[1];
                 ServerSend.REMOVEDOORLOCK(-1, GUID, Scene);
+#if(!DEDICATED)
                 if(!MyMod.DedicatedServerAppMode)
                 {
                     if(MyMod.level_guid == Scene)
@@ -618,6 +621,9 @@ namespace SkyCoop
             }else{
                 ServerSend.LOCKPICK(Picker, Swear);
             }
+#else
+            ServerSend.LOCKPICK(Picker, Swear);
+#endif
         }
 
         public static void SaveRecentStuff()

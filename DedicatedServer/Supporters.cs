@@ -184,18 +184,30 @@ namespace SkyCoop
         }
         public static void Log(string LOG)
         {
+#if (!DEDICATED)
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
+#else
+            Console.WriteLine("[Supporters] " + LOG);
+#endif
         }
         public static void DebugLog(string LOG)
         {
             if (DeBug)
             {
+#if (!DEDICATED)
                 MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
+#else
+                Console.WriteLine("[Supporters] " + LOG);
+#endif
             }
         }
         public static void Error(string LOG)
         {
-            MelonLoader.MelonLogger.Msg(ConsoleColor.Red, "[Supporters] " + LOG);
+#if (!DEDICATED)
+            MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[Supporters] " + LOG);
+#else
+            Console.WriteLine("[Supporters] " + LOG);
+#endif
         }
 
         public static bool IsLoaded()
