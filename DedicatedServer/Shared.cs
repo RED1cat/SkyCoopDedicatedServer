@@ -20,6 +20,8 @@ namespace SkyCoop
         public static int SecondsBeforeUnload = 0;
         public static Dictionary<string, DataStr.AnimalKilled> AnimalsKilled = new Dictionary<string, DataStr.AnimalKilled>();
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
+        public static int ExperienceForDS = 2;
+        public static int StartingRegionDS = 0;
 
         public static void OnUpdate()
         {
@@ -1805,16 +1807,21 @@ namespace SkyCoop
         }
         public static void SendSlotData(int _forClient)
         {
-            MelonLogger.Msg("Sending savedata for " + _forClient);
+            Log("Sending savedata for " + _forClient);
             DataStr.SaveSlotSync SaveData = new DataStr.SaveSlotSync();
-            SaveData.m_Episode = (int)SaveGameSystem.m_CurrentEpisode;
-            SaveData.m_SaveSlotType = (int)SaveGameSystem.m_CurrentGameMode;
+            SaveData.m_Episode = 0;
+            SaveData.m_SaveSlotType = 3;
+#if(!DEDICATED)
             SaveData.m_Seed = GameManager.m_SceneTransitionData.m_GameRandomSeed;
             SaveData.m_ExperienceMode = (int)ExperienceModeManager.s_CurrentModeType;
             SaveData.m_Location = (int)RegionManager.GetCurrentRegion();
+#else
+            SaveData.m_Seed = MPSaveManager.Seed;
+            SaveData.m_ExperienceMode = 2;
+            SaveData.m_Location = 0;
+#endif
             SaveData.m_FixedSpawnScene = MyMod.SavedSceneForSpawn;
             SaveData.m_FixedSpawnPosition = MyMod.SavedPositionForSpawn;
-
             if (ExperienceModeManager.s_CurrentModeType == ExperienceModeType.Custom)
             {
                 SaveData.m_CustomExperienceStr = GameManager.GetExperienceModeManagerComponent().GetCurrentCustomModeString();

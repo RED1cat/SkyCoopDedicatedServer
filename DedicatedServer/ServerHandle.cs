@@ -953,7 +953,7 @@ namespace GameServer
         }
         public static void CUSTOM(int _fromClient, Packet _packet)
         {
-#if (DEDICATED)
+#if (!DEDICATED)
             API.CustomEventCallback(_packet, _fromClient);
 #endif
         }
