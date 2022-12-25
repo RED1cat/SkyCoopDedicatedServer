@@ -3,10 +3,10 @@ using System.IO;
 
 namespace DedicatedServer
 {
-    internal class Logger
+    public static class Logger
     {
         
-        public void Log(string message)
+        public static void Log(string message)
         {
             string time = DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString();
             if (File.Exists("log.txt"))
