@@ -4,7 +4,9 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using SkyCoop;
+#if (!DEDICATED)
 using MelonLoader;
+#endif
 
 namespace GameServer
 {
