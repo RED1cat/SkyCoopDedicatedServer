@@ -88,7 +88,6 @@ namespace SkyCoop
         {
 
             ResourceIndependent.Init();
-            Server.Start(2);
             base.Initialize();
         }
 
