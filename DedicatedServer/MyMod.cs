@@ -90,6 +90,7 @@ namespace SkyCoop
         {
 
             Shared.OnUpdate();
+            ThreadManager.UpdateMain();
 
             CurrentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
             CurrentTime1 += (float)gameTime.ElapsedGameTime.TotalSeconds;
