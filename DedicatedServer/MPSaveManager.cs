@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 using GameServer;
+using static SkyCoop.DataStr;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -1113,6 +1114,57 @@ namespace SkyCoop
         {
             string Name = LoadData("MultiplayerNickName");
             return Name;
+        }
+        public static void SaveGlobalData()
+        {
+            Dictionary<string, string> GlobalData = new Dictionary<string, string>();
+            GlobalData.Add("furns", JSON.Dump(MyMod.BrokenFurniture));
+            GlobalData.Add("pickedgears", JSON.Dump(MyMod.PickedGears));
+            GlobalData.Add("ropes", JSON.Dump(MyMod.DeployedRopes));
+            GlobalData.Add("containers", JSON.Dump(MyMod.LootedContainers));
+            GlobalData.Add("plants", JSON.Dump(MyMod.HarvestedPlants));
+            GlobalData.Add("shelters", JSON.Dump(MyMod.ShowSheltersBuilded));
+            int[] saveProxy = { MyMod.MinutesFromStartServer };
+            GlobalData.Add("rtt", JSON.Dump(saveProxy));
+            GlobalData.Add("killedanimals", JSON.Dump(Shared.AnimalsKilled));
+            GlobalData.Add("deathcreates", JSON.Dump(MyMod.DeathCreates));
+            string[] saveProxy2 = { MyMod.OveridedTime };
+            GlobalData.Add("gametime", JSON.Dump(saveProxy2));
+            string Jonny = JSON.Dump(GlobalData);
+            SaveData("GlobalServerData", Jonny, GetSeed());
+        }
+        public static string GetDictionaryString(Dictionary<string, string> Dict, string Key)
+        {
+            string Val;
+            if(Dict.TryGetValue(Key, out Val))
+            {
+                return Val;
+            }
+            return "";
+        }
+        public static void LoadGlobalData()
+        {
+            string Data = LoadData("GlobalServerData", GetSeed());
+            Dictionary<string, string> GlobalData = new Dictionary<string, string>();
+            if (Data != "")
+            {
+                GlobalData = JSON.Load(Data).Make<Dictionary<string, string>>();
+            } else
+            {
+                return;
+            }
+            MyMod.BrokenFurniture = JSON.Load(GetDictionaryString(GlobalData, "furns")).Make<List<BrokenFurnitureSync>>();
+            MyMod.PickedGears = JSON.Load(GetDictionaryString(GlobalData, "pickedgears")).Make<List<PickedGearSync>>();
+            MyMod.DeployedRopes = JSON.Load(GetDictionaryString(GlobalData, "ropes")).Make<List<ClimbingRopeSync>>();
+            MyMod.LootedContainers = JSON.Load(GetDictionaryString(GlobalData, "containers")).Make<List<ContainerOpenSync>>();
+            MyMod.HarvestedPlants = JSON.Load(GetDictionaryString(GlobalData, "plants")).Make<List<string>>();
+            MyMod.ShowSheltersBuilded = JSON.Load(GetDictionaryString(GlobalData, "shelters")).Make<List<ShowShelterByOther>>();
+            int[] saveProxy = JSON.Load(GetDictionaryString(GlobalData, "rtt")).Make<int[]>();
+            MyMod.MinutesFromStartServer = saveProxy[0];
+            Shared.AnimalsKilled = JSON.Load(GetDictionaryString(GlobalData, "killedanimals")).Make<Dictionary<string, AnimalKilled>>();
+            MyMod.DeathCreates = JSON.Load(GetDictionaryString(GlobalData, "deathcreates")).Make<List<DeathContainerData>>();
+            string[] saveProxy2 = JSON.Load(GetDictionaryString(GlobalData, "gametime")).Make<string[]>();
+            MyMod.OveridedTime = saveProxy2[0];
         }
     }
 }

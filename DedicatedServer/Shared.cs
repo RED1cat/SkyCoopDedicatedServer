@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
+using static AuroraScreenManager;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -259,7 +260,7 @@ namespace SkyCoop
                     Quaternion rot = new Quaternion(0, 0, 0, 0);
 #if (!DEDICATED)
                     GameObject reference = MyMod.GetGearItemObject("gear_rabbitcarcass");
-                    
+
 
                     if (reference != null)
                     {
@@ -363,7 +364,7 @@ namespace SkyCoop
             Log("MinutesFromStartServer " + PrevMinutesFromStartServer + " now it " + MyMod.MinutesFromStartServer + " because " + h * 60 + " been added");
 
 #if (!DEDICATED)
-           EveryInGameMinute();
+            EveryInGameMinute();
 #else
            EveryInGameMinute();
 #endif
@@ -1078,7 +1079,7 @@ namespace SkyCoop
 
         public static void AddSlicedJsonDataForDrop(DataStr.SlicedJsonData jData, int ClientID)
         {
-            Log("Got Dropped Item Slice for hash:"+jData.m_Hash+" Is Last "+ jData.m_Last);
+            Log("Got Dropped Item Slice for hash:" + jData.m_Hash + " Is Last " + jData.m_Last);
             if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
             {
                 string previousString = "";
@@ -1103,7 +1104,7 @@ namespace SkyCoop
                 {
                     MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
                     AddDroppedGear(jData.m_SendTo, jData.m_Hash, finalJsonData, jData.m_GearName, jData.m_Extra);
-                    Log("Finished adding data for:" + jData.m_Hash +" total "+Encoding.UTF8.GetBytes(finalJsonData).Length+"bytes");
+                    Log("Finished adding data for:" + jData.m_Hash + " total " + Encoding.UTF8.GetBytes(finalJsonData).Length + "bytes");
                 }
             }
             ServerSend.READYSENDNEXTSLICEGEAR(ClientID, true);
@@ -1531,7 +1532,7 @@ namespace SkyCoop
 #else
                 ServerSend.REMOVESHELTER(0, shelter, true);
 #endif
-            } 
+            }
         }
 
 
@@ -1756,7 +1757,7 @@ namespace SkyCoop
                 AnimalsKilled.Add(GUID, Animal);
 
 #if (!DEDICATED)
-                if (LevelGUID == MyMod.level_guid) 
+                if (LevelGUID == MyMod.level_guid)
                 {
                     MyMod.ProcessAnimalCorpseSync(Animal);
                 }
