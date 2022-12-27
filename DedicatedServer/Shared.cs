@@ -1989,7 +1989,7 @@ namespace SkyCoop
             string Path = "Mods\\server.json";
 
 #if(DEDICATED)
-            Path = "\\server.json";
+            Path = "server.json";
 #endif
             if (System.IO.File.Exists(Path))
             {
