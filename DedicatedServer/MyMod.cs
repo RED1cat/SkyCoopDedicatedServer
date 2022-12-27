@@ -95,7 +95,7 @@ namespace SkyCoop
 
         protected override void Initialize()
         {
-
+            Supporters.GetSupportersList(true);
             ResourceIndependent.Init();
             Shared.HostAServer();
             base.Initialize();

@@ -5,7 +5,6 @@ namespace SkyCoop
 {
     public static class Logger
     {
-        
         public static void Log(string message)
         {
             string time = DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString();
@@ -15,7 +14,7 @@ namespace SkyCoop
             }
             else
             {
-                File.Create("log.txt");
+                File.Create("log.txt").Close();
                 File.AppendAllText("log.txt", $"[{time}] " + message + Environment.NewLine);
             }
         }
