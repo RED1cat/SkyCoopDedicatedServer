@@ -292,7 +292,7 @@ namespace SkyCoop
 
                     DataStr.DroppedGearItemDataPacket RabbitVisual = new DataStr.DroppedGearItemDataPacket();
                     RabbitVisual.m_Extra = Rabbit.m_Extra;
-                    RabbitVisual.m_GearID = MyMod.GetGearIDByName("gear_rabbitcarcass");
+                    RabbitVisual.m_GearID = -1;
                     RabbitVisual.m_Hash = SearchKey;
                     RabbitVisual.m_LevelGUID = Scene;
                     RabbitVisual.m_Position = RabbitsBuff[i];
@@ -938,20 +938,7 @@ namespace SkyCoop
         public static void SendDroppedItemToPicker(string DataProxy, int GiveItemTo, int SearchKey, int GearID, bool place, DataStr.ExtraDataForDroppedGear Extra)
         {
             byte[] bytesToSlice = Encoding.UTF8.GetBytes(DataProxy);
-            Log("Going to send gear " + GearID + " to client " + GiveItemTo + " bytes: " + bytesToSlice.Length);
-            if (GearID == MyMod.GetGearIDByName("gear_knife"))
-            {
-                if (MyMod.playersData[GiveItemTo].m_SupporterBenefits.m_Knife)
-                {
-                    GearID = MyMod.GetGearIDByName("gear_jeremiahknife");
-                }
-            } else if (GearID == MyMod.GetGearIDByName("gear_jeremiahknife"))
-            {
-                if (!MyMod.playersData[GiveItemTo].m_SupporterBenefits.m_Knife)
-                {
-                    GearID = MyMod.GetGearIDByName("gear_knife");
-                }
-            }
+            Log("Going to send gear to client " + GiveItemTo + " bytes: " + bytesToSlice.Length);
 
             if (bytesToSlice.Length > 500)
             {
@@ -1047,7 +1034,7 @@ namespace SkyCoop
             if (DataProxy != null)
             {
                 Log("Found gear with hash " + Hash);
-                SendDroppedItemToPicker(DataProxy.m_Json, sendTo, Hash, MyMod.GetGearIDByName(DataProxy.m_GearName), place, DataProxy.m_Extra);
+                SendDroppedItemToPicker(DataProxy.m_Json, sendTo, Hash, -1, place, DataProxy.m_Extra);
                 if (!MyMod.DedicatedServerAppMode && MyMod.players[sendTo] != null && MyMod.players[sendTo].GetComponent<Comps.MultiplayerPlayerAnimator>() != null)
                 {
                     MyMod.players[sendTo].GetComponent<Comps.MultiplayerPlayerAnimator>().Pickup();
@@ -1061,7 +1048,7 @@ namespace SkyCoop
             if (DataProxy != null)
             {
                 Log("Found gear with hash " + Hash);
-                SendDroppedItemToPicker(DataProxy.m_Json, sendTo, Hash, MyMod.GetGearIDByName(DataProxy.m_GearName), place, DataProxy.m_Extra);
+                SendDroppedItemToPicker(DataProxy.m_Json, sendTo, Hash, -1, place, DataProxy.m_Extra);
             } else
             {
                 Log("Client requested gear we have not data for, so gear most likely is missing. Gear hash " + Hash);
@@ -1074,14 +1061,7 @@ namespace SkyCoop
         public static void AddDroppedGear(int GearID, int Hash, string DataProxy, string Scene, DataStr.ExtraDataForDroppedGear extra)
         {
             DataStr.SlicedJsonDroppedGear element = new DataStr.SlicedJsonDroppedGear();
-
-            if (GearID == -1)
-            {
-                element.m_GearName = extra.m_GearName;
-            } else
-            {
-                element.m_GearName = MyMod.GetGearNameByID(GearID);
-            }
+            element.m_GearName = extra.m_GearName;
             element.m_Json = DataProxy;
             element.m_Extra = extra;
 

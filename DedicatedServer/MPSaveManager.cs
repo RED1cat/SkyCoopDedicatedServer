@@ -352,7 +352,7 @@ namespace SkyCoop
 
                     DataStr.DroppedGearItemDataPacket GearVisual = new DataStr.DroppedGearItemDataPacket();
                     GearVisual.m_Extra = NewGear.m_Extra;
-                    GearVisual.m_GearID = MyMod.GetGearIDByName(NewGear.m_GearName);
+                    GearVisual.m_GearID = -1;
                     GearVisual.m_Hash = SearchKey;
                     GearVisual.m_LevelGUID = Scene;
                     GearVisual.m_Position = PlaceV3;
