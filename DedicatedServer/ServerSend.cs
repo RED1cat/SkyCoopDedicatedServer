@@ -1780,6 +1780,17 @@ namespace GameServer
                 SendTCPData(_toClient, _packet);
             }
         }
+        public static void READYSENDNEXTSLICEGEAR(int _toClient, bool _msg)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.READYSENDNEXTSLICEGEAR))
+            {
+                _packet.Write(_msg);
+                _packet.Write(_toClient);
+
+                SendTCPData(_toClient, _packet);
+            }
+        }
+        
         public static void LOADINGSCENEDROPSDONE(int _toClient, bool _msg)
         {
             using (Packet _packet = new Packet((int)ServerPackets.LOADINGSCENEDROPSDONE))

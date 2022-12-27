@@ -1076,7 +1076,7 @@ namespace SkyCoop
             MPSaveManager.AddGearData(Scene, Hash, element);
         }
 
-        public static void AddSlicedJsonDataForDrop(DataStr.SlicedJsonData jData)
+        public static void AddSlicedJsonDataForDrop(DataStr.SlicedJsonData jData, int ClientID)
         {
             Log("Got Dropped Item Slice for hash:"+jData.m_Hash+" Is Last "+ jData.m_Last);
             if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
@@ -1106,6 +1106,7 @@ namespace SkyCoop
                     Log("Finished adding data for:" + jData.m_Hash +" total "+Encoding.UTF8.GetBytes(finalJsonData).Length+"bytes");
                 }
             }
+            ServerSend.READYSENDNEXTSLICEGEAR(ClientID, true);
         }
 
         public static void AddLootedContainer(DataStr.ContainerOpenSync box, bool needSync, int Looter = 0)

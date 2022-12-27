@@ -1020,7 +1020,7 @@ namespace GameServer
         public static void GOTDROPSLICE(int _fromClient, Packet _packet)
         {
             DataStr.SlicedJsonData got = _packet.ReadSlicedGear();
-            Shared.AddSlicedJsonDataForDrop(got);
+            Shared.AddSlicedJsonDataForDrop(got, _fromClient);
         }
         public static void REQUESTPICKUP(int _fromClient, Packet _packet)
         {

@@ -164,6 +164,7 @@ namespace GameServer
         PEEPHOLE,
         PINGSERVER,
         RESTART,
+        READYSENDNEXTSLICEGEAR,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -317,6 +318,7 @@ namespace GameServer
         PEEPHOLE,
         PINGSERVER,
         RESTART,
+        READYSENDNEXTSLICEGEAR,
     }
 
     public class Packet : IDisposable
