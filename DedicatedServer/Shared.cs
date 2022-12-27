@@ -8,8 +8,10 @@ using System.Text.RegularExpressions;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
+using MelonLoader.TinyJSON;
 #else
 using System.Numerics;
+using TinyJSON;
 #endif
 
 namespace SkyCoop
@@ -1979,6 +1981,71 @@ namespace SkyCoop
             InitAllPlayers(); // Prepare players objects based on amount of max players
             Log("Server has been runned with InGame time: " + MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes + " seed " + MPSaveManager.Seed);     
 #endif
+        }
+
+
+        public static DataStr.DedicatedServerData LoadDedicatedServerConfig()
+        {
+            string Path = "Mods\\server.json";
+
+#if(DEDICATED)
+            Path = "\\server.json";
+#endif
+            if (System.IO.File.Exists(Path))
+            {
+                Log("Reading server.json...");
+                string readText = System.IO.File.ReadAllText(Path);
+                DataStr.DedicatedServerData ServerData = JSON.Load(readText).Make<DataStr.DedicatedServerData>();
+                Log("Server settings: ");
+                Log("SaveSlot: " + ServerData.SaveSlot);
+                Log("ItemDupes: " + ServerData.ItemDupes);
+                Log("ContainersDupes: " + ServerData.ContainersDupes);
+                Log("SpawnStyle: " + ServerData.SpawnStyle);
+                Log("MaxPlayers: " + ServerData.MaxPlayers);
+                Log("UsingSteam: " + ServerData.UsingSteam);
+                Log("Ports: " + ServerData.Ports);
+                Log("Cheats: " + ServerData.Cheats);
+                Log("SteamServerAccessibility: " + ServerData.SteamServerAccessibility);
+                Log("RCON: (SECURED)");
+                Log("DropUnloadPeriod: " + ServerData.DropUnloadPeriod);
+                Log("SaveScamProtection: " + ServerData.SaveScamProtection);
+                Log("ModValidationCheck: " + ServerData.ModValidationCheck);
+                Log("ExperienceMode: " + ServerData.ExperienceMode);
+                Log("StartRegion: " + ServerData.StartRegion);
+                ExperienceForDS = ServerData.ExperienceMode;
+                StartingRegionDS = ServerData.StartRegion;
+                if (ServerData.Seed == 0)
+                {
+                    Log("Seed: (Random)");
+                } else
+                {
+                    Log("Seed: " + ServerData.Seed);
+                }
+                Log("PVP: " + ServerData.PVP);
+                Log("SavingPeriod: " + ServerData.SavingPeriod);
+                Log("RestartPerioud: " + ServerData.RestartPerioud);
+                Log("No problems with server.json found!");
+                if (ServerData.RCON != null)
+                {
+                    MyMod.RCON = ServerData.RCON;
+                }
+                if (ServerData.DropUnloadPeriod > 5)
+                {
+                    MPSaveManager.SaveRecentTimer = ServerData.DropUnloadPeriod;
+                }
+                MyMod.ServerConfig.m_CheckModsValidation = ServerData.ModValidationCheck;
+                MyMod.ServerConfig.m_SaveScamProtection = ServerData.SaveScamProtection;
+                MyMod.ServerConfig.m_DuppedContainers = ServerData.ContainersDupes;
+                MyMod.ServerConfig.m_DuppedSpawns = ServerData.ItemDupes;
+                MyMod.ServerConfig.m_PlayersSpawnType = ServerData.SpawnStyle;
+                MyMod.ServerConfig.m_CheatsMode = ServerData.Cheats;
+                MyMod.DsSavePerioud = ServerData.SavingPeriod;
+                MyMod.MaxPlayers = ServerData.MaxPlayers;
+                return ServerData;
+            } else
+            {
+                return new DataStr.DedicatedServerData();
+            }
         }
     }
 }
