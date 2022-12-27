@@ -736,10 +736,10 @@ namespace SkyCoop
 
             if (Seed != 0)
             {
-                return AppPath + PathSeparator + Seed + PathSeparator + name;
+                return AppPath + Seed + PathSeparator + name;
             }
 
-            return AppPath + PathSeparator + name;
+            return AppPath + name;
         }
 #else
         public static string GetPathForName(string name, int Seed = 0)
