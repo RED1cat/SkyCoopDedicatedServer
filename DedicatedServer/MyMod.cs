@@ -1,9 +1,12 @@
-﻿using GameServer;
+﻿using DedicatedServer;
+using GameServer;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Text;
 
 namespace SkyCoop
 {
@@ -69,8 +72,11 @@ namespace SkyCoop
         public static Dictionary<string, bool> OpenableThings = new Dictionary<string, bool>();
         public static Dictionary<int, string> SlicedJsonDataBuffer = new Dictionary<int, string>();
 
-        static float CurrentTime0 = 0f;
+        static float currentTime0 = 0f;
         static float CurrentTime1 = 0f;
+        public static SpriteFont font;
+        public static Texture2D fontBg;
+        public static GameWindow gw;
 
         public static string GetGearNameByID(int index)
         {
@@ -94,17 +100,20 @@ namespace SkyCoop
         {
             Supporters.GetSupportersList(true);
             ResourceIndependent.Init();
+
             DataStr.DedicatedServerData config = Shared.LoadDedicatedServerConfig();
             MPSaveManager.Seed = config.Seed;
             Shared.HostAServer(config.Ports);
+
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
+            gw = Window;
+            font = Content.Load<SpriteFont>("File");
+            fontBg = Content.Load<Texture2D>("fontBg");
         }
 
         protected override void Update(GameTime gameTime)
@@ -113,12 +122,12 @@ namespace SkyCoop
             Shared.OnUpdate();
             ThreadManager.UpdateMain();
 
-            CurrentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            currentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
             CurrentTime1 += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (CurrentTime0 >= 1f)
+            if (currentTime0 >= 1f)
             {
-                CurrentTime0 -= 1f;
+                currentTime0 -= 1f;
                 Shared.EverySecond();
             }
             if (CurrentTime1 >= 5f)
@@ -127,16 +136,24 @@ namespace SkyCoop
                 Shared.EveryInGameMinute();
             }
 
+            CustomConsole.Updata();
+
+
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.DarkGray);
+            _spriteBatch.Begin();
 
-            // TODO: Add your drawing code here
+            CustomConsole.Draw(_spriteBatch);
+
+            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
+
+
     }
 }
