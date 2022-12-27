@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DedicatedServer;
+using System;
 using System.IO;
 
 namespace SkyCoop
@@ -7,15 +8,17 @@ namespace SkyCoop
     {
         public static void Log(string message)
         {
-            string time = DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString();
+            string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message + Environment.NewLine;
             if (File.Exists("log.txt"))
             {
-                File.AppendAllText("log.txt", $"[{time}] " + message + Environment.NewLine);
+                File.AppendAllText("log.txt", log);
+                CustomConsole.AddLine(log);
             }
             else
             {
                 File.Create("log.txt").Close();
-                File.AppendAllText("log.txt", $"[{time}] " + message + Environment.NewLine);
+                File.AppendAllText("log.txt", log);
+                CustomConsole.AddLine(log);
             }
         }
     }

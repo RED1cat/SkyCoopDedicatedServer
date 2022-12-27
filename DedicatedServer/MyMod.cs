@@ -106,7 +106,6 @@ namespace SkyCoop
             MPSaveManager.Seed = config.Seed;
             MPSaveManager.LoadGlobalData();
             Shared.HostAServer(config.Ports);
-
             base.Initialize();
         }
 
@@ -144,7 +143,7 @@ namespace SkyCoop
                 MPSaveManager.SaveGlobalData();
             }
 
-            CustomConsole.Updata();
+            CustomConsole.Updata(gameTime);
 
 
             base.Update(gameTime);
@@ -155,7 +154,7 @@ namespace SkyCoop
             GraphicsDevice.Clear(Color.DarkGray);
             _spriteBatch.Begin();
 
-            CustomConsole.Draw(_spriteBatch);
+            CustomConsole.Draw(_spriteBatch, gameTime);
 
             _spriteBatch.End();
 
