@@ -94,7 +94,9 @@ namespace SkyCoop
         {
             Supporters.GetSupportersList(true);
             ResourceIndependent.Init();
-            Shared.HostAServer();
+            DataStr.DedicatedServerData config = Shared.LoadDedicatedServerConfig();
+            MPSaveManager.Seed = config.Seed;
+            Shared.HostAServer(config.Ports);
             base.Initialize();
         }
 
