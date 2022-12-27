@@ -74,6 +74,7 @@ namespace SkyCoop
 
         static float currentTime0 = 0f;
         static float CurrentTime1 = 0f;
+        static float CurrentTime2 = 0f;
         public static SpriteFont font;
         public static Texture2D fontBg;
         public static GameWindow gw;
@@ -103,6 +104,7 @@ namespace SkyCoop
 
             DataStr.DedicatedServerData config = Shared.LoadDedicatedServerConfig();
             MPSaveManager.Seed = config.Seed;
+            MPSaveManager.LoadGlobalData();
             Shared.HostAServer(config.Ports);
 
             base.Initialize();
@@ -124,6 +126,7 @@ namespace SkyCoop
 
             currentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
             CurrentTime1 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            CurrentTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (currentTime0 >= 1f)
             {
@@ -134,6 +137,11 @@ namespace SkyCoop
             {
                 CurrentTime1 -= 5f;
                 Shared.EveryInGameMinute();
+            }
+            if (CurrentTime2 >= (float)DsSavePerioud)
+            {
+                CurrentTime2 -= (float)DsSavePerioud;
+                MPSaveManager.SaveGlobalData();
             }
 
             CustomConsole.Updata();
