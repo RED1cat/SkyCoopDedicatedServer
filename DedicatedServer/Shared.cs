@@ -1078,7 +1078,7 @@ namespace SkyCoop
 
         public static void AddSlicedJsonDataForDrop(DataStr.SlicedJsonData jData)
         {
-            //MelonLogger.Msg(ConsoleColor.Yellow, "Got Dropped Item Slice for hash:"+jData.m_Hash+" DATA: "+jData.m_Str);
+            Log("Got Dropped Item Slice for hash:"+jData.m_Hash+" Is Last "+ jData.m_Last);
             if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
             {
                 string previousString = "";
@@ -1103,7 +1103,7 @@ namespace SkyCoop
                 {
                     MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
                     AddDroppedGear(jData.m_SendTo, jData.m_Hash, finalJsonData, jData.m_GearName, jData.m_Extra);
-                    Log("Finished adding data for:" + jData.m_Hash);
+                    Log("Finished adding data for:" + jData.m_Hash +" total "+Encoding.UTF8.GetBytes(finalJsonData).Length+"bytes");
                 }
             }
         }
