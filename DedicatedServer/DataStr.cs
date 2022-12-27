@@ -332,14 +332,14 @@ namespace SkyCoop
         }
         public class SaveSlotSync
         {
-            public int m_Episode;
-            public int m_SaveSlotType;
-            public int m_Seed;
-            public int m_ExperienceMode;
-            public int m_Location;
-            public string m_FixedSpawnScene;
-            public Vector3 m_FixedSpawnPosition;
-            public string m_CustomExperienceStr;
+            public int m_Episode = 0;
+            public int m_SaveSlotType = 3;
+            public int m_Seed = 0;
+            public int m_ExperienceMode = 2;
+            public int m_Location = 0;
+            public string m_FixedSpawnScene = "";
+            public Vector3 m_FixedSpawnPosition = new Vector3(0,0,0);
+            public string m_CustomExperienceStr = "";
         }
         public class MultiplayerChatMessage
         {

@@ -1831,10 +1831,7 @@ namespace SkyCoop
             }
 #endif
 
-            using (Packet __packet = new Packet((int)ServerPackets.SAVEDATA))
-            {
-                ServerSend.SAVEDATA(_forClient, SaveData);
-            }
+            ServerSend.SAVEDATA(_forClient, SaveData);
         }
         public static void ClientTryingLockDoor(string DoorKey, string KeySeed, string Scene, int Client)
         {
