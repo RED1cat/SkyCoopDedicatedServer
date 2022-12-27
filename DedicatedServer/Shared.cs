@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
-using static AuroraScreenManager;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -1532,8 +1531,6 @@ namespace SkyCoop
 #else
                 ServerSend.REMOVESHELTER(0, shelter, true);
 #endif
-
-
             }
         }
 
