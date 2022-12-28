@@ -2028,5 +2028,20 @@ namespace SkyCoop
                 return new DataStr.DedicatedServerData();
             }
         }
+        public static void FakeDropItem(DataStr.DroppedGearItemDataPacket GearData, bool JustLoad = false)
+        {
+#if(!DEDICATED)
+            if (MyMod.iAmHost && !JustLoad)
+            {
+                MPSaveManager.AddGearVisual(GearData.m_LevelGUID, GearData);
+            }
+            if (GearData.m_LevelGUID == MyMod.level_guid)
+            {
+                MyMod.FakeDropItem(GearData.m_GearID, GearData.m_Position, GearData.m_Rotation, GearData.m_Hash, GearData.m_Extra);
+            }
+#else
+            MPSaveManager.AddGearVisual(GearData.m_LevelGUID, GearData);
+#endif
+        }
     }
 }

@@ -1012,9 +1012,7 @@ namespace GameServer
         public static void DROPITEM(int _fromClient, Packet _packet)
         {
             DataStr.DroppedGearItemDataPacket GearData = _packet.ReadDroppedGearData();
-#if (!DEDICATED)
-            MyMod.FakeDropItem(GearData);
-#endif
+            Shared.FakeDropItem(GearData);
             ServerSend.DROPITEM(_fromClient, GearData, true);
         }
         public static void GOTDROPSLICE(int _fromClient, Packet _packet)

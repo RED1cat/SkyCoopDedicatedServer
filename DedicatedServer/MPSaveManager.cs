@@ -379,9 +379,7 @@ namespace SkyCoop
                     AddGearData(Scene, SearchKey, NewGear);
                     AddGearVisual(Scene, GearVisual);
                     AddBlank(SearchKey, Result, Scene, Blank.m_Dropper);
-#if (!DEDICATED)
-                    MyMod.FakeDropItem(GearVisual, true);
-#endif
+                    Shared.FakeDropItem(GearVisual, true);
                     ServerSend.DROPITEM(0, GearVisual, true);
                     Log("Added " + SearchKey);
                 }else{
