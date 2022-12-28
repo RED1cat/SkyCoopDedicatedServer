@@ -105,6 +105,7 @@ namespace SkyCoop
             DataStr.DedicatedServerData config = Shared.LoadDedicatedServerConfig();
             MPSaveManager.Seed = config.Seed;
             MPSaveManager.LoadGlobalData();
+
             Shared.HostAServer(config.Ports);
             base.Initialize();
         }
