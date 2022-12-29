@@ -105,14 +105,14 @@ namespace DedicatedServer
             if (textBuffer.Count != 0)
             {
                 int index = 0;
+                if (textBuffer.Count > 18)
+                {
+                    textBuffer.RemoveFirst();
+                }
                 foreach (string line in textBuffer)
                 {
                     _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, 23 * index), Color.White);
                     index++;
-                }
-                if(textBuffer.Count > 18)
-                {
-                    textBuffer.RemoveFirst();
                 }
             }
         }
