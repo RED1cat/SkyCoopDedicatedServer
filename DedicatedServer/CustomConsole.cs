@@ -12,8 +12,9 @@ namespace DedicatedServer
 {
     internal class CustomConsole
     {
-        const int lineLimit = 70;
-        const int symbolHeight = 23;
+        const int symbolLimit = 90;
+        const int symbolHeight = 18;
+        const int lineLimit = 25;
         public static MouseState mouseState;
         static bool textBoxHasFocus = false;
         static StringBuilder textBoxDisplayCharacters = new StringBuilder();
@@ -21,15 +22,16 @@ namespace DedicatedServer
         static bool mouseIsClick = false;
         static bool keyBackSpaceIsClick = false;
         static bool keyEnterIsClick = false;
+        static bool cursorBlink = false;
         static float currentTime = 0f;
         public static void AddLine(string line)
         {
-            if(line.Length >= lineLimit)
+            if(line.Length >= symbolLimit)
             {
                 string curLine = "";
                 while(line != "")
                 {
-                    if(curLine.Length <= lineLimit)
+                    if(curLine.Length <= symbolLimit)
                     {
                         curLine += line[0];
                         line = line.Remove(0, 1);
@@ -104,15 +106,24 @@ namespace DedicatedServer
                 currentTime -= 0.2f;
                 if (textBoxHasFocus)
                 {
-                    _spriteBatch.Draw(MyMod.fontBg, new Vector2(0, 464), new Rectangle(0, 0, 10, 2), Color.White);
+                    cursorBlink = !cursorBlink;
                 }
             }
-            _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
+            if(cursorBlink) 
+            {
+                textBoxDisplayCharacters.Append('_');
+                _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
+                textBoxDisplayCharacters.Remove(textBoxDisplayCharacters.Length - 1, 1);
+            }
+            else
+            {
+                _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
+            }
 
             if (textBuffer.Count != 0)
             {
                 int index = 0;
-                if (textBuffer.Count >= 20)
+                if (textBuffer.Count >= lineLimit)
                 {
                     textBuffer.RemoveFirst();
                 }
