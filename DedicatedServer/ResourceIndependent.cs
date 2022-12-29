@@ -12,6 +12,13 @@ namespace SkyCoop
         public static Dictionary<string, string> Templates = new Dictionary<string, string>();
         public static bool IsInit = false;
 
+        public static void Log(string TXT)
+        {
+#if (DEDICATED)
+            Logger.Log(TXT);
+#endif
+        }
+
         public static void Init()
         {
             if (IsInit)
@@ -65,6 +72,8 @@ namespace SkyCoop
                 JSON = OverrideTransform(JSON, pos, rot);
 
                 JSON = JSON.Replace("#KGVAL", Shared.GetBodyHarvestUnits("WILDLIFE_Rabbit").m_Meat.ToString());
+                Log("gear_rabbitcarcass JSON:");
+                Log(JSON);
 
                 return JSON;
             } else
@@ -75,11 +84,11 @@ namespace SkyCoop
         public static string GetSnare(Vector3 pos, Quaternion rot, int State)
         {
             string JSON;
-            if (Templates.TryGetValue("gear_rabbitcarcass", out JSON))
+            if (Templates.TryGetValue("gear_snare_"+ State, out JSON))
             {
                 JSON = OverrideTransform(JSON, pos, rot);
-
-                JSON = JSON.Replace("#KGVAL", Shared.GetBodyHarvestUnits("WILDLIFE_Rabbit").m_Meat.ToString());
+                Log("gear_snare JSON:");
+                Log(JSON);
 
                 return JSON;
             } else

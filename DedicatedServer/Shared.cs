@@ -148,6 +148,8 @@ namespace SkyCoop
                     float ChanceToBreak = 15;
                     if (minutesLeft <= 0) // If snare ready to roll random
                     {
+                        DataStr.DroppedGearItemDataPacket Visual;
+                        LoadedVisual.TryGetValue(curKey, out Visual);
 #if (!DEDICATED)
                         if (dat.m_Extra.m_Variant == 4 || Utils.RollChance(ChanceToCatch))
                         {
@@ -182,21 +184,22 @@ namespace SkyCoop
                             }
                         }
 #else
+                        Vector3 pos = new Vector3(0, 0, 0);
+                        Quaternion rot = new Quaternion(0, 0, 0, 0);
+                        if (Visual != null)
+                        {
+                            pos = Visual.m_Position;
+                            rot = Visual.m_Rotation;
+                        }
+
                         if (dat.m_Extra.m_Variant == 4 || RollChance(ChanceToCatch))
                         {
                             dat.m_Extra.m_Variant = 3; // With Rabbit
                             dat.m_Extra.m_GoalTime = -1; // So it won't reload itself.
 
-                            // TODO: GET Possition AND Rotation From Old Object via dat.m_Json
+                            dat.m_Json = ResourceIndependent.GetSnare(pos, rot, dat.m_Extra.m_Variant);
 
-
-                            //string Pattern = "\r\n^.*[^\"]*.*$\r\n";
-                            //Regex regex = new Regex(Pattern);
-                            //MatchCollection matches = regex.Matches(dat.m_Json);
-
-                            dat.m_Json = ResourceIndependent.GetSnare(new Vector3(0,0,0),new Quaternion(0,0,0,0), dat.m_Extra.m_Variant);
-
-                            RabbitsBuff.Add(new Vector3(0, 0, 0)); // Add request on rabbit on snare position
+                            RabbitsBuff.Add(pos); // Add request on rabbit on snare position
                         } else
                         {
                             if (RollChance(ChanceToBreak))
@@ -204,9 +207,7 @@ namespace SkyCoop
                                 dat.m_Extra.m_Variant = 2; // Broken
                                 dat.m_Extra.m_GoalTime = -1; // So it won't reload itself.
 
-                                // TODO: GET Possition AND Rotation From Old Object via dat.m_Json
-
-                                dat.m_Json = ResourceIndependent.GetSnare(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 0), dat.m_Extra.m_Variant);
+                                dat.m_Json = ResourceIndependent.GetSnare(pos, rot, dat.m_Extra.m_Variant);
                             } else
                             {
                                 // No new visual state, but reseting time player should to wait for.
@@ -219,8 +220,8 @@ namespace SkyCoop
                         newGear.m_Key = curKey;
                         newGear.m_Val = dat;
 
-                        DataStr.DroppedGearItemDataPacket Visual;
-                        if (LoadedVisual.TryGetValue(curKey, out Visual))
+                        
+                        if (Visual != null)
                         {
                             Visual.m_Extra = dat.m_Extra;
                             newGear.m_Val2 = Visual;
@@ -276,15 +277,15 @@ namespace SkyCoop
                         gi.m_CurrentHP = bh.GetCondition() / 100f * gi.m_MaxHP;
 
                         RabbitJson = obj.GetComponent<GearItem>().Serialize();
-                        int hashV3 = Shared.GetVectorHash(v3);
-                        int hashRot = Shared.GetQuaternionHash(rot);
+                        int hashV3 = GetVectorHash(v3);
+                        int hashRot = GetQuaternionHash(rot);
                         int hashLevelKey = Scene.GetHashCode();
                         SearchKey = hashV3 + hashRot + hashLevelKey;
                         UnityEngine.Object.Destroy(obj);
                     }
 #else
-                    int hashV3 = Shared.GetVectorHash(v3);
-                    int hashRot = Shared.GetQuaternionHash(rot);
+                    int hashV3 = GetVectorHash(v3);
+                    int hashRot = GetQuaternionHash(rot);
                     int hashLevelKey = Scene.GetHashCode();
                     SearchKey = hashV3 + hashRot + hashLevelKey;
                     RabbitJson = ResourceIndependent.GetRabbit(v3, rot);
