@@ -51,8 +51,13 @@ namespace DedicatedServer
         {
             if(textBoxDisplayCharacters.Length != 0)
             {
-                Logger.Log("[Console] " + textBoxDisplayCharacters.ToString());
-                Logger.Log("[Console] " + Shared.ExecuteCommand(textBoxDisplayCharacters.ToString()));
+                string lime = textBoxDisplayCharacters.ToString();
+                if (lime.Contains('\r'))
+                {
+                    lime = lime.Replace("\r", "");
+                }
+                Logger.Log("[Console] " + lime);
+                Logger.Log("[Console] " + Shared.ExecuteCommand(lime));
                 textBoxDisplayCharacters.Clear();
             }
         }
