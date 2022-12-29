@@ -114,7 +114,7 @@ namespace SkyCoop
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             gw = Window;
-            font = Content.Load<SpriteFont>("File");
+            font = Content.Load<SpriteFont>("font");
             fontBg = Content.Load<Texture2D>("fontBg");
         }
 

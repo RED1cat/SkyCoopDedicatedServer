@@ -84,7 +84,7 @@ namespace DedicatedServer
                 keyBackSpaceIsClick = false;
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Enter) && keyEnterIsClick == false)
+            if (Keyboard.GetState().IsKeyDown(Keys.Enter) && keyEnterIsClick == false && textBoxHasFocus == true)
             {
                 ReadLine();
                 keyEnterIsClick = true;
