@@ -108,6 +108,8 @@ namespace SkyCoop
                 {
                     JSON = OverrideKey(JSON, KeyName, KeySeed);
                 }
+                Log(GearName + " JSON:");
+                Log(JSON);
 
                 return JSON;
             } else{

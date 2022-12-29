@@ -139,7 +139,7 @@ namespace SkyCoop
             {
                 int curKey = cur.Key;
                 DataStr.SlicedJsonDroppedGear dat = cur.Value;
-                if (dat.m_GearName.Contains("gear_snare") == true && (dat.m_Extra.m_Variant == 1 || dat.m_Extra.m_Variant == 4)) // If is placed snare
+                if (dat.m_GearName.ToLower().Contains("gear_snare") == true && (dat.m_Extra.m_Variant == 1 || dat.m_Extra.m_Variant == 4)) // If is placed snare
                 {
                     int minutesPlaced = MyMod.MinutesFromStartServer - dat.m_Extra.m_DroppedTime;
                     int NeedToBePlaced = 720;
