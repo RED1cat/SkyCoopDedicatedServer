@@ -1115,6 +1115,7 @@ namespace SkyCoop
         }
         public static void SaveGlobalData()
         {
+            Log("Dedicated server saving...");
             Dictionary<string, string> GlobalData = new Dictionary<string, string>();
             GlobalData.Add("furns", JSON.Dump(MyMod.BrokenFurniture));
             GlobalData.Add("pickedgears", JSON.Dump(MyMod.PickedGears));
@@ -1130,6 +1131,7 @@ namespace SkyCoop
             GlobalData.Add("gametime", JSON.Dump(saveProxy2));
             string Jonny = JSON.Dump(GlobalData);
             SaveData("GlobalServerData", Jonny, GetSeed());
+            Log("Save is done! Next save "+MyMod.DsSavePerioud+" seconds later");
         }
         public static string GetDictionaryString(Dictionary<string, string> Dict, string Key)
         {

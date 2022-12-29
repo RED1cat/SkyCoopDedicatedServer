@@ -2119,6 +2119,13 @@ namespace SkyCoop
             } else if (Low.StartsWith("rpc "))
             {
                 string[] Things = CMD.Split(' ');
+
+                if(Things.Length < 2)
+                {
+                    return "Invalid syntax!";
+                }
+
+
                 int Client = int.Parse(Things[1]);
 
                 if(Client < 0)
@@ -2150,6 +2157,10 @@ namespace SkyCoop
                     }
                 }
                 return "There no Client " + Client;
+            }else if(Low == "save")
+            {
+                MPSaveManager.SaveGlobalData();
+                return "Manual saving done!";
             }
 #if (!DEDICATED)
             uConsole.RunCommand(CMD);
