@@ -1957,7 +1957,6 @@ namespace SkyCoop
 #else
             MPSaveManager.LoadNonUnloadables();
             Server.Start(MyMod.MaxPlayers, port);
-            MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
             InitAllPlayers(); // Prepare players objects based on amount of max players
             Log("Server has been runned with InGame time: " + MyMod.OveridedTime + " seed " + MPSaveManager.Seed);     
 #endif
