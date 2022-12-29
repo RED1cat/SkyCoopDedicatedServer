@@ -169,7 +169,7 @@ namespace DedicatedServer
                         commandHistoryIndex = commandLineBuffer.Count - 1;
                     }
                     textBoxDisplayCharacters.Clear();
-                    textBoxDisplayCharacters.AppendLine(commandLineBuffer.ElementAt(commandHistoryIndex));
+                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
                 }
                 keyUpIsClick = true;
             }
@@ -191,7 +191,7 @@ namespace DedicatedServer
                         commandHistoryIndex = 0;
                     }
                     textBoxDisplayCharacters.Clear();
-                    textBoxDisplayCharacters.AppendLine(commandLineBuffer.ElementAt(commandHistoryIndex));
+                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
                 }
                 keyDownIsClick = true;
             }
