@@ -254,6 +254,7 @@ namespace SkyCoop
                     Rabbit.m_GearName = "gear_rabbitcarcass";
                     Rabbit.m_Extra.m_DroppedTime = MyMod.MinutesFromStartServer;
                     Rabbit.m_Extra.m_Dropper = "Snare";
+                    Rabbit.m_Extra.m_GearName = "gear_rabbitcarcass";
                     string RabbitJson = "";
                     int SearchKey = 0;
                     Vector3 v3 = RabbitsBuff[i];
@@ -1956,12 +1957,9 @@ namespace SkyCoop
 #else
             MPSaveManager.LoadNonUnloadables();
             Server.Start(MyMod.MaxPlayers, port);
-            MyMod.iAmHost = true;
-            MyMod.OverridedHourse = 12;
-            MyMod.OverridedMinutes = 30;
             MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
             InitAllPlayers(); // Prepare players objects based on amount of max players
-            Log("Server has been runned with InGame time: " + MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes + " seed " + MPSaveManager.Seed);     
+            Log("Server has been runned with InGame time: " + MyMod.OveridedTime + " seed " + MPSaveManager.Seed);     
 #endif
         }
 
@@ -2093,10 +2091,10 @@ namespace SkyCoop
                     {
                         if (!c.Value.RCON)
                         {
-                            List = List + "\n" + c.Key + ". " + MyMod.playersData[c.Key].m_Name;
+                            List = List + " " + c.Key + ". " + MyMod.playersData[c.Key].m_Name;
                         } else
                         {
-                            List = List + "\n" + c.Key + ". RCON";
+                            List = List + " " + c.Key + ". RCON";
                         }
                     }
                 }
@@ -2124,7 +2122,7 @@ namespace SkyCoop
                 string[] Things = CMD.Split(' ');
                 int Client = int.Parse(Things[1]);
 
-                if(Client > 0)
+                if(Client < 0)
                 {
                     return "Client ID can't be negative";
                 }
