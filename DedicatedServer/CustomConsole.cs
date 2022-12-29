@@ -12,7 +12,8 @@ namespace DedicatedServer
 {
     internal class CustomConsole
     {
-        const int lineLimit = 63;
+        const int lineLimit = 70;
+        const int symbolHeight = 23;
         public static MouseState mouseState;
         static bool textBoxHasFocus = false;
         static StringBuilder textBoxDisplayCharacters = new StringBuilder();
@@ -105,13 +106,13 @@ namespace DedicatedServer
             if (textBuffer.Count != 0)
             {
                 int index = 0;
-                if (textBuffer.Count > 18)
+                if (textBuffer.Count >= 20)
                 {
                     textBuffer.RemoveFirst();
                 }
                 foreach (string line in textBuffer)
                 {
-                    _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, 23 * index), Color.White);
+                    _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), Color.White);
                     index++;
                 }
             }
