@@ -5,6 +5,7 @@ using SkyCoop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,19 +15,37 @@ namespace DedicatedServer
     {
         const int symbolLimit = 90;
         const int symbolHeight = 18;
-        const int lineLimit = 25;
-        public static MouseState mouseState;
+        const int lineLimit = 24;
+        const int lineBufferLimit = 75;
+        const int commandLineBufferLimit = 10;
+        static int consolePosition = 0;
+        static int commandHistoryIndex = 0;
+        static MouseState mouseState;
         static bool textBoxHasFocus = false;
         static StringBuilder textBoxDisplayCharacters = new StringBuilder();
-        static LinkedList<string> textBuffer = new LinkedList<string>();
+        static List<string> lineBuffer = new List<string>();
+        static List<string> commandLineBuffer = new List<string>();
         static bool mouseIsClick = false;
         static bool keyBackSpaceIsClick = false;
         static bool keyEnterIsClick = false;
+        static bool keyPageUpIsClick = false;
+        static bool keyPageDownIsClick = false;
+        static bool keyUpIsClick = false;
+        static bool keyDownIsClick = false;
+        static bool keyCopyIsClicked = false;
+        static bool keyPasteIsClicked = false;
         static bool cursorBlink = false;
         static float currentTime = 0f;
         public static void AddLine(string line)
         {
-            if(line.Length >= symbolLimit)
+            bool needScroll = true;
+            if (lineBuffer.Count >= lineBufferLimit)
+            {
+                lineBuffer.RemoveAt(0);
+                needScroll = false;
+
+            }
+            if (line.Length >= symbolLimit)
             {
                 string curLine = "";
                 while(line != "")
@@ -38,15 +57,22 @@ namespace DedicatedServer
                     }
                     else
                     {
-                        textBuffer.AddLast(curLine);
+                        lineBuffer.Add(curLine);
                         curLine = "";
                     }
                 }
-                textBuffer.AddLast(curLine);
+                lineBuffer.Add(curLine);
             }
             else
             {
-                textBuffer.AddLast(line);
+                lineBuffer.Add(line);
+            }
+            if(needScroll) 
+            {
+                if (lineBuffer.Count + 1 > lineLimit)
+                {
+                    consolePosition++;
+                }
             }
         }
         static void ReadLine()
@@ -60,6 +86,13 @@ namespace DedicatedServer
                 }
                 Logger.Log("[Console] " + lime);
                 Logger.Log("[Console] " + Shared.ExecuteCommand(lime));
+
+                if(commandLineBuffer.Count - 1> commandLineBufferLimit)
+                {
+                    commandLineBuffer.RemoveAt(0);
+                }
+                commandLineBuffer.Add(lime);
+
                 textBoxDisplayCharacters.Clear();
             }
         }
@@ -79,6 +112,7 @@ namespace DedicatedServer
             if (Keyboard.GetState().IsKeyDown(Keys.Back) && keyBackSpaceIsClick == false && textBoxHasFocus == true && textBoxDisplayCharacters.Length > 0)
             {
                 textBoxDisplayCharacters.Remove(textBoxDisplayCharacters.Length - 1, 1);
+
                 keyBackSpaceIsClick = true;
             }
             else if (Keyboard.GetState().IsKeyUp(Keys.Back))
@@ -95,6 +129,98 @@ namespace DedicatedServer
             {
                 keyEnterIsClick = false;
             }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.PageUp) && keyPageUpIsClick == false)
+            {
+                if(consolePosition > 0)
+                {
+                    consolePosition--;
+                }
+                keyPageUpIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.PageUp))
+            {
+                keyPageUpIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.PageDown) && keyPageDownIsClick == false)
+            {
+                if(consolePosition < lineBuffer.Count - lineLimit && lineBuffer.Count + 1 >= lineLimit)
+                {
+                    consolePosition++;
+                }
+                keyPageDownIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.PageDown))
+            {
+                keyPageDownIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Up) && keyUpIsClick == false)
+            {
+                if(commandLineBuffer.Count > 0)
+                {
+                    if (commandHistoryIndex > 0)
+                    {
+                        commandHistoryIndex--;
+                    }
+                    else
+                    {
+                        commandHistoryIndex = commandLineBuffer.Count - 1;
+                    }
+                    textBoxDisplayCharacters.Clear();
+                    textBoxDisplayCharacters.AppendLine(commandLineBuffer.ElementAt(commandHistoryIndex));
+                }
+                keyUpIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Up))
+            {
+                keyUpIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Down) && keyDownIsClick == false)
+            {
+                if(commandLineBuffer.Count > 0)
+                {
+                    if (commandHistoryIndex < commandLineBuffer.Count - 1)
+                    {
+                        commandHistoryIndex++;
+                    }
+                    else
+                    {
+                        commandHistoryIndex = 0;
+                    }
+                    textBoxDisplayCharacters.Clear();
+                    textBoxDisplayCharacters.AppendLine(commandLineBuffer.ElementAt(commandHistoryIndex));
+                }
+                keyDownIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Down))
+            {
+                keyDownIsClick = false;
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.C) && keyCopyIsClicked == false)
+                {
+                    AddLine("Не забуть, что забыл, добавить копирование, потому что нету форм и КЛИПОРТА");
+                    keyCopyIsClicked = true;
+                }
+                else if (Keyboard.GetState().IsKeyUp(Keys.C))
+                {
+                    keyCopyIsClicked = false;
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.V) && keyPasteIsClicked == false)
+                {
+                    AddLine("Не забуть, что забыл, добавить вставку, потому что нету форм и КЛИПОРТА");
+                    keyPasteIsClicked = true;
+                }
+                else if (Keyboard.GetState().IsKeyUp(Keys.V))
+                {
+                    keyPasteIsClicked = false;
+                }
+            }
+
         }
         public static void Draw(SpriteBatch _spriteBatch, GameTime gameTime)
         {
@@ -107,6 +233,7 @@ namespace DedicatedServer
                 if (textBoxHasFocus)
                 {
                     cursorBlink = !cursorBlink;
+                    keyBackSpaceIsClick = false;
                 }
             }
             if(cursorBlink) 
@@ -120,18 +247,31 @@ namespace DedicatedServer
                 _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
             }
 
-            if (textBuffer.Count != 0)
+            int boundery;
+            int start;
+
+            if (lineBuffer.Count < lineLimit)
             {
-                int index = 0;
-                if (textBuffer.Count >= lineLimit)
+                boundery = lineBuffer.Count;
+                start = 0;
+            }
+            else
+            {
+                start = consolePosition;
+                boundery = start+lineLimit;
+
+                if(boundery > lineBuffer.Count)
                 {
-                    textBuffer.RemoveFirst();
+                    boundery = lineBuffer.Count;
                 }
-                foreach (string line in textBuffer)
-                {
-                    _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), Color.White);
-                    index++;
-                }
+            }
+
+            int index = 0;
+            for (int i = start; i < boundery; i++)
+            {
+                string line = lineBuffer.ElementAt(i);
+                _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), Color.White);
+                index++;
             }
         }
         public static void RegisterFocusedButtonForTextInput(System.EventHandler<TextInputEventArgs> method)
