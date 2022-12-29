@@ -2048,7 +2048,11 @@ namespace SkyCoop
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
         {
             string Low = CMD.ToLower();
-            Log("[RCON] Operator Execute: " + CMD);
+            if(_fromClient != -1)
+            {
+                Log("[RCON] Operator Execute: " + CMD);
+            }
+            
             if (Low == "disconnect" || Low == "exit" || Low == "quit")
             {
                 if (_fromClient != -1)
