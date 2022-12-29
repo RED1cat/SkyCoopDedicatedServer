@@ -2044,5 +2044,119 @@ namespace SkyCoop
             MPSaveManager.AddGearVisual(GearData.m_LevelGUID, GearData);
 #endif
         }
+
+        public static string ExecuteCommand(string CMD, int _fromClient = -1)
+        {
+            string Low = CMD.ToLower();
+            Log("[RCON] Operator Execute: " + CMD);
+            if (Low == "disconnect" || Low == "exit" || Low == "quit")
+            {
+                if (_fromClient != -1)
+                {
+                    Server.clients[_fromClient].RCON = false;
+                    ResetDataForSlot(_fromClient);
+                    Log("RCON process disconnect");
+                    Server.clients[_fromClient].udp.Disconnect();
+                }
+                return "";
+            } else if (Low == "trafficdebug" || Low == "traffic" || Low == "trafictrace" || Low == "trafficcheck")
+            {
+                MyMod.DebugTrafficCheck = !MyMod.DebugTrafficCheck;
+                return "DebugTrafficCheck = " + MyMod.DebugTrafficCheck;
+            } else if (Low == "savediag" || Low == "unloaddiag")
+            {
+                MPSaveManager.Diagnostic = !MPSaveManager.Diagnostic;
+                return "MPSaveManager.Diagnostic = " + MPSaveManager.Diagnostic;
+            } else if (Low == "reset" || Low == "restart")
+            {
+                MyMod.RestartPerioud = 0;
+                MyMod.SecondsWithoutSaving = MyMod.DsSavePerioud;
+                return "Server going to restart in 30 seconds!";
+            } else if (Low == "shutdown")
+            {
+#if (DEDICATED)
+                Environment.Exit(0);
+#else
+                Application.Quit();
+#endif
+                return "Server will shutdown";
+            } else if (Low == "players" || Low == "playerslist" || Low == "clients")
+            {
+                string List = "Players:";
+                foreach (var c in Server.clients)
+                {
+                    if (c.Value.IsBusy())
+                    {
+                        if (!c.Value.RCON)
+                        {
+                            List = List + "\n" + c.Key + ". " + MyMod.playersData[c.Key].m_Name;
+                        } else
+                        {
+                            List = List + "\n" + c.Key + ". RCON";
+                        }
+                    }
+                }
+                return List;
+            } else if (Low.StartsWith("say "))
+            {
+                string Message = CMD.Remove(0, 4);
+                DataStr.MultiplayerChatMessage MSG = new DataStr.MultiplayerChatMessage();
+                MSG.m_Type = 0;
+                MSG.m_By = "";
+                MSG.m_Message = "[SERVER] " + Message;
+                SendMessageToChat(MSG, true);
+                return "Message sent to chat";
+            } else if (Low.StartsWith("skip "))
+            {
+                int Skip = int.Parse(CMD.Split(' ')[1]);
+                SkipRTTime(Skip);
+                return "Skipped " + Skip + " hour(s)";
+            } else if (Low == "skip")
+            {
+                SkipRTTime(1);
+                return "Skipped 1 hour";
+            } else if (Low.StartsWith("rpc "))
+            {
+                string[] Things = CMD.Split(' ');
+                int Client = int.Parse(Things[1]);
+
+                if(Client > 0)
+                {
+                    return "Client ID can't be negative";
+                }
+
+                string RPCDATA = "";
+                for (int i = 2; i < Things.Length; i++)
+                {
+                    if (RPCDATA == "")
+                    {
+                        RPCDATA = Things[i];
+                    } else
+                    {
+                        RPCDATA = RPCDATA + " " + Things[i];
+                    }
+                }
+
+                if (Client < MyMod.playersData.Count)
+                {
+                    if (MyMod.playersData[Client] != null)
+                    {
+                        if (Server.clients[Client].IsBusy())
+                        {
+                            ServerSend.RPC(Client, RPCDATA);
+                            return "Sent " + RPCDATA + " to client " + Client;
+                        }
+                    }
+                }
+                return "There no Client " + Client;
+            }
+#if (!DEDICATED)
+            uConsole.RunCommand(CMD);
+            string Responce = uConsoleLog.m_Log[uConsoleLog.m_Log.Count - 1];
+            return Responce;
+#else
+            return "Unknown command";
+#endif
+        }
     }
 }

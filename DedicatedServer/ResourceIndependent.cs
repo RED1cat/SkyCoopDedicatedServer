@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
+using System.Globalization;
 
 namespace SkyCoop
 {
@@ -48,8 +49,8 @@ namespace SkyCoop
 
         public static string OverrideTransform(string JSON, Vector3 pos, Quaternion rot)
         {
-            string Pos = "[" +pos.X + "," + pos.Y + "," + pos.Z + "]";
-            string Rot = "[" + rot.X + "," + rot.Y + "," + rot.Z + "," + rot.W + "]";
+            string Pos = "[" +pos.X.ToString(CultureInfo.InvariantCulture) + "," + pos.Y.ToString(CultureInfo.InvariantCulture) + "," + pos.Z.ToString(CultureInfo.InvariantCulture) + "]";
+            string Rot = "[" + rot.X.ToString(CultureInfo.InvariantCulture) + "," + rot.Y.ToString(CultureInfo.InvariantCulture) + "," + rot.Z.ToString(CultureInfo.InvariantCulture) + "," + rot.W.ToString(CultureInfo.InvariantCulture) + "]";
 
             JSON = JSON.Replace(@"""m_Position"":[]", @"""m_Position"":" + Pos);
             JSON = JSON.Replace(@"""m_Rotation"":[]", @"""m_Rotation"":" + Rot);
@@ -71,7 +72,7 @@ namespace SkyCoop
             {
                 JSON = OverrideTransform(JSON, pos, rot);
 
-                JSON = JSON.Replace("#KGVAL", Shared.GetBodyHarvestUnits("WILDLIFE_Rabbit").m_Meat.ToString());
+                JSON = JSON.Replace("#KGVAL", Shared.GetBodyHarvestUnits("WILDLIFE_Rabbit").m_Meat.ToString(CultureInfo.InvariantCulture));
                 Log("gear_rabbitcarcass JSON:");
                 Log(JSON);
 
