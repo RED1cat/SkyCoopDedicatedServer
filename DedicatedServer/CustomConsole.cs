@@ -52,6 +52,7 @@ namespace DedicatedServer
             if(textBoxDisplayCharacters.Length != 0)
             {
                 Logger.Log("[Console] " + textBoxDisplayCharacters.ToString());
+                Logger.Log("[Console] " + Shared.ExecuteCommand(textBoxDisplayCharacters.ToString()));
                 textBoxDisplayCharacters.Clear();
             }
         }
