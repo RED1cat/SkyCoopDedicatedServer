@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using TextCopy;
 
 namespace DedicatedServer
 {
@@ -203,7 +204,7 @@ namespace DedicatedServer
             {
                 if (Keyboard.GetState().IsKeyDown(Keys.C) && keyCopyIsClicked == false)
                 {
-                    AddLine("Не забуть, что забыл, добавить копирование, потому что нету форм и КЛИПОРТА");
+                    ClipboardService.SetText(textBoxDisplayCharacters.ToString());
                     keyCopyIsClicked = true;
                 }
                 else if (Keyboard.GetState().IsKeyUp(Keys.C))
@@ -212,7 +213,8 @@ namespace DedicatedServer
                 }
                 if (Keyboard.GetState().IsKeyDown(Keys.V) && keyPasteIsClicked == false)
                 {
-                    AddLine("Не забуть, что забыл, добавить вставку, потому что нету форм и КЛИПОРТА");
+                    textBoxDisplayCharacters.Clear();
+                    textBoxDisplayCharacters.Append(ClipboardService.GetText());
                     keyPasteIsClicked = true;
                 }
                 else if (Keyboard.GetState().IsKeyUp(Keys.V))
@@ -258,7 +260,7 @@ namespace DedicatedServer
             else
             {
                 start = consolePosition;
-                boundery = start+lineLimit;
+                boundery = start + lineLimit;
 
                 if(boundery > lineBuffer.Count)
                 {

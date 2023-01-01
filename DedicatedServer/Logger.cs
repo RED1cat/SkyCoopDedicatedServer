@@ -11,13 +11,27 @@ namespace SkyCoop
             string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message + Environment.NewLine;
             if (File.Exists("log.txt"))
             {
-                File.AppendAllText("log.txt", log);
+                try
+                {
+                    File.AppendAllText("log.txt", log);
+                }
+                catch
+                {
+                    CustomConsole.AddLine("Unable to access log.txt");
+                }
                 CustomConsole.AddLine(log);
             }
             else
             {
                 File.Create("log.txt").Close();
-                File.AppendAllText("log.txt", log);
+                try
+                {
+                    File.AppendAllText("log.txt", log);
+                }
+                catch
+                {
+                    CustomConsole.AddLine("Unable to access log.txt");
+                }
                 CustomConsole.AddLine(log);
             }
         }
