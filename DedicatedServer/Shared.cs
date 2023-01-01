@@ -23,6 +23,60 @@ namespace SkyCoop
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static int ExperienceForDS = 2;
         public static int StartingRegionDS = 0;
+        public static int WeatherStage = 4;
+        public static float WeatherProgress = 1;
+        public static float WeatherTimer = 0;
+        public static float WeatherDuration = 0;
+        public static int WeatherSeed = 0;
+
+        public static float GetWeatherDuration(int Stage)
+        {
+            switch (Stage)
+            {
+                case 0: // DenseFog
+                    return NextFloat(0.6f, 1);
+                case 1: // LightSnow
+                    return NextFloat(2, 5);
+                case 2: // HeavySnow
+                    return NextFloat(1, 2.5f);
+                case 3: // PartlyCloudy
+                    return NextFloat(2, 5);
+                case 4: // Clear
+                    return NextFloat(3, 5);
+                case 5: // Cloudy
+                    return NextFloat(1, 3);
+                case 6: // LightFog
+                    return NextFloat(2, 4);
+                case 7: // Blizzard
+                    return NextFloat(1, 4);
+                case 8: // ClearAurora
+                    return NextFloat(5, 9);
+                default:
+                    return NextFloat(1, 7);
+            }
+        }
+
+        public static void NextWeatherSet()
+        {
+            System.Random RNG = new System.Random();
+            WeatherStage = RNG.Next(0, 8);
+            WeatherProgress = 0;
+            WeatherDuration = GetWeatherDuration(WeatherStage);
+            WeatherSeed = Guid.NewGuid().GetHashCode();
+        }
+        public static void WeatherUpdate()
+        {
+            float VAl = 0.016f;
+            WeatherTimer += VAl;
+            WeatherProgress = WeatherTimer * 100 / WeatherDuration;
+
+            if (WeatherProgress >= 1)
+            {
+                NextWeatherSet();
+            }
+            ServerSend.DEDICATEDWEATHER(WeatherStage, WeatherProgress, WeatherSeed, WeatherDuration);
+        }
+        
 
         public static void OnUpdate()
         {
@@ -72,7 +126,7 @@ namespace SkyCoop
                 MyMod.MinutesFromStartServer++;
                 ServerSend.GAMETIME(MyMod.OveridedTime);
                 UpdateTicksOnScenes();
-                // TODO: WEATHER SYNC
+                WeatherUpdate();
             }
         }
 
@@ -1540,6 +1594,11 @@ namespace SkyCoop
         public static float NextFloat(float min, float max)
         {
             System.Random random = new System.Random();
+            double val = (random.NextDouble() * (max - min) + min);
+            return (float)val;
+        }
+        public static float NextFloat(System.Random random, float min, float max)
+        {
             double val = (random.NextDouble() * (max - min) + min);
             return (float)val;
         }

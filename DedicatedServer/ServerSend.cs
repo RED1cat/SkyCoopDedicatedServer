@@ -2269,5 +2269,16 @@ namespace GameServer
                 SendUDPDataToAll(_packet);
             }
         }
+        public static void DEDICATEDWEATHER(int Stage, float StartAtFrac, int Seed, float Duration)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.DEDICATEDWEATHER))
+            {
+                _packet.Write(Stage);
+                _packet.Write(StartAtFrac);
+                _packet.Write(Seed);
+                _packet.Write(Duration);
+                SendUDPDataToAll(_packet);
+            }
+        }
     }
 }

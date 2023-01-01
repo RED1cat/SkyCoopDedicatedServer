@@ -165,6 +165,7 @@ namespace GameServer
         PINGSERVER,
         RESTART,
         READYSENDNEXTSLICEGEAR,
+        DEDICATEDWEATHER,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -319,6 +320,7 @@ namespace GameServer
         PINGSERVER,
         RESTART,
         READYSENDNEXTSLICEGEAR,
+        DEDICATEDWEATHER,
     }
 
     public class Packet : IDisposable
