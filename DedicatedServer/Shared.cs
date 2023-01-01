@@ -64,14 +64,14 @@ namespace SkyCoop
             WeatherDuration = GetWeatherDuration(WeatherStage);
             WeatherSeed = Guid.NewGuid().GetHashCode();
         }
-        public static void WeatherUpdate()
+        public static void WeatherUpdate(int Minutes = 1)
         {
             if (WeatherProgress >= 1)
             {
                 NextWeatherSet();
             }
             float VAl = 0.016f;
-            WeatherTimer += VAl;
+            WeatherTimer += VAl* Minutes;
             WeatherProgress = WeatherTimer / WeatherDuration;
             Log("[DEDICATEDWEATHER] StartAtFrac " + WeatherProgress);
             Log("[DEDICATEDWEATHER] WeatherSeed " + WeatherSeed);
@@ -108,7 +108,7 @@ namespace SkyCoop
             }
         }
 
-        public static void EveryInGameMinute()
+        public static void EveryInGameMinute(int MinutesSkipped = 1)
         {
             MyMod.OverridedMinutes++;
 
@@ -129,7 +129,9 @@ namespace SkyCoop
                 MyMod.MinutesFromStartServer++;
                 ServerSend.GAMETIME(MyMod.OveridedTime);
                 UpdateTicksOnScenes();
-                WeatherUpdate();
+#if (DEDICATED)
+                WeatherUpdate(MinutesSkipped);
+#endif
             }
         }
 
@@ -422,9 +424,9 @@ namespace SkyCoop
             Log("MinutesFromStartServer " + PrevMinutesFromStartServer + " now it " + MyMod.MinutesFromStartServer + " because " + h * 60 + " been added");
 
 #if (!DEDICATED)
-            EveryInGameMinute();
+            EveryInGameMinute(h * 60);
 #else
-           EveryInGameMinute();
+           EveryInGameMinute(h * 60);
 #endif
 
 
@@ -1857,7 +1859,7 @@ namespace SkyCoop
             DataStr.SaveSlotSync SaveData = new DataStr.SaveSlotSync();
             SaveData.m_Episode = 0;
             SaveData.m_SaveSlotType = 3;
-#if(!DEDICATED)
+#if (!DEDICATED)
             SaveData.m_Seed = GameManager.m_SceneTransitionData.m_GameRandomSeed;
             SaveData.m_ExperienceMode = (int)ExperienceModeManager.s_CurrentModeType;
             SaveData.m_Location = (int)RegionManager.GetCurrentRegion();
@@ -1868,7 +1870,7 @@ namespace SkyCoop
             SaveData.m_ExperienceMode = ExperienceForDS;
             SaveData.m_Location = StartingRegionDS;
 #endif
-#if(!DEDICATED)
+#if (!DEDICATED)
             if (ExperienceModeManager.s_CurrentModeType == ExperienceModeType.Custom)
             {
                 SaveData.m_CustomExperienceStr = GameManager.GetExperienceModeManagerComponent().GetCurrentCustomModeString();
@@ -2029,7 +2031,7 @@ namespace SkyCoop
         {
             string Path = "Mods\\server.json";
 
-#if(DEDICATED)
+#if (DEDICATED)
             Path = "server.json";
 #endif
             if (System.IO.File.Exists(Path))
@@ -2090,7 +2092,7 @@ namespace SkyCoop
         }
         public static void FakeDropItem(DataStr.DroppedGearItemDataPacket GearData, bool JustLoad = false)
         {
-#if(!DEDICATED)
+#if (!DEDICATED)
             if (MyMod.iAmHost && !JustLoad)
             {
                 MPSaveManager.AddGearVisual(GearData.m_LevelGUID, GearData);
