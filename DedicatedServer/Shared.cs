@@ -61,6 +61,7 @@ namespace SkyCoop
             System.Random RNG = new System.Random();
             WeatherStage = RNG.Next(0, 8);
             WeatherProgress = 0;
+            WeatherTimer = 0;
             WeatherDuration = GetWeatherDuration(WeatherStage);
             WeatherSeed = Guid.NewGuid().GetHashCode();
         }
