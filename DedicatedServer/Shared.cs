@@ -23,11 +23,11 @@ namespace SkyCoop
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static int ExperienceForDS = 2;
         public static int StartingRegionDS = 0;
-        public static int WeatherStage = 4;
-        public static float WeatherProgress = 1;
-        public static float WeatherTimer = 0;
-        public static float WeatherDuration = 0;
-        public static int WeatherSeed = 0;
+        public static int WeatherStage = 4; // Current weather stage
+        public static float WeatherProgress = 1; // Procent of weather stage completion
+        public static float WeatherTimer = 0; // Hours since weather stage selected
+        public static float WeatherDuration = 0; // Hours until Weather Stage Over
+        public static int WeatherSeed = 0; // Client Weather variation seed
 
         public static float GetWeatherDuration(int Stage)
         {
@@ -66,14 +66,17 @@ namespace SkyCoop
         }
         public static void WeatherUpdate()
         {
-            float VAl = 0.016f;
-            WeatherTimer += VAl;
-            WeatherProgress = WeatherTimer * 100 / WeatherDuration;
-
             if (WeatherProgress >= 1)
             {
                 NextWeatherSet();
             }
+            float VAl = 0.016f;
+            WeatherTimer += VAl;
+            WeatherProgress = WeatherTimer / WeatherDuration;
+            Log("[DEDICATEDWEATHER] StartAtFrac " + WeatherProgress);
+            Log("[DEDICATEDWEATHER] WeatherSeed " + WeatherSeed);
+            Log("[DEDICATEDWEATHER] Duration " + WeatherDuration);
+            Log("[DEDICATEDWEATHER] Stage " + WeatherStage);
             ServerSend.DEDICATEDWEATHER(WeatherStage, WeatherProgress, WeatherSeed, WeatherDuration);
         }
         
