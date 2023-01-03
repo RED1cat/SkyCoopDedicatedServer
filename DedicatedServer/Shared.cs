@@ -39,10 +39,6 @@ namespace SkyCoop
         //because most of WeatherSets contains only one WeatherStage, but every scene
         //has different amout of WeatherSets.
 
-        //TODO:
-        //Dedicated server should be able to:
-        //1. Register Weather for scene by first client request.
-
         public class RegionWeatherControler
         {
             public int m_Region = 0;
@@ -119,6 +115,18 @@ namespace SkyCoop
             Log("New WeatherSet provided by Client " + ClientID);
             RegionWeathers.Add(new RegionWeatherControler(Region, WeatherSetType, Indx, Duration, Durations, Transition));
         }
+        //public static void WeatherUpdate(int Minutes = 1)
+        //{
+        //    float OneMinuteVal = 0.016f;
+        //    foreach (RegionWeatherControler RegionController in RegionWeathers)
+        //    {
+        //        if (!RegionController.m_WaitsForUpdate)
+        //        {
+        //            RegionController.AddTime(OneMinuteVal * Minutes);
+        //            ServerSend.DEDICATEDWEATHER(RegionController.m_Region, RegionController.m_WeatherType, RegionController.m_WeatherSetIndex, RegionController.m_Progress, 0, RegionController.m_Duration, RegionController.m_StageDuration, RegionController.m_TransitionDuration);
+        //        }
+        //    }
+        //}
         public static void WeatherUpdate(int Minutes = 1)
         {
             float OneMinuteVal = 0.016f;
@@ -127,11 +135,21 @@ namespace SkyCoop
                 if (!RegionController.m_WaitsForUpdate)
                 {
                     RegionController.AddTime(OneMinuteVal * Minutes);
+                }
+            }
+        }
+        public static void WeatherUpdateSecond()
+        {
+            float OneMinuteVal = 0.016f;
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
+            {
+                if (!RegionController.m_WaitsForUpdate)
+                {
+                    RegionController.AddTime(OneMinuteVal / 60);
                     ServerSend.DEDICATEDWEATHER(RegionController.m_Region, RegionController.m_WeatherType, RegionController.m_WeatherSetIndex, RegionController.m_Progress, 0, RegionController.m_Duration, RegionController.m_StageDuration, RegionController.m_TransitionDuration);
                 }
             }
         }
-        
 
         public static void OnUpdate()
         {
@@ -156,6 +174,9 @@ namespace SkyCoop
                 List<DataStr.MultiPlayerClientStatus> PlayersListDat = SleepTrackerAndTimeOutAndAnimalControllers();
 #if (!DEDICATED)
                 MyMod.UpdatePlayerStatusMenu(PlayersListDat);
+#endif
+#if (DEDICATED)
+                WeatherUpdateSecond();
 #endif
             }
         }
