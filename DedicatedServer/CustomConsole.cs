@@ -39,12 +39,13 @@ namespace DedicatedServer
         static float currentTime = 0f;
         public static void AddLine(string line)
         {
+            int scrollCount = 0;
             bool needScroll = true;
             if (lineBuffer.Count >= lineBufferLimit)
             {
-                lineBuffer.RemoveAt(0);
+                scrollCount--;
                 needScroll = false;
-
+                lineBuffer.RemoveAt(0);
             }
             if (line.Length >= symbolLimit)
             {
@@ -58,6 +59,7 @@ namespace DedicatedServer
                     }
                     else
                     {
+                        scrollCount++;
                         lineBuffer.Add(curLine);
                         curLine = "";
                     }
@@ -67,12 +69,13 @@ namespace DedicatedServer
             else
             {
                 lineBuffer.Add(line);
+                scrollCount++;
             }
-            if(needScroll) 
+            if(scrollCount > 0 & needScroll) 
             {
                 if (lineBuffer.Count + 1 > lineLimit)
                 {
-                    consolePosition++;
+                    consolePosition += scrollCount;
                 }
             }
         }
