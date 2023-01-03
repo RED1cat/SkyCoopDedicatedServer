@@ -166,6 +166,8 @@ namespace GameServer
         RESTART,
         READYSENDNEXTSLICEGEAR,
         DEDICATEDWEATHER,
+        WEATHERVOLUNTEER,
+        REREGISTERWEATHER,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -321,6 +323,8 @@ namespace GameServer
         RESTART,
         READYSENDNEXTSLICEGEAR,
         DEDICATEDWEATHER,
+        WEATHERVOLUNTEER,
+        REREGISTERWEATHER,
     }
 
     public class Packet : IDisposable

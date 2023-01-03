@@ -330,6 +330,8 @@ namespace GameServer
                 { (int)ClientPackets.PEEPHOLE, ServerHandle.PEEPHOLE},
                 { (int)ClientPackets.KNOCKKNOCK, ServerHandle.KNOCKKNOCK},
                 { (int)ClientPackets.RESTART, ServerHandle.RESTART},
+                { (int)ClientPackets.WEATHERVOLUNTEER, ServerHandle.WEATHERVOLUNTEER},
+                { (int)ClientPackets.REREGISTERWEATHER, ServerHandle.REREGISTERWEATHER},
             };
             Log("Initialized packets.");
         }

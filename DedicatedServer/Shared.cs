@@ -42,7 +42,6 @@ namespace SkyCoop
         //TODO:
         //Dedicated server should be able to:
         //1. Register Weather for scene by first client request.
-        //
 
         public class RegionWeatherControler
         {
@@ -53,6 +52,7 @@ namespace SkyCoop
             public float m_Duration = 0;
             public float m_Progress = 0;
             public bool m_WaitsForUpdate = false;
+            public bool m_SearchingVolunteer = false;
             public List<float> m_StageDuration = new List<float>();
             public List<float> m_TransitionDuration = new List<float>();
 
@@ -86,8 +86,11 @@ namespace SkyCoop
                     if (m_Progress >= 1)
                     {
                         m_WaitsForUpdate = true;
+                        m_SearchingVolunteer = true;
                         m_Progress = 1;
                         m_Time = m_Duration;
+                        Log("WeatherSet is over, searching weather volunteer for Region "+m_Region);
+                        ServerSend.WEATHERVOLUNTEER(m_Region);
                         return;
                     }
                     m_Time += Val;
@@ -98,7 +101,7 @@ namespace SkyCoop
 
         
 
-        public static void RegisterWeatherSetForRegion(int Region, int WeatherSetType, int Indx, float Duration, List<float> Durations, List<float> Transition)
+        public static void RegisterWeatherSetForRegion(int ClientID, int Region, int WeatherSetType, int Indx, float Duration, List<float> Durations, List<float> Transition)
         {
             foreach (RegionWeatherControler RegionController in RegionWeathers)
             {
@@ -106,11 +109,14 @@ namespace SkyCoop
                 {
                     if (RegionController.m_WaitsForUpdate)
                     {
+                        RegionController.m_SearchingVolunteer = false;
                         RegionController.SetNewSet(WeatherSetType, Indx, Duration, Durations, Transition);
+                        Log("New WeatherSet provided by Client "+ ClientID);
                     }
                     return;
                 }
             }
+            Log("New WeatherSet provided by Client " + ClientID);
             RegionWeathers.Add(new RegionWeatherControler(Region, WeatherSetType, Indx, Duration, Durations, Transition));
         }
         public static void WeatherUpdate(int Minutes = 1)

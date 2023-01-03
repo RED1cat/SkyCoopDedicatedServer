@@ -2297,5 +2297,21 @@ namespace GameServer
                 SendUDPDataToAll(_packet, Region);
             }
         }
+        public static void WEATHERVOLUNTEER(int Region)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.WEATHERVOLUNTEER))
+            {
+                _packet.Write(Region);
+                SendUDPDataToAll(_packet, Region);
+            }
+        }
+        public static void REREGISTERWEATHER(int For, int Region)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.REREGISTERWEATHER))
+            {
+                _packet.Write(Region);
+                SendUDPData(For, _packet);
+            }
+        }
     }
 }

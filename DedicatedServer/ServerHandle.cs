@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using SkyCoop;
+using static SkyCoop.Shared;
+using static UnityEngine.UI.Selectable;
 #if (!DEDICATED)
 using MelonLoader;
 using UnityEngine;
@@ -1096,7 +1098,7 @@ namespace GameServer
             int Indx = _packet.ReadInt();
 
             Log("Client "+ _fromClient+" request all drops for scene "+ Scene);
-            Shared.RegisterWeatherSetForRegion(CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
+            RegisterWeatherSetForRegion(_fromClient, CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
             if(MyMod.playersData[_fromClient] != null)
             {
                 MyMod.playersData[_fromClient].m_Levelid = lvl;
@@ -1543,6 +1545,35 @@ namespace GameServer
         public static void RESTART(int _fromClient, Packet _packet)
         {
             Log("Incomming reconnect");
+        }
+        public static void WEATHERVOLUNTEER(int _fromClient, Packet _packet)
+        {
+            int Region = _packet.ReadInt();
+
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
+            {
+                if (RegionController.m_Region == Region)
+                {
+                    if (RegionController.m_WaitsForUpdate && RegionController.m_SearchingVolunteer)
+                    {
+                        RegionController.m_SearchingVolunteer = false;
+                        Log("Client " + _fromClient + " want to be weather voluneer for " + Region);
+                        ServerSend.REREGISTERWEATHER(_fromClient, Region);
+                    }
+                    return;
+                }
+            }
+        }
+        public static void REREGISTERWEATHER(int _fromClient, Packet _packet)
+        {
+            int WeatherType = _packet.ReadInt();
+            float WeatherDuration = _packet.ReadFloat();
+            int CurrentRegion = _packet.ReadInt();
+            List<float> StagesDuration = _packet.ReadFloatList();
+            List<float> StagesTransition = _packet.ReadFloatList();
+            int Indx = _packet.ReadInt();
+            Log("Client " + _fromClient + " sent back weather volunteer data, going to reregister weather for Region " + CurrentRegion);
+            RegisterWeatherSetForRegion(_fromClient, CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
         }
     }
 }
