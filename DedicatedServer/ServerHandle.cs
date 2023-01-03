@@ -1088,11 +1088,20 @@ namespace GameServer
         {
             int lvl = _packet.ReadInt();
             string Scene = _packet.ReadString();
+            int WeatherType = _packet.ReadInt();
+            float WeatherDuration = _packet.ReadFloat();
+            int CurrentRegion = _packet.ReadInt();
+            List<float> StagesDuration = _packet.ReadFloatList();
+            List<float> StagesTransition = _packet.ReadFloatList();
+            int Indx = _packet.ReadInt();
+
             Log("Client "+ _fromClient+" request all drops for scene "+ Scene);
+            Shared.RegisterWeatherSetForRegion(CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
             if(MyMod.playersData[_fromClient] != null)
             {
                 MyMod.playersData[_fromClient].m_Levelid = lvl;
                 MyMod.playersData[_fromClient].m_LevelGuid = Scene;
+                MyMod.playersData[_fromClient].m_LastRegion = CurrentRegion;
             }
             SendAllOpenables(_fromClient, Scene);
             RequestAnimalCorpses(_fromClient, Scene);

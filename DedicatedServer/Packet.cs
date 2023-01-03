@@ -804,6 +804,14 @@ namespace GameServer
                 Write(LIST[i]);
             }
         }
+        public void Write(List<float> LIST)
+        {
+            Write(LIST.Count);
+            for (int i = 0; i < LIST.Count; i++)
+            {
+                Write(LIST[i]);
+            }
+        }
 
         public void Write(DataStr.CustomChallengeData DAT)
         {
@@ -829,6 +837,16 @@ namespace GameServer
             for (int i = 0; i < Count; i++)
             {
                 LIST.Add(ReadInt());
+            }
+            return LIST;
+        }
+        public List<float> ReadFloatList()
+        {
+            List<float> LIST = new List<float>();
+            int Count = ReadInt();
+            for (int i = 0; i < Count; i++)
+            {
+                LIST.Add(ReadFloat());
             }
             return LIST;
         }

@@ -64,6 +64,20 @@ namespace GameServer
                 }
             }
         }
+        public static void SendUDPDataToAll(Packet _packet, int Region)
+        {
+            _packet.WriteLength();
+            for (int i = 1; i < MyMod.playersData.Count; i++)
+            {
+                if (MyMod.playersData[i] != null)
+                {
+                    if (MyMod.playersData[i].m_LastRegion == Region && !Server.clients[i].RCON)
+                    {
+                        Server.clients[i].udp.SendData(_packet);
+                    }
+                }
+            }
+        }
         public static void SendUDPDataToAllButNotSender(Packet _packet, int SenderId)
         {
             _packet.WriteLength();
@@ -2269,15 +2283,18 @@ namespace GameServer
                 SendUDPDataToAll(_packet);
             }
         }
-        public static void DEDICATEDWEATHER(int Stage, float StartAtFrac, int Seed, float Duration)
+        public static void DEDICATEDWEATHER(int Region, int Type, int Indx, float StartAtFrac, int Seed, float Duration, List<float> Durations, List<float> Transitions)
         {
             using (Packet _packet = new Packet((int)ServerPackets.DEDICATEDWEATHER))
             {
-                _packet.Write(Stage);
+                _packet.Write(Type);
+                _packet.Write(Indx);
                 _packet.Write(StartAtFrac);
                 _packet.Write(Seed);
                 _packet.Write(Duration);
-                SendUDPDataToAll(_packet);
+                _packet.Write(Durations);
+                _packet.Write(Transitions);
+                SendUDPDataToAll(_packet, Region);
             }
         }
     }

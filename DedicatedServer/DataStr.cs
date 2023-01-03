@@ -231,6 +231,7 @@ namespace SkyCoop
             public float m_RadioFrequency = 0;
             public Supporters.SupporterBenefits m_SupporterBenefits = new Supporters.SupporterBenefits();
             public bool m_IsLoading = false;
+            public int m_LastRegion = 0;
         }
         public class MultiPlayerClientStatus //: MelonMod
         {

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
+using static UnityEngine.UI.Selectable;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -23,62 +24,107 @@ namespace SkyCoop
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static int ExperienceForDS = 2;
         public static int StartingRegionDS = 0;
-        public static int WeatherStage = 4; // Current weather stage
-        public static float WeatherProgress = 1; // Procent of weather stage completion
-        public static float WeatherTimer = 0; // Hours since weather stage selected
-        public static float WeatherDuration = 0; // Hours until Weather Stage Over
-        public static int WeatherSeed = 0; // Client Weather variation seed
 
-        public static float GetWeatherDuration(int Stage)
+        public static List<RegionWeatherControler> RegionWeathers = new List<RegionWeatherControler>();
+
+        // WeatherSet
+        // Is Pack of WeatherStages. But often, WeatherSet has only one Stage.
+        // WeatherSet utilize WeatherStage's type for categorize.
+        // For example Blizzard is Pack of Stages: LightSnow, HeavySnow, Blizzard, HeavySnow, LightSnow.
+        // But Blizzard *set* still use Blizzard *stage* for categorize. That means, to start blizzard set
+        // You need to start set with index 7, that math *stage* blizzard index, damn that so dumb and confusing.
+        // Thanksfully we have debug_weather command that handly disply how that all working in runtime.
+
+        //WeatherStage
+        //Is setting for weather behavior. Almost always it used as WeatherSet itself,
+        //because most of WeatherSets contains only one WeatherStage, but every scene
+        //has different amout of WeatherSets.
+
+        //TODO:
+        //Dedicated server should be able to:
+        //1. Register Weather for scene by first client request.
+        //
+
+        public class RegionWeatherControler
         {
-            switch (Stage)
+            public int m_Region = 0;
+            public int m_WeatherType = 0;
+            public int m_WeatherSetIndex = 0;
+            public float m_Time = 0;
+            public float m_Duration = 0;
+            public float m_Progress = 0;
+            public bool m_WaitsForUpdate = false;
+            public List<float> m_StageDuration = new List<float>();
+            public List<float> m_TransitionDuration = new List<float>();
+
+            public RegionWeatherControler(int Region ,int Type, int Indx, float Duration, List<float> Durations, List<float> Transition)
             {
-                case 0: // DenseFog
-                    return NextFloat(0.6f, 1);
-                case 1: // LightSnow
-                    return NextFloat(2, 5);
-                case 2: // HeavySnow
-                    return NextFloat(1, 2.5f);
-                case 3: // PartlyCloudy
-                    return NextFloat(2, 5);
-                case 4: // Clear
-                    return NextFloat(3, 5);
-                case 5: // Cloudy
-                    return NextFloat(1, 3);
-                case 6: // LightFog
-                    return NextFloat(2, 4);
-                case 7: // Blizzard
-                    return NextFloat(1, 4);
-                case 8: // ClearAurora
-                    return NextFloat(5, 9);
-                default:
-                    return NextFloat(1, 7);
+                m_Region = Region;
+
+                m_WeatherSetIndex = Indx;
+                m_Duration = Duration;
+                m_WeatherType = Type;
+                m_StageDuration = Durations;
+                m_TransitionDuration = Transition;
+            }
+
+            public void SetNewSet(int Type, int Indx, float Duration, List<float> Durations, List<float> Transition)
+            {
+                m_WaitsForUpdate = false;
+                m_Time = 0;
+                m_Progress = 0;
+
+                m_WeatherSetIndex = Indx;
+                m_Duration = Duration;
+                m_WeatherType = Type;
+                m_StageDuration = Durations;
+                m_TransitionDuration = Transition;
+            }
+            public void AddTime(float Val)
+            {
+                if (!m_WaitsForUpdate)
+                {
+                    if (m_Progress >= 1)
+                    {
+                        m_WaitsForUpdate = true;
+                        m_Progress = 1;
+                        m_Time = m_Duration;
+                        return;
+                    }
+                    m_Time += Val;
+                    m_Progress = m_Time / m_Duration;
+                }
             }
         }
 
-        public static void NextWeatherSet()
+        
+
+        public static void RegisterWeatherSetForRegion(int Region, int WeatherSetType, int Indx, float Duration, List<float> Durations, List<float> Transition)
         {
-            System.Random RNG = new System.Random();
-            WeatherStage = RNG.Next(0, 8);
-            WeatherProgress = 0;
-            WeatherTimer = 0;
-            WeatherDuration = GetWeatherDuration(WeatherStage);
-            WeatherSeed = Guid.NewGuid().GetHashCode();
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
+            {
+                if(RegionController.m_Region == Region)
+                {
+                    if (RegionController.m_WaitsForUpdate)
+                    {
+                        RegionController.SetNewSet(WeatherSetType, Indx, Duration, Durations, Transition);
+                    }
+                    return;
+                }
+            }
+            RegionWeathers.Add(new RegionWeatherControler(Region, WeatherSetType, Indx, Duration, Durations, Transition));
         }
         public static void WeatherUpdate(int Minutes = 1)
         {
-            if (WeatherProgress >= 1)
+            float OneMinuteVal = 0.016f;
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
             {
-                NextWeatherSet();
+                if (!RegionController.m_WaitsForUpdate)
+                {
+                    RegionController.AddTime(OneMinuteVal * Minutes);
+                    ServerSend.DEDICATEDWEATHER(RegionController.m_Region, RegionController.m_WeatherType, RegionController.m_WeatherSetIndex, RegionController.m_Progress, 0, RegionController.m_Duration, RegionController.m_StageDuration, RegionController.m_TransitionDuration);
+                }
             }
-            float VAl = 0.016f;
-            WeatherTimer += VAl* Minutes;
-            WeatherProgress = WeatherTimer / WeatherDuration;
-            Log("[DEDICATEDWEATHER] StartAtFrac " + WeatherProgress);
-            Log("[DEDICATEDWEATHER] WeatherSeed " + WeatherSeed);
-            Log("[DEDICATEDWEATHER] Duration " + WeatherDuration);
-            Log("[DEDICATEDWEATHER] Stage " + WeatherStage);
-            ServerSend.DEDICATEDWEATHER(WeatherStage, WeatherProgress, WeatherSeed, WeatherDuration);
         }
         
 
