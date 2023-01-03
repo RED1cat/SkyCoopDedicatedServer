@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using SkyCoop;
 using static SkyCoop.Shared;
-using static UnityEngine.UI.Selectable;
 #if (!DEDICATED)
 using MelonLoader;
 using UnityEngine;
