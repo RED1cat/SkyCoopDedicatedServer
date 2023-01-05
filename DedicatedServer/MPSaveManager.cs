@@ -1191,9 +1191,13 @@ namespace SkyCoop
         {
             if (Decompress)
             {
-                Json = MyMod.DecompressString(Json);
+                Json = Shared.DecompressString(Json);
             }
             Json = Json.Replace("SkyCoop.MyMod", "SkyCoop.DataStr");
+            if (Decompress)
+            {
+                Json = Shared.CompressString(Json);
+            }
 
             return Json;
         }
