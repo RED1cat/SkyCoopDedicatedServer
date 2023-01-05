@@ -5,9 +5,7 @@ using SkyCoop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using TextCopy;
 
 namespace DedicatedServer
@@ -24,7 +22,7 @@ namespace DedicatedServer
         static MouseState mouseState;
         static bool textBoxHasFocus = false;
         static StringBuilder textBoxDisplayCharacters = new StringBuilder();
-        static List<string> lineBuffer = new List<string>();
+        static List<Line> lineBuffer = new List<Line>();
         static List<string> commandLineBuffer = new List<string>();
         static bool mouseIsClick = false;
         static bool keyBackSpaceIsClick = false;
@@ -37,46 +35,65 @@ namespace DedicatedServer
         static bool keyPasteIsClicked = false;
         static bool cursorBlink = false;
         static float currentTime = 0f;
-        public static void AddLine(string line)
+        
+        public static void AddLine(string line, Color color)
         {
-            int scrollCount = 0;
-            bool needScroll = true;
-            if (lineBuffer.Count >= lineBufferLimit)
+
+            if(lineBuffer.Count >= lineBufferLimit)
             {
-                scrollCount--;
-                needScroll = false;
                 lineBuffer.RemoveAt(0);
+                if(line.Length > symbolLimit )
+                {
+                    consolePosition -= line.Length / symbolLimit;
+                }
+                else
+                {
+                    consolePosition--;
+                }
             }
-            if (line.Length >= symbolLimit)
+
+            if (line.Length > symbolLimit)
             {
                 string curLine = "";
-                while(line != "")
+                foreach (char item in line)
                 {
-                    if(curLine.Length <= symbolLimit)
+                    if (curLine.Length == symbolLimit)
                     {
-                        curLine += line[0];
-                        line = line.Remove(0, 1);
+                        Line lineToAdd1 = new Line();
+                        lineToAdd1.color = color;
+                        lineToAdd1.line = curLine;
+                        if (lineBuffer.Count >= lineLimit)
+                        {
+                            consolePosition++;
+                        }
+                        lineBuffer.Add(lineToAdd1);
+                        curLine = "";
+                        
                     }
                     else
                     {
-                        scrollCount++;
-                        lineBuffer.Add(curLine);
-                        curLine = "";
+                        curLine += item;
                     }
                 }
-                lineBuffer.Add(curLine);
+                Line lineToAdd2 = new Line();
+                lineToAdd2.line = curLine;
+                lineToAdd2.color = color;
+                if (lineBuffer.Count >= lineLimit)
+                {
+                    consolePosition++;
+                }
+                lineBuffer.Add(lineToAdd2);
             }
             else
             {
-                lineBuffer.Add(line);
-                scrollCount++;
-            }
-            if(scrollCount > 0 & needScroll) 
-            {
-                if (lineBuffer.Count + 1 > lineLimit)
+                Line lineToAdd3 = new Line();
+                lineToAdd3.line = line;
+                lineToAdd3.color = color;
+                if (lineBuffer.Count >= lineLimit)
                 {
-                    consolePosition += scrollCount;
+                    consolePosition++;
                 }
+                lineBuffer.Add(lineToAdd3);
             }
         }
         static void ReadLine()
@@ -88,8 +105,8 @@ namespace DedicatedServer
                 {
                     lime = lime.Replace("\r", "");
                 }
-                Logger.Log("[Console] " + lime);
-                Logger.Log("[Console] " + Shared.ExecuteCommand(lime));
+                Logger.Log("[Console] " + lime, Logger.LoggerColor.Yellow);
+                Logger.Log("[Console] " + Shared.ExecuteCommand(lime), Logger.LoggerColor.Yellow);
 
                 if(commandLineBuffer.Count - 1> commandLineBufferLimit)
                 {
@@ -274,8 +291,9 @@ namespace DedicatedServer
             int index = 0;
             for (int i = start; i < boundery; i++)
             {
-                string line = lineBuffer.ElementAt(i);
-                _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), Color.White);
+                string line = lineBuffer.ElementAt(i).line;
+                Color color = lineBuffer.ElementAt(i).color;
+                _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), color);
                 index++;
             }
         }
@@ -306,6 +324,7 @@ namespace DedicatedServer
             }
         }
         
+
     }
 
 }
