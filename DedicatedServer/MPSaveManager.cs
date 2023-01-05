@@ -1013,7 +1013,23 @@ namespace SkyCoop
             string LoadedContent = LoadData(Key, SaveSeed);
             if (LoadedContent != "")
             {
-                return JSON.Load(LoadedContent).Make<Dictionary<int, DataStr.SlicedJsonDroppedGear>>();
+                Dictionary<int, DataStr.SlicedJsonDroppedGear> TempDict;
+                TempDict = JSON.Load(LoadedContent).Make<Dictionary<int, DataStr.SlicedJsonDroppedGear>>();
+                Dictionary<int, DataStr.SlicedJsonDroppedGear> Reconstructed = new Dictionary<int, SlicedJsonDroppedGear>();
+
+                foreach (var item in TempDict)
+                {
+                    if (item.Value.m_GearName != "" && item.Value.m_Extra.m_GearName == "")
+                    {
+                        item.Value.m_Extra.m_GearName = item.Value.m_GearName;
+                    }else if(item.Value.m_GearName == "" && item.Value.m_Extra.m_GearName != "")
+                    {
+                        item.Value.m_GearName = item.Value.m_Extra.m_GearName;
+                    }
+                    Reconstructed.Add(item.Key, item.Value);
+                }
+
+                return Reconstructed;
             }
             return null;
         }
