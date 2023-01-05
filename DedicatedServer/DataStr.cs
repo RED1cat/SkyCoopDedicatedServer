@@ -638,6 +638,7 @@ namespace SkyCoop
             public float LowMax = 0f;
             public int CoolingHours = 0;
             public int WarmingHours = 0;
+            public int PreviousStage = 10;
         }
     }
 }

@@ -1479,6 +1479,7 @@ namespace GameServer
             Write(obj.LowMax);
             Write(obj.CoolingHours);
             Write(obj.WarmingHours);
+            Write(obj.PreviousStage);
         }
         public WeatherVolunteerData ReadWeatherVolunteerData()
         {
@@ -1495,6 +1496,7 @@ namespace GameServer
             obj.LowMax = ReadFloat();
             obj.CoolingHours = ReadInt();
             obj.WarmingHours = ReadInt();
+            obj.PreviousStage = ReadInt();
 
             return obj;
         }

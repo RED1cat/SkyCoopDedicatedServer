@@ -13,10 +13,10 @@ namespace SkyCoop
         public static Dictionary<string, string> Templates = new Dictionary<string, string>();
         public static bool IsInit = false;
 
-        public static void Log(string TXT)
+        public static void Log(string TXT, Shared.LoggerColor Color = Shared.LoggerColor.White)
         {
 #if (DEDICATED)
-            Logger.Log(TXT);
+            Logger.Log(TXT, Color);
 #endif
         }
 

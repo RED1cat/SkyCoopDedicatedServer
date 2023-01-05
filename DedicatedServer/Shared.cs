@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
-using Harmony;
 using static SkyCoop.DataStr;
 #if (!DEDICATED)
 using UnityEngine;
@@ -78,6 +77,7 @@ namespace SkyCoop
             public float m_LowTemp = 0;
             public bool m_CanUpdateLowTemp = false;
             public bool m_CanUpdateHighTemp = false;
+            public int m_PreviousStage = 10;
 
             public void RecalculateTemperture()
             {
@@ -123,6 +123,7 @@ namespace SkyCoop
                 m_TempLowhMax = Data.LowMax;
                 m_CoolingHours = Data.CoolingHours;
                 m_WarmingHours = Data.WarmingHours;
+                m_PreviousStage = Data.PreviousStage;
                 RecalculateTemperture();
             }
 
@@ -144,6 +145,7 @@ namespace SkyCoop
                 m_TempLowhMax = Data.LowMax;
                 m_CoolingHours = Data.CoolingHours;
                 m_WarmingHours = Data.WarmingHours;
+                m_PreviousStage = Data.PreviousStage;
                 RecalculateTemperture();
             }
             public void AddTime(float Val)
@@ -362,7 +364,8 @@ namespace SkyCoop
                             RegionController.m_TransitionDuration, 
                             RegionController.m_WeatherTimeOfDayCount, 
                             RegionController.m_HighTemp, 
-                            RegionController.m_LowTemp);
+                            RegionController.m_LowTemp,
+                            RegionController.m_PreviousStage);
                     }
 #endif
 
@@ -376,7 +379,8 @@ namespace SkyCoop
                         RegionController.m_TransitionDuration,
                         RegionController.m_WeatherTimeOfDayCount,
                         RegionController.m_HighTemp,
-                        RegionController.m_LowTemp);
+                        RegionController.m_LowTemp,
+                        RegionController.m_PreviousStage);
                 }
             }
         }

@@ -25,7 +25,7 @@ namespace SkyCoop
         public static void Log(string LOG)
         {
 #if (DEDICATED)
-            Logger.Log("[MPSaveManager] " +LOG, ConsoleColor.Blue);
+            Logger.Log("[MPSaveManager] " +LOG, Shared.LoggerColor.Blue);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
             #endif
@@ -33,7 +33,7 @@ namespace SkyCoop
         public static void Error(string LOG)
         {
 #if (DEDICATED)
-            Logger.Log("[MPSaveManager] " +LOG, ConsoleColor.Red);
+            Logger.Log("[MPSaveManager] " +LOG, Shared.LoggerColor.Red);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Red, "[MPSaveManager] " + LOG);
             #endif
