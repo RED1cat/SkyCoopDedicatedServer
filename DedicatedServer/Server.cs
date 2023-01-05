@@ -21,12 +21,12 @@ namespace GameServer
         public static bool UsingSteamWorks = false;
         public static UdpClient udpListener;
 
-        public static void Log(string TXT)
+        public static void Log(string TXT, Shared.LoggerColor Color = Shared.LoggerColor.White)
         {
 #if (!DEDICATED)
-            MelonLogger.Msg(TXT);
+            MelonLogger.Msg(MyMod.ConvertLoggerColor(Color),TXT);
 #else
-            Logger.Log(TXT);
+            Logger.Log(TXT, Color);
 #endif
         }
 

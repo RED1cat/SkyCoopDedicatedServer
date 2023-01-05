@@ -2283,7 +2283,7 @@ namespace GameServer
                 SendUDPDataToAll(_packet);
             }
         }
-        public static void DEDICATEDWEATHER(int Region, int Type, int Indx, float StartAtFrac, int Seed, float Duration, List<float> Durations, List<float> Transitions)
+        public static void DEDICATEDWEATHER(int Region, int Type, int Indx, float StartAtFrac, int Seed, float Duration, List<float> Durations, List<float> Transitions, int TOD, float High, float Low)
         {
             using (Packet _packet = new Packet((int)ServerPackets.DEDICATEDWEATHER))
             {
@@ -2294,6 +2294,9 @@ namespace GameServer
                 _packet.Write(Duration);
                 _packet.Write(Durations);
                 _packet.Write(Transitions);
+                _packet.Write(TOD);
+                _packet.Write(High);
+                _packet.Write(Low);
                 SendUDPDataToAll(_packet, Region);
             }
         }

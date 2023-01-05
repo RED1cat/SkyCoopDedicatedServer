@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using SkyCoop;
+using static SkyCoop.DataStr;
 #if (DEDICATED)
 using System.Numerics;
 #else
@@ -333,7 +334,7 @@ namespace GameServer
         private byte[] readableBuffer;
         private int readPos;
 
-        public static void Log(string TXT)
+        public static void Log(string TXT, Shared.LoggerColor Color = Shared.LoggerColor.White)
         {
 #if (!DEDICATED)
             MelonLogger.Msg(TXT);
@@ -1460,6 +1461,40 @@ namespace GameServer
             obj.m_BrightNick = ReadBool();
             obj.m_Flairs = ReadIntList();
 
+
+            return obj;
+        }
+
+        public void Write(WeatherVolunteerData obj)
+        {
+            Write(obj.WeatherType);
+            Write(obj.WeatherDuration);
+            Write(obj.CurrentRegion);
+            Write(obj.StageDuration);
+            Write(obj.StageTransition);
+            Write(obj.SetIndex);
+            Write(obj.HighMin);
+            Write(obj.HighMax);
+            Write(obj.LowMin);
+            Write(obj.LowMax);
+            Write(obj.CoolingHours);
+            Write(obj.WarmingHours);
+        }
+        public WeatherVolunteerData ReadWeatherVolunteerData()
+        {
+            WeatherVolunteerData obj = new WeatherVolunteerData();
+            obj.WeatherType = ReadInt();
+            obj.WeatherDuration = ReadFloat();
+            obj.CurrentRegion = ReadInt();
+            obj.StageDuration = ReadFloatList();
+            obj.StageTransition = ReadFloatList();
+            obj.SetIndex = ReadInt();
+            obj.HighMin = ReadFloat();
+            obj.HighMax = ReadFloat();
+            obj.LowMin = ReadFloat();
+            obj.LowMax = ReadFloat();
+            obj.CoolingHours = ReadInt();
+            obj.WarmingHours = ReadInt();
 
             return obj;
         }

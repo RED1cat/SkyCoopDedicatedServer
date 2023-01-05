@@ -614,6 +614,30 @@ namespace SkyCoop
             public int SavingPeriod = 60;
             public int RestartPerioud = 10800;
         }
-
+        public enum TimeOfDayStatus
+        {
+            NightEndToDawn,
+            DawnToMorning,
+            MorningToMidday,
+            MiddayToAfternoon,
+            AfternoonToDusk,
+            DuskToNightStart,
+            NightStartToNightEnd,
+        }
+        public class WeatherVolunteerData
+        {
+            public int WeatherType = 0;
+            public float WeatherDuration = 1f;
+            public int CurrentRegion = 0;
+            public List<float> StageDuration = new List<float>();
+            public List<float> StageTransition = new List<float>();
+            public int SetIndex = 0;
+            public float HighMin = 0f;
+            public float HighMax = 0f;
+            public  float LowMin = 0f;
+            public float LowMax = 0f;
+            public int CoolingHours = 0;
+            public int WarmingHours = 0;
+        }
     }
 }

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
+using Harmony;
+using static SkyCoop.DataStr;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -19,12 +21,24 @@ namespace SkyCoop
     public class Shared
     {
         public static int SecondsBeforeUnload = 0;
-        public static Dictionary<string, DataStr.AnimalKilled> AnimalsKilled = new Dictionary<string, DataStr.AnimalKilled>();
-        public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static int ExperienceForDS = 2;
         public static int StartingRegionDS = 0;
-
+        public static Dictionary<string, DataStr.AnimalKilled> AnimalsKilled = new Dictionary<string, DataStr.AnimalKilled>();
+        public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static List<RegionWeatherControler> RegionWeathers = new List<RegionWeatherControler>();
+        public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
+        public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
+
+        public enum LoggerColor
+        {
+            Red,
+            Green,
+            Blue,
+            Yellow,
+            Magenta,
+            White,
+        }
+
 
         // WeatherSet
         // Is Pack of WeatherStages. But often, WeatherSet has only one Stage.
@@ -51,29 +65,86 @@ namespace SkyCoop
             public bool m_SearchingVolunteer = false;
             public List<float> m_StageDuration = new List<float>();
             public List<float> m_TransitionDuration = new List<float>();
+            public int m_WeatherSeed = Guid.NewGuid().GetHashCode();
+            public int m_WeatherTimeOfDayCount = 0;
+            public TimeOfDayStatus m_PreviousTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
+            public int m_CoolingHours = 0;
+            public int m_WarmingHours = 0;
+            public float m_TempHighMin = 0;
+            public float m_TempHighMax = 0;
+            public float m_TempLowMin = 0;
+            public float m_TempLowhMax = 0;
+            public float m_HighTemp = 0;
+            public float m_LowTemp = 0;
+            public bool m_CanUpdateLowTemp = false;
+            public bool m_CanUpdateHighTemp = false;
 
-            public RegionWeatherControler(int Region ,int Type, int Indx, float Duration, List<float> Durations, List<float> Transition)
+            public void RecalculateTemperture()
             {
-                m_Region = Region;
-
-                m_WeatherSetIndex = Indx;
-                m_Duration = Duration;
-                m_WeatherType = Type;
-                m_StageDuration = Durations;
-                m_TransitionDuration = Transition;
+                m_HighTemp = NextFloat(m_TempHighMin, m_TempHighMax);
+                m_LowTemp = NextFloat(m_TempLowMin, m_TempLowhMax);
+            }
+            public void MayRecalculate()
+            {
+                int hour = MyMod.OverridedHourse;
+                if (hour >= m_WarmingHours && hour < m_CoolingHours)
+                {
+                    if (m_CanUpdateHighTemp)
+                    {
+                        m_HighTemp = NextFloat(m_TempHighMin, m_TempHighMax);
+                        Log("High Temperture Updated For Region "+m_Region, LoggerColor.Blue);
+                        m_CanUpdateHighTemp = false;
+                    }
+                    m_CanUpdateLowTemp = true;
+                } else
+                {
+                    if (m_CanUpdateLowTemp)
+                    {
+                        m_LowTemp = NextFloat(m_TempLowMin, m_TempLowhMax);
+                        Log("Low Temperture Updated For Region " + m_Region, LoggerColor.Blue);
+                        m_CanUpdateLowTemp = false;
+                    }
+                    m_CanUpdateHighTemp = true;
+                }
             }
 
-            public void SetNewSet(int Type, int Indx, float Duration, List<float> Durations, List<float> Transition)
+            public RegionWeatherControler(WeatherVolunteerData Data)
+            {
+                m_Region = Data.CurrentRegion;
+
+                m_WeatherSetIndex = Data.SetIndex;
+                m_Duration = Data.WeatherDuration;
+                m_WeatherType = Data.WeatherType;
+                m_StageDuration = Data.StageDuration;
+                m_TransitionDuration = Data.StageTransition;
+                m_TempHighMin = Data.HighMin;
+                m_TempHighMax = Data.HighMax;
+                m_TempLowMin = Data.LowMin;
+                m_TempLowhMax = Data.LowMax;
+                m_CoolingHours = Data.CoolingHours;
+                m_WarmingHours = Data.WarmingHours;
+                RecalculateTemperture();
+            }
+
+            public void SetNewSet(WeatherVolunteerData Data)
             {
                 m_WaitsForUpdate = false;
                 m_Time = 0;
                 m_Progress = 0;
+                m_WeatherTimeOfDayCount = 0;
 
-                m_WeatherSetIndex = Indx;
-                m_Duration = Duration;
-                m_WeatherType = Type;
-                m_StageDuration = Durations;
-                m_TransitionDuration = Transition;
+                m_WeatherSetIndex = Data.SetIndex;
+                m_Duration = Data.WeatherDuration;
+                m_WeatherType = Data.WeatherType;
+                m_StageDuration = Data.StageDuration;
+                m_TransitionDuration = Data.StageTransition;
+                m_TempHighMin = Data.HighMin;
+                m_TempHighMax = Data.HighMax;
+                m_TempLowMin = Data.LowMin;
+                m_TempLowhMax = Data.LowMax;
+                m_CoolingHours = Data.CoolingHours;
+                m_WarmingHours = Data.WarmingHours;
+                RecalculateTemperture();
             }
             public void AddTime(float Val)
             {
@@ -85,48 +156,178 @@ namespace SkyCoop
                         m_SearchingVolunteer = true;
                         m_Progress = 1;
                         m_Time = m_Duration;
+                        
+
+#if (!DEDICATED)
+                        if (MyMod.iAmHost)
+                        {
+                            if (m_Region == MyMod.GetCurrentRegionIfPossible())
+                            {
+                                Log("WeatherSet is over, I am on same region, so going to provide weatherset for Region " + m_Region, LoggerColor.Blue);
+                                RegisterWeatherSetForRegion(0, Pathes.GetWeatherVolunteerData(true));
+                            } else
+                            {
+                                Log("WeatherSet is over, searching weather volunteer for Region " + m_Region, LoggerColor.Blue);
+                                ServerSend.WEATHERVOLUNTEER(m_Region);
+                            }
+                        }
+#else
                         Log("WeatherSet is over, searching weather volunteer for Region "+m_Region);
                         ServerSend.WEATHERVOLUNTEER(m_Region);
+#endif
+
                         return;
                     }
                     m_Time += Val;
                     m_Progress = m_Time / m_Duration;
                 }
             }
+            public void AddTOD(int Ticks, TimeOfDayStatus TODStatus)
+            {
+                if(m_PreviousTimeOfDayStatus != TODStatus)
+                {
+                    m_PreviousTimeOfDayStatus = TODStatus;
+                    m_WeatherTimeOfDayCount = 0;
+                }
+                m_WeatherTimeOfDayCount += Ticks;
+            }
         }
 
-        
+        public static void NewDayBegins()
+        {
+            //TODO
+        }
+        public static void NewTimeOfDayState()
+        {
+            Log("New Time Of Day Status: " + CurrentTimeOfDayStatus.ToString(), LoggerColor.Blue);
+        }
 
-        public static void RegisterWeatherSetForRegion(int ClientID, int Region, int WeatherSetType, int Indx, float Duration, List<float> Durations, List<float> Transition)
+        public static void UpdateTimeOfDayState()
+        {
+            float Master = 1;
+            float HourOffset = MyMod.OverridedHourse - Master;
+
+            if ((double)HourOffset < (double)HoursOffsetTable[0])
+            {
+                if(CurrentTimeOfDayStatus != TimeOfDayStatus.NightStartToNightEnd)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.NightStartToNightEnd;
+                    NewTimeOfDayState();
+                }
+                return;
+            }
+            else if ((double)HourOffset < (double)HoursOffsetTable[1])
+            {
+                if(CurrentTimeOfDayStatus != TimeOfDayStatus.NightEndToDawn)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
+                    NewTimeOfDayState();
+                }
+
+                return;
+            }
+            else if((double)HourOffset < (double)HoursOffsetTable[2])
+            {
+                if(CurrentTimeOfDayStatus != TimeOfDayStatus.DawnToMorning)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.DawnToMorning;
+                    NewTimeOfDayState();
+                }
+                return;
+            }
+            else if((double)HourOffset < (double)HoursOffsetTable[3])
+            {
+                if(CurrentTimeOfDayStatus != TimeOfDayStatus.MorningToMidday)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.MorningToMidday;
+                    NewTimeOfDayState();
+                }
+                return;
+            }  
+            else if((double)HourOffset < (double)HoursOffsetTable[4])
+            {
+                if(CurrentTimeOfDayStatus != TimeOfDayStatus.MiddayToAfternoon)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.MiddayToAfternoon;
+                    NewTimeOfDayState();
+                }
+                return;
+            }
+            else if((double)HourOffset < (double)HoursOffsetTable[5])
+            {
+                if (CurrentTimeOfDayStatus != TimeOfDayStatus.AfternoonToDusk)
+                {
+                    CurrentTimeOfDayStatus = TimeOfDayStatus.AfternoonToDusk;
+                    NewTimeOfDayState();
+                }
+                return;
+            }
+
+            TimeOfDayStatus GoingToBe = (double)HourOffset < (double)HoursOffsetTable[6] ? TimeOfDayStatus.DuskToNightStart : TimeOfDayStatus.NightStartToNightEnd;
+            if(GoingToBe != CurrentTimeOfDayStatus)
+            {
+                CurrentTimeOfDayStatus = GoingToBe;
+                NewTimeOfDayState();
+            }
+        }
+        public static void ForceNextWeatherSet()
         {
             foreach (RegionWeatherControler RegionController in RegionWeathers)
             {
-                if(RegionController.m_Region == Region)
+                if (!RegionController.m_WaitsForUpdate)
+                {
+                    RegionController.m_WaitsForUpdate = true;
+                    RegionController.m_SearchingVolunteer = true;
+                }
+            }
+        }
+        public static void ForceNextWeather()
+        {
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
+            {
+                if (!RegionController.m_WaitsForUpdate)
+                {
+                    if (RegionController.m_StageDuration.Count == 1)
+                    {
+                        RegionController.m_WaitsForUpdate = true;
+                        RegionController.m_SearchingVolunteer = true;
+                    } else{
+
+                        float HoursPased = 0;
+                        
+                        for (int i = 0; i < RegionController.m_StageDuration.Count; i++)
+                        {
+                            HoursPased +=RegionController.m_StageDuration[i];
+
+                            if(HoursPased > RegionController.m_Time)
+                            {
+                                RegionController.m_Time = RegionController.m_StageDuration[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void RegisterWeatherSetForRegion(int ClientID, WeatherVolunteerData Data)
+        {
+            foreach (RegionWeatherControler RegionController in RegionWeathers)
+            {
+                if(RegionController.m_Region == Data.CurrentRegion)
                 {
                     if (RegionController.m_WaitsForUpdate)
                     {
                         RegionController.m_SearchingVolunteer = false;
-                        RegionController.SetNewSet(WeatherSetType, Indx, Duration, Durations, Transition);
-                        Log("New WeatherSet provided by Client "+ ClientID);
+                        RegionController.SetNewSet(Data);
+                        Log("New WeatherSet for Region "+ Data.CurrentRegion + " provided by Client "+ ClientID, LoggerColor.Blue);
                     }
                     return;
                 }
             }
-            Log("New WeatherSet provided by Client " + ClientID);
-            RegionWeathers.Add(new RegionWeatherControler(Region, WeatherSetType, Indx, Duration, Durations, Transition));
+            Log("New WeatherSet for Region "+ Data.CurrentRegion + " provided by Client " + ClientID, LoggerColor.Blue);
+            RegionWeathers.Add(new RegionWeatherControler(Data));
         }
-        //public static void WeatherUpdate(int Minutes = 1)
-        //{
-        //    float OneMinuteVal = 0.016f;
-        //    foreach (RegionWeatherControler RegionController in RegionWeathers)
-        //    {
-        //        if (!RegionController.m_WaitsForUpdate)
-        //        {
-        //            RegionController.AddTime(OneMinuteVal * Minutes);
-        //            ServerSend.DEDICATEDWEATHER(RegionController.m_Region, RegionController.m_WeatherType, RegionController.m_WeatherSetIndex, RegionController.m_Progress, 0, RegionController.m_Duration, RegionController.m_StageDuration, RegionController.m_TransitionDuration);
-        //        }
-        //    }
-        //}
         public static void WeatherUpdate(int Minutes = 1)
         {
             float OneMinuteVal = 0.016f;
@@ -135,6 +336,7 @@ namespace SkyCoop
                 if (!RegionController.m_WaitsForUpdate)
                 {
                     RegionController.AddTime(OneMinuteVal * Minutes);
+                    RegionController.MayRecalculate();
                 }
             }
         }
@@ -146,7 +348,35 @@ namespace SkyCoop
                 if (!RegionController.m_WaitsForUpdate)
                 {
                     RegionController.AddTime(OneMinuteVal / 60);
-                    ServerSend.DEDICATEDWEATHER(RegionController.m_Region, RegionController.m_WeatherType, RegionController.m_WeatherSetIndex, RegionController.m_Progress, 0, RegionController.m_Duration, RegionController.m_StageDuration, RegionController.m_TransitionDuration);
+                    RegionController.AddTOD(90, CurrentTimeOfDayStatus);
+
+#if (!DEDICATED)
+                    if(RegionController.m_Region == MyMod.GetCurrentRegionIfPossible())
+                    {
+                        ClientHandle.DoWeatherSync(RegionController.m_Progress, 
+                            RegionController.m_WeatherSeed, 
+                            RegionController.m_Duration, 
+                            (WeatherStage)RegionController.m_WeatherType, 
+                            RegionController.m_WeatherSetIndex, 
+                            RegionController.m_StageDuration, 
+                            RegionController.m_TransitionDuration, 
+                            RegionController.m_WeatherTimeOfDayCount, 
+                            RegionController.m_HighTemp, 
+                            RegionController.m_LowTemp);
+                    }
+#endif
+
+                    ServerSend.DEDICATEDWEATHER(RegionController.m_Region, 
+                        RegionController.m_WeatherType, 
+                        RegionController.m_WeatherSetIndex, 
+                        RegionController.m_Progress, 
+                        RegionController.m_WeatherSeed, 
+                        RegionController.m_Duration, 
+                        RegionController.m_StageDuration, 
+                        RegionController.m_TransitionDuration,
+                        RegionController.m_WeatherTimeOfDayCount,
+                        RegionController.m_HighTemp,
+                        RegionController.m_LowTemp);
                 }
             }
         }
@@ -175,9 +405,8 @@ namespace SkyCoop
 #if (!DEDICATED)
                 MyMod.UpdatePlayerStatusMenu(PlayersListDat);
 #endif
-#if (DEDICATED)
                 WeatherUpdateSecond();
-#endif
+
             }
         }
 
@@ -190,10 +419,12 @@ namespace SkyCoop
                 MyMod.OverridedMinutes = 0;
                 MyMod.OverridedHourse = MyMod.OverridedHourse + 1;
                 MyMod.PlayedHoursInOnline = MyMod.PlayedHoursInOnline + 1;
+                UpdateTimeOfDayState();
             }
             if (MyMod.OverridedHourse > 23)
             {
                 MyMod.OverridedHourse = 0;
+                UpdateTimeOfDayState();
             }
 
             MyMod.OveridedTime = MyMod.OverridedHourse + ":" + MyMod.OverridedMinutes;
@@ -202,21 +433,19 @@ namespace SkyCoop
                 MyMod.MinutesFromStartServer++;
                 ServerSend.GAMETIME(MyMod.OveridedTime);
                 UpdateTicksOnScenes();
-#if (DEDICATED)
                 WeatherUpdate(MinutesSkipped);
-#endif
             }
         }
 
 
 
 
-        public static void Log(string TXT)
+        public static void Log(string TXT, LoggerColor Color = LoggerColor.White)
         {
 #if (!DEDICATED)
-            MelonLogger.Msg(TXT);
+            MelonLogger.Msg(MyMod.ConvertLoggerColor(Color), TXT);
 #else
-            Logger.Log(TXT);
+            Logger.Log(TXT, Color);
 #endif
         }
 
@@ -2096,6 +2325,7 @@ namespace SkyCoop
             Server.Start(MyMod.MaxPlayers, port);
             InitAllPlayers(); // Prepare players objects based on amount of max players
             Log("Server has been runned with InGame time: " + MyMod.OveridedTime + " seed " + MPSaveManager.Seed);     
+            UpdateTimeOfDayState();
 #endif
         }
 
@@ -2109,38 +2339,40 @@ namespace SkyCoop
 #endif
             if (System.IO.File.Exists(Path))
             {
-                Log("Reading server.json...");
+                Log("Reading server.json...", LoggerColor.Blue);
                 string readText = System.IO.File.ReadAllText(Path);
                 DataStr.DedicatedServerData ServerData = JSON.Load(readText).Make<DataStr.DedicatedServerData>();
-                Log("Server settings: ");
-                Log("SaveSlot: " + ServerData.SaveSlot);
-                Log("ItemDupes: " + ServerData.ItemDupes);
-                Log("ContainersDupes: " + ServerData.ContainersDupes);
-                Log("SpawnStyle: " + ServerData.SpawnStyle);
-                Log("MaxPlayers: " + ServerData.MaxPlayers);
-                Log("UsingSteam: " + ServerData.UsingSteam);
-                Log("Ports: " + ServerData.Ports);
-                Log("Cheats: " + ServerData.Cheats);
-                Log("SteamServerAccessibility: " + ServerData.SteamServerAccessibility);
-                Log("RCON: (SECURED)");
-                Log("DropUnloadPeriod: " + ServerData.DropUnloadPeriod);
-                Log("SaveScamProtection: " + ServerData.SaveScamProtection);
-                Log("ModValidationCheck: " + ServerData.ModValidationCheck);
-                Log("ExperienceMode: " + ServerData.ExperienceMode);
-                Log("StartRegion: " + ServerData.StartRegion);
+                Log("Server settings: ", LoggerColor.Blue);
+                Log("SaveSlot: " + ServerData.SaveSlot, LoggerColor.Blue);
+                Log("ItemDupes: " + ServerData.ItemDupes, LoggerColor.Blue);
+                Log("ContainersDupes: " + ServerData.ContainersDupes, LoggerColor.Blue);
+                Log("SpawnStyle: " + ServerData.SpawnStyle, LoggerColor.Blue);
+                Log("MaxPlayers: " + ServerData.MaxPlayers, LoggerColor.Blue);
+                Log("UsingSteam: " + ServerData.UsingSteam, LoggerColor.Blue);
+                Log("Ports: " + ServerData.Ports, LoggerColor.Blue);
+                Log("Cheats: " + ServerData.Cheats, LoggerColor.Blue);
+                Log("SteamServerAccessibility: " + ServerData.SteamServerAccessibility, LoggerColor.Blue);
+                Log("RCON: (SECURED)", LoggerColor.Blue);
+                Log("DropUnloadPeriod: " + ServerData.DropUnloadPeriod, LoggerColor.Blue);
+                Log("SaveScamProtection: " + ServerData.SaveScamProtection, LoggerColor.Blue);
+                Log("ModValidationCheck: " + ServerData.ModValidationCheck, LoggerColor.Blue);
+                Log("ExperienceMode: " + ServerData.ExperienceMode, LoggerColor.Blue);
+                Log("StartRegion: " + ServerData.StartRegion, LoggerColor.Blue);
                 ExperienceForDS = ServerData.ExperienceMode;
                 StartingRegionDS = ServerData.StartRegion;
                 if (ServerData.Seed == 0)
                 {
-                    Log("Seed: (Random)");
+                    Log("Seed: (Random)", LoggerColor.Blue);
+                    ServerData.Seed = Guid.NewGuid().GetHashCode();
+
                 } else
                 {
-                    Log("Seed: " + ServerData.Seed);
+                    Log("Seed: " + ServerData.Seed, LoggerColor.Blue);
                 }
-                Log("PVP: " + ServerData.PVP);
-                Log("SavingPeriod: " + ServerData.SavingPeriod);
-                Log("RestartPerioud: " + ServerData.RestartPerioud);
-                Log("No problems with server.json found!");
+                Log("PVP: " + ServerData.PVP, LoggerColor.Blue);
+                Log("SavingPeriod: " + ServerData.SavingPeriod, LoggerColor.Blue);
+                Log("RestartPerioud: " + ServerData.RestartPerioud, LoggerColor.Blue);
+                Log("No problems with server.json found!", LoggerColor.Green);
                 if (ServerData.RCON != null)
                 {
                     MyMod.RCON = ServerData.RCON;
@@ -2184,9 +2416,9 @@ namespace SkyCoop
             string Low = CMD.ToLower();
             if(_fromClient != -1)
             {
-                Log("[RCON] Operator Execute: " + CMD);
+                Log("[RCON] Operator Execute: " + CMD, LoggerColor.Magenta);
             }
-            
+
             if (Low == "disconnect" || Low == "exit" || Low == "quit")
             {
                 if (_fromClient != -1)
@@ -2257,7 +2489,7 @@ namespace SkyCoop
             {
                 string[] Things = CMD.Split(' ');
 
-                if(Things.Length < 2)
+                if (Things.Length < 2)
                 {
                     return "Invalid syntax!";
                 }
@@ -2265,7 +2497,7 @@ namespace SkyCoop
 
                 int Client = int.Parse(Things[1]);
 
-                if(Client < 0)
+                if (Client < 0)
                 {
                     return "Client ID can't be negative";
                 }
@@ -2294,11 +2526,21 @@ namespace SkyCoop
                     }
                 }
                 return "There no Client " + Client;
-            }else if(Low == "save")
+            } else if (Low == "save")
             {
                 MPSaveManager.SaveGlobalData();
                 return "Manual saving done!";
             }
+#if (DEDICATED)
+            else if (Low == "next_weather" || Low == "next weather")
+            {
+                ForceNextWeather();
+            } else if (Low == "next_weatherset" || Low == "next weatherset" || Low == "next weather set")
+            {
+                ForceNextWeatherSet();
+            }
+#endif
+
 #if (!DEDICATED)
             uConsole.RunCommand(CMD);
             string Responce = uConsoleLog.m_Log[uConsoleLog.m_Log.Count - 1];

@@ -34,7 +34,7 @@ namespace GameServer
         public static void Log(string LOG)
         {
 #if (DEDICATED)
-            Logger.Log(LOG);
+            Logger.Log(LOG, Shared.LoggerColor.Blue);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
 #endif

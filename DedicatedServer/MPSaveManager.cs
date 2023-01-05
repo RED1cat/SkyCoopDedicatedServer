@@ -7,6 +7,7 @@ using System.IO;
 using System.Diagnostics;
 using GameServer;
 using static SkyCoop.DataStr;
+using System.Globalization;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -24,7 +25,7 @@ namespace SkyCoop
         public static void Log(string LOG)
         {
 #if (DEDICATED)
-            Logger.Log("[MPSaveManager] " +LOG);
+            Logger.Log("[MPSaveManager] " +LOG, ConsoleColor.Blue);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Blue, "[MPSaveManager] " + LOG);
             #endif
@@ -32,7 +33,7 @@ namespace SkyCoop
         public static void Error(string LOG)
         {
 #if (DEDICATED)
-            Logger.Log("[MPSaveManager] " +LOG);
+            Logger.Log("[MPSaveManager] " +LOG, ConsoleColor.Red);
 #else
             MelonLoader.MelonLogger.Msg(ConsoleColor.Red, "[MPSaveManager] " + LOG);
             #endif
@@ -761,7 +762,7 @@ namespace SkyCoop
         }
 #endif
 
-        public static bool SaveData(string name, string content, int Seed = 0)
+        public static bool SaveData(string name, string content, int Seed = 0, string CustomPath = "")
         {
             if (NoSaveAndLoad)
             {
@@ -774,6 +775,11 @@ namespace SkyCoop
             }
             Log("Attempt to save " + name);
             string pathAndFilename = GetPathForName(name, Seed);
+
+            if (!string.IsNullOrEmpty(CustomPath))
+            {
+                pathAndFilename = CustomPath;
+            }
             string tempFile = pathAndFilename + "_temp";
             if (File.Exists(tempFile))
                 File.Delete(tempFile);
@@ -1165,6 +1171,15 @@ namespace SkyCoop
             MyMod.DeathCreates = JSON.Load(GetDictionaryString(GlobalData, "deathcreates")).Make<List<DeathContainerData>>();
             string[] saveProxy2 = JSON.Load(GetDictionaryString(GlobalData, "gametime")).Make<string[]>();
             MyMod.OveridedTime = saveProxy2[0];
+        }
+        public static void SaveJsonSnapshot(string Alias, string JSON)
+        {
+            CreateFolderIfNotExist(GetPathForName("Snapshots"));
+            CreateFolderIfNotExist(GetPathForName(@"Snapshots\"+ Alias));
+
+            DateTime DT = System.DateTime.Now;
+            string FileName = DT.Hour.ToString() + "_" + DT.Minute.ToString() + "_" + DT.Second.ToString() + "_" + DT.Millisecond.ToString();
+            SaveData(FileName, JSON, 0, GetPathForName(@"Snapshots\" + Alias+@"\"+FileName));
         }
     }
 }

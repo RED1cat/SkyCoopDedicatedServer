@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using SkyCoop;
 using static SkyCoop.Shared;
+using static SkyCoop.DataStr;
 #if (!DEDICATED)
 using MelonLoader;
 using UnityEngine;
@@ -14,12 +15,12 @@ namespace GameServer
 {
     class ServerHandle
     {
-        public static void Log(string TXT)
+        public static void Log(string TXT, Shared.LoggerColor Color = LoggerColor.White)
         {
 #if (!DEDICATED)
-            MelonLogger.Msg(TXT);
+            MelonLogger.Msg(TXT, MyMod.ConvertLoggerColor(Color));
 #else
-            Logger.Log(TXT);
+            Logger.Log(TXT, Color);
 #endif
         }
 
@@ -1089,20 +1090,15 @@ namespace GameServer
         {
             int lvl = _packet.ReadInt();
             string Scene = _packet.ReadString();
-            int WeatherType = _packet.ReadInt();
-            float WeatherDuration = _packet.ReadFloat();
-            int CurrentRegion = _packet.ReadInt();
-            List<float> StagesDuration = _packet.ReadFloatList();
-            List<float> StagesTransition = _packet.ReadFloatList();
-            int Indx = _packet.ReadInt();
+            WeatherVolunteerData Data = _packet.ReadWeatherVolunteerData();
 
             Log("Client "+ _fromClient+" request all drops for scene "+ Scene);
-            RegisterWeatherSetForRegion(_fromClient, CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
+            RegisterWeatherSetForRegion(_fromClient, Data);
             if(MyMod.playersData[_fromClient] != null)
             {
                 MyMod.playersData[_fromClient].m_Levelid = lvl;
                 MyMod.playersData[_fromClient].m_LevelGuid = Scene;
-                MyMod.playersData[_fromClient].m_LastRegion = CurrentRegion;
+                MyMod.playersData[_fromClient].m_LastRegion = Data.CurrentRegion;
             }
             SendAllOpenables(_fromClient, Scene);
             RequestAnimalCorpses(_fromClient, Scene);
@@ -1565,14 +1561,9 @@ namespace GameServer
         }
         public static void REREGISTERWEATHER(int _fromClient, Packet _packet)
         {
-            int WeatherType = _packet.ReadInt();
-            float WeatherDuration = _packet.ReadFloat();
-            int CurrentRegion = _packet.ReadInt();
-            List<float> StagesDuration = _packet.ReadFloatList();
-            List<float> StagesTransition = _packet.ReadFloatList();
-            int Indx = _packet.ReadInt();
-            Log("Client " + _fromClient + " sent back weather volunteer data, going to reregister weather for Region " + CurrentRegion);
-            RegisterWeatherSetForRegion(_fromClient, CurrentRegion, WeatherType, Indx, WeatherDuration, StagesDuration, StagesTransition);
+            WeatherVolunteerData Data = _packet.ReadWeatherVolunteerData();
+            Log("Client " + _fromClient + " sent back weather volunteer data, going to reregister weather for Region " + Data.CurrentRegion);
+            RegisterWeatherSetForRegion(_fromClient, Data);
         }
     }
 }
