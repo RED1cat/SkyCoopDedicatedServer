@@ -684,7 +684,7 @@ namespace SkyCoop
             }
         }
 
-        public static string LoadData(string name, int Seed = 0)
+        public static string LoadData(string name, int Seed = 0, bool Compressed = false)
         {
             if (NoSaveAndLoad)
             {
@@ -696,6 +696,7 @@ namespace SkyCoop
             {
                 watch = Stopwatch.StartNew();
             }
+            string Result = "";
             string fullPath = GetPathForName(name, Seed);
             if (!File.Exists(fullPath))
             {
@@ -705,18 +706,23 @@ namespace SkyCoop
                     Log("LoadData() Took " + watch.ElapsedMilliseconds + "ms");
                 }
                 Log("File " + fullPath+" not exist");
-                return "";
             }else{
                 byte[] FileData = File.ReadAllBytes(fullPath);
-                string Result = UTF8Encoding.UTF8.GetString(FileData);
+                Result = UTF8Encoding.UTF8.GetString(FileData);
                 if(watch != null)
                 {
                     watch.Stop();
                     Log("LoadData() Took " + watch.ElapsedMilliseconds + "ms");
                 }
                 Log("Loaded with no problems");
-                return Result;
             }
+
+            if (!string.IsNullOrEmpty(Result))
+            {
+                Result = UpgradeOldJsonFile(Result);
+            }
+
+            return Result;
         }
 
 #if (DEDICATED)
@@ -892,7 +898,7 @@ namespace SkyCoop
             int SaveSeed = GetSeed();
             string Key = GetKeyTemplate(SaveKeyTemplateType.Container, scene, GUID);
             ValidateRootExits();
-            return LoadData(Key, SaveSeed);
+            return LoadData(Key, SaveSeed, true);
         }
         public static void RemoveContainer(string scene, string GUID)
         {
@@ -1180,6 +1186,16 @@ namespace SkyCoop
             DateTime DT = System.DateTime.Now;
             string FileName = DT.Hour.ToString() + "_" + DT.Minute.ToString() + "_" + DT.Second.ToString() + "_" + DT.Millisecond.ToString();
             SaveData(FileName, JSON, 0, GetPathForName(@"Snapshots\" + Alias+@"\"+FileName));
+        }
+        public static string UpgradeOldJsonFile(string Json, bool Decompress = false)
+        {
+            if (Decompress)
+            {
+                Json = MyMod.DecompressString(Json);
+            }
+            Json = Json.Replace("SkyCoop.MyMod", "SkyCoop.DataStr");
+
+            return Json;
         }
     }
 }
