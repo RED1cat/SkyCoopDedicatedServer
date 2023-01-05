@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TextCopy;
+using static SkyCoop.Shared;
 
 namespace DedicatedServer
 {
@@ -105,8 +106,8 @@ namespace DedicatedServer
                 {
                     lime = lime.Replace("\r", "");
                 }
-                Logger.Log("[Console] " + lime, Logger.LoggerColor.Yellow);
-                Logger.Log("[Console] " + Shared.ExecuteCommand(lime), Logger.LoggerColor.Yellow);
+                Logger.Log("[Console] " + lime, LoggerColor.Yellow);
+                Logger.Log("[Console] " + Shared.ExecuteCommand(lime), LoggerColor.Yellow);
 
                 if(commandLineBuffer.Count - 1> commandLineBufferLimit)
                 {

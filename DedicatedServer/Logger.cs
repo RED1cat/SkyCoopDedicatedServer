@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
+using static SkyCoop.Shared;
 
 namespace SkyCoop
 {
@@ -37,15 +38,7 @@ namespace SkyCoop
                 CustomConsole.AddLine(log, color);
             }
         }
-        public enum LoggerColor
-        {
-            Red,
-            Green,
-            Blue,
-            Yellow,
-            Magenta,
-            White,
-        }
+
         public static Color ColorToXna(LoggerColor lColor)
         {
             switch (lColor)
