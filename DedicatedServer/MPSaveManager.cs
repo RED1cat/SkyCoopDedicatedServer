@@ -1198,6 +1198,21 @@ namespace SkyCoop
             {
                 Json = Shared.CompressString(Json);
             }
+#if (DEDICATED)
+            Json = Json.Replace("UnityEngine.Vector3", "System.Numerics.Vector3");
+            Json = Json.Replace("UnityEngine.Quaternion", "System.Numerics.Quaternion");
+            Json = Json.Replace("\"x\"", "\"X\"");
+            Json = Json.Replace("\"y\"", "\"Y\"");
+            Json = Json.Replace("\"z\"", "\"Z\"");
+            Json = Json.Replace("\"w\"", "\"W\"");
+#else
+            Json = Json.Replace("System.Numerics.Vector3", "UnityEngine.Vector3");
+            Json = Json.Replace("System.Numerics.Quaternion", "UnityEngine.Quaternion");
+            Json = Json.Replace("\"X\"", "\"x\"");
+            Json = Json.Replace("\"Y\"", "\"y\"");
+            Json = Json.Replace("\"Z\"", "\"z\"");
+            Json = Json.Replace("\"W\"", "\"w\"");
+#endif
 
             return Json;
         }
