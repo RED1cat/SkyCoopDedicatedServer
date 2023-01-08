@@ -464,9 +464,15 @@ namespace GameServer
         {
             if (!MyMod.PVP)
             {
-                ServerSend.DOORLOCKEDMSG(_fromClient, "You can't attack players on this server.");
+                ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack players on this server.");
                 return;
             }
+            if (MyMod.playersData[_fromClient] != null && MyMod.playersData[_fromClient].m_IsSafe)
+            {
+                ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack when you in the safe zone!");
+                return;
+            }
+
             
             float damage = _packet.ReadFloat();
             int BodyPart = _packet.ReadInt();
@@ -481,16 +487,28 @@ namespace GameServer
 #if (!DEDICATED)
             if (_for == 0)
             {
+                if(GameManager.m_PlayerObject && (SafeZoneManager.SceneIsSafe(MyMod.level_guid) || SafeZoneManager.InsideSafeZone(MyMod.level_guid, GameManager.GetPlayerTransform().position)))
+                {
+                    ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack players in the safe zone!");
+                    return;
+                }
                 MyMod.DamageByBullet(damage, _fromClient, BodyPart, Melee, MeleeWeapon);
             }else{
+                if (MyMod.playersData[_for] != null && MyMod.playersData[_for].m_IsSafe)
+                {
+                    ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack players in the safe zone!");
+                    return;
+                }
                 ServerSend.BULLETDAMAGE(_for, damage, BodyPart, _fromClient, Melee, MeleeWeapon);
             }
 #else
+            if (MyMod.playersData[_for] != null && MyMod.playersData[_for].m_IsSafe)
+            {
+                ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack players in the safe zone!");
+                return;
+            }
             ServerSend.BULLETDAMAGE(_for, damage, BodyPart, _fromClient, Melee, MeleeWeapon);
 #endif
-
-
-
         }
         public static void MULTISOUND(int _fromClient, Packet _packet)
         {
@@ -1425,6 +1443,15 @@ namespace GameServer
             string DoorKey = _packet.ReadString();
             string KeySeed = _packet.ReadString();
             string Scene = _packet.ReadString();
+            bool LeadKey = _packet.ReadBool();
+
+            if (LeadKey && !MPSaveManager.TryUseLeadKey())
+            {
+                ServerSend.DOORLOCKEDMSG(_fromClient, "The key broke!");
+                ServerSend.REMOVEKEYBYSEED(_fromClient, KeySeed);
+                return;
+            }
+
             bool Correct = MPSaveManager.TryUseKey(Scene, DoorKey, KeySeed);
 
             if (Correct)

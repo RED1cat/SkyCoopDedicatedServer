@@ -31,7 +31,9 @@ namespace SkyCoop
             AddTemplate("gear_sclockpick", BasicBlank);
             AddTemplate("gear_scmetalblanksmall", BasicBlank);
             AddTemplate("gear_scdoorkeytemp", BasicBlank);
+            AddTemplate("gear_scdoorkeyleadtemp", BasicBlank);
             AddTemplate("gear_scdoorkey", Key);
+            AddTemplate("gear_scdoorkeylead", Key);
             AddTemplate("gear_rabbitcarcass", @"{""m_Position"":[],""m_Rotation"":[],""m_InstanceIDProxy"":-1,""m_CurrentHPProxy"":9.693987,""m_NormalizedCondition"":0.9693987,""m_RolledSpawnChanceProxy"":true,""m_WeightKG"":3,""m_BodyHarvestSerialized"":""{\""m_MeatAvailableKG\"":#KGVAL,\""m_HideAvailableUnits\"":1,\""m_GutAvailableUnits\"":1,\""m_Condition\"":96.93987,\""m_HoursPlayed\"":5.815399,\""m_QuarterBagWasteMultiplier\"":1,\""m_DamageSide\"":\""DamageSideLeft\""}"",""m_GearItemSaveVersion"":4,""m_InspectSerialized"":""{}""}");
             AddTemplate("gear_snare_3", @"{""m_HoursPlayed"":0,""m_Position"":[],""m_Rotation"":[],""m_InstanceIDProxy"":-1,""m_CurrentHPProxy"":100,""m_NormalizedCondition"":1,""m_BeenInPlayerInventoryProxy"":true,""m_BeenInspectedProxy"":true,""m_HasBeenOwnedByPlayer"":true,""m_SnareItemSerialized"":""{\""m_HoursPlayed\"":0,\""m_HoursAtLastRoll\"":0,\""m_State\"":\""WithRabbit\""}"",""m_WeightKG"":0.3,""m_GearItemSaveVersion"":4,""m_InspectSerialized"":""{}""}");
             AddTemplate("gear_snare_2", @"{""m_HoursPlayed"":0,""m_Position"":[],""m_Rotation"":[],""m_InstanceIDProxy"":-1,""m_CurrentHPProxy"":100,""m_NormalizedCondition"":1,""m_BeenInPlayerInventoryProxy"":true,""m_BeenInspectedProxy"":true,""m_HasBeenOwnedByPlayer"":true,""m_SnareItemSerialized"":""{\""m_HoursPlayed\"":0,\""m_HoursAtLastRoll\"":0,\""m_State\"":\""Broken\""}"",""m_WeightKG"":0.3,""m_GearItemSaveVersion"":4,""m_InspectSerialized"":""{}""}");

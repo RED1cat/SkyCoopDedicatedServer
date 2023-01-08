@@ -2317,5 +2317,13 @@ namespace GameServer
                 SendUDPData(For, _packet);
             }
         }
+        public static void REMOVEKEYBYSEED(int SendTo, string Seed)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.REMOVEKEYBYSEED))
+            {
+                _packet.Write(Seed);
+                SendUDPData(SendTo, _packet);
+            }
+        }
     }
 }

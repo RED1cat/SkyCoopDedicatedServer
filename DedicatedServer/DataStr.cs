@@ -232,6 +232,7 @@ namespace SkyCoop
             public Supporters.SupporterBenefits m_SupporterBenefits = new Supporters.SupporterBenefits();
             public bool m_IsLoading = false;
             public int m_LastRegion = 0;
+            public bool m_IsSafe = false;
         }
         public class MultiPlayerClientStatus //: MelonMod
         {
@@ -578,11 +579,13 @@ namespace SkyCoop
         {
             public string m_Seed = "";
             public string m_Name = "";
+            public bool m_Lead = false;
 
-            public DoorKey(string Seed, string Name)
+            public DoorKey(string Seed, string Name, bool Lead = false)
             {
                 m_Seed = Seed;
                 m_Name = Name;
+                m_Lead = Lead;
             }
         }
         public class VoiceChatQueueElement

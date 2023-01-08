@@ -169,6 +169,7 @@ namespace GameServer
         DEDICATEDWEATHER,
         WEATHERVOLUNTEER,
         REREGISTERWEATHER,
+        REMOVEKEYBYSEED,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -326,6 +327,7 @@ namespace GameServer
         DEDICATEDWEATHER,
         WEATHERVOLUNTEER,
         REREGISTERWEATHER,
+        REMOVEKEYBYSEED,
     }
 
     public class Packet : IDisposable

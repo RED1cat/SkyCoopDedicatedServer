@@ -29,6 +29,8 @@ namespace SkyCoop
         public static List<RegionWeatherControler> RegionWeathers = new List<RegionWeatherControler>();
         public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
         public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
+        public static bool DSQuit = false;
+
 
         public enum LoggerColor
         {
@@ -412,7 +414,7 @@ namespace SkyCoop
                 MyMod.UpdatePlayerStatusMenu(PlayersListDat);
 #endif
                 WeatherUpdateSecond();
-
+                SafeZoneManager.UpdatePlayersSafeZoneStatus();
             }
         }
 
@@ -1069,7 +1071,8 @@ namespace SkyCoop
             if (Gear == "gear_scrapmetal"
             || Gear == "gear_scmetalblanksmall"
             || Gear == "gear_scdoorkeytemp"
-            || Gear == "gear_scmetalblank")
+            || Gear == "gear_scmetalblank"
+            || Gear == "gear_scdoorkeyleadtemp")
             {
                 return true;
             } else
@@ -1087,7 +1090,7 @@ namespace SkyCoop
                     return "gear_sclockpick";
                 } else if (Tool == 1)
                 {
-                    return "gear_scsharpening";
+                    return "broken";
                 }
             } else if (GearName == "gear_scmetalblank")
             {
@@ -1115,6 +1118,15 @@ namespace SkyCoop
                 } else if (Tool == 1)
                 {
                     return "gear_scdoorkey";
+                }
+            } else if (GearName == "gear_scdoorkeyleadtemp")
+            {
+                if (Tool == 0)
+                {
+                    return "broke";
+                } else if (Tool == 1)
+                {
+                    return "gear_scdoorkeylead";
                 }
             }
             return "broke";
@@ -2451,7 +2463,7 @@ namespace SkyCoop
             } else if (Low == "shutdown")
             {
 #if (DEDICATED)
-                Environment.Exit(0);
+                DSQuit = true;
 #else
                 Application.Quit();
 #endif
