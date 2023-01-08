@@ -79,7 +79,7 @@ namespace GameServer
             Supporters.ApplyFlairsForModel(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits.m_Flairs);
 #endif
 
-            int ClientModsHash = _packet.ReadInt();
+            long ClientModsHash = _packet.ReadLong();
 
             if (MyMod.ServerConfig.m_CheckModsValidation)
             {
