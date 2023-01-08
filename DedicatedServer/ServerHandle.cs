@@ -1464,7 +1464,7 @@ namespace GameServer
         public static void VERIFYSAVE(int _fromClient, Packet _packet)
         {
             string UGUID = _packet.ReadString();
-            int SaveHash = _packet.ReadInt();
+            long SaveHash = _packet.ReadLong();
 
             Log("[VERIFYSAVE] Client "+ _fromClient+" UGUID "+ UGUID+" Hash "+ SaveHash);
 
@@ -1488,7 +1488,7 @@ namespace GameServer
         public static void SAVEHASH(int _fromClient, Packet _packet)
         {
             string UGUID = _packet.ReadString();
-            int SaveHash = _packet.ReadInt();
+            long SaveHash = _packet.ReadLong();
             bool DisconnectMe = _packet.ReadBool();
 
             if (MyMod.ServerConfig.m_SaveScamProtection)

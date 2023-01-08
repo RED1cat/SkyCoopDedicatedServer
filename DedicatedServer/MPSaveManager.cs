@@ -50,7 +50,7 @@ namespace SkyCoop
         public static Dictionary<string, Dictionary<int, DataStr.DroppedGearItemDataPacket>> RecentVisual = new Dictionary<string, Dictionary<int, DataStr.DroppedGearItemDataPacket>>();
         public static Dictionary<string, Dictionary<int, DataStr.SlicedJsonDroppedGear>> RecentData = new Dictionary<string, Dictionary<int, DataStr.SlicedJsonDroppedGear>>();
         public static Dictionary<string, Dictionary<string, bool>> RecentOpenableThings = new Dictionary<string, Dictionary<string, bool>>();
-        public static Dictionary<string, int> UsersSaveHashs = new Dictionary<string, int>();
+        public static Dictionary<string, long> UsersSaveHashs = new Dictionary<string, long>();
         public static Dictionary<string, Dictionary<string, string>> LockedDoors = new Dictionary<string, Dictionary<string, string>>();
         public static Dictionary<string, bool> UsedKeys = new Dictionary<string, bool>();
         public static Dictionary<int, LocksmithBlank> Blanks = new Dictionary<int, LocksmithBlank>();
@@ -447,7 +447,7 @@ namespace SkyCoop
             }
             if (!string.IsNullOrEmpty(UsersSavesHashJSON))
             {
-                UsersSaveHashs = JSON.Load(UsersSavesHashJSON).Make<Dictionary<string, int>>();
+                UsersSaveHashs = JSON.Load(UsersSavesHashJSON).Make<Dictionary<string, long>>();
             }
         }
 
@@ -490,7 +490,7 @@ namespace SkyCoop
             return GenerateSeededGUID(GUIDseed, new Vector3(GUIDx, GUIDy, GUIDz));
         }
 
-        public static void SetSaveHash(string UGUID, int hash)
+        public static void SetSaveHash(string UGUID, long hash)
         {
             if (UsersSaveHashs.ContainsKey(UGUID))
             {
@@ -501,11 +501,11 @@ namespace SkyCoop
             SaveHashsChanged = true;
         }
 
-        public static bool VerifySaveHash(string UGUID, int hash)
+        public static bool VerifySaveHash(string UGUID, long hash)
         {
             if (UsersSaveHashs.ContainsKey(UGUID))
             {
-                int LastHash;
+                long LastHash;
                 if(UsersSaveHashs.TryGetValue(UGUID, out LastHash))
                 {
                     Log("GUID " + UGUID+" Provided  hash: "+ hash+" expected "+ LastHash);
