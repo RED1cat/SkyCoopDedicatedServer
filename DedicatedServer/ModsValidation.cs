@@ -143,7 +143,7 @@ namespace SkyCoop
                 Logger.Log("[ModsValidation][Info] " + mod.m_Name + " Hash: " + mod.m_Hash);
             }
 
-            Valid.m_Hash = MainHash.GetHashCode();
+            Valid.m_Hash = Shared.GetDeterministicId(MainHash);
             Valid.m_FullString = FullString;
             Valid.m_FullStringBase64 = Shared.CompressString(FullString);
             Logger.Log("[ModsValidation][Info] Main Hash: " + Valid.m_Hash);
