@@ -30,6 +30,9 @@
     <PackageReference Include="TextCopy" Version="6.2.1" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Mono.Nat">
+      <HintPath>..\..\Mono.Nat.dll</HintPath>
+    </Reference>
     <Reference Include="TinyJSON">
       <HintPath>..\..\TinyJSON.dll</HintPath>
     </Reference>

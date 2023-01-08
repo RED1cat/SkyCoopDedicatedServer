@@ -11,12 +11,12 @@ namespace SkyCoop
         public static void Log(string message, LoggerColor lColor = LoggerColor.White)
         {
             Color color = ColorToXna(lColor);
-            string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message + Environment.NewLine;
+            string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message;
             if (File.Exists("log.txt"))
             {
                 try
                 {
-                    File.AppendAllText("log.txt", log);
+                    File.AppendAllText("log.txt", log + Environment.NewLine);
                 }
                 catch
                 {
@@ -29,7 +29,7 @@ namespace SkyCoop
                 File.Create("log.txt").Close();
                 try
                 {
-                    File.AppendAllText("log.txt", log);
+                    File.AppendAllText("log.txt", log + Environment.NewLine);
                 }
                 catch
                 {

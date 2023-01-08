@@ -76,6 +76,8 @@ namespace SkyCoop
         public static SpriteFont font;
         public static Texture2D fontBg;
         public static GameWindow gw;
+        NetworkHelper networkPort;
+        static bool portOpen = false;
 
         public static string GetGearNameByID(int index)
         {
@@ -105,6 +107,8 @@ namespace SkyCoop
             MPSaveManager.LoadGlobalData();
 
             Shared.HostAServer(config.Ports);
+            networkPort = new NetworkHelper(config.Ports);
+            portOpen= true;
             base.Initialize();
         }
 
@@ -159,7 +163,14 @@ namespace SkyCoop
 
             base.Draw(gameTime);
         }
-
+        protected override void OnExiting(object sender, EventArgs args)
+        {
+            if (portOpen)
+            {
+                networkPort.TryClosePort();
+            }
+            base.OnExiting(sender, args);
+        }
 
     }
 }
