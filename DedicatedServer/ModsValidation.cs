@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using TinyJSON;
 
 namespace SkyCoop
@@ -13,13 +14,22 @@ namespace SkyCoop
 
         public static string SHA256CheckSum(string filePath)
         {
+            if (!File.Exists(filePath))
+                return "null";
+
+            byte[] byteHash;
             using (SHA256 SHA256 = SHA256Managed.Create())
             {
                 using (FileStream fileStream = File.OpenRead(filePath))
                 {
-                    return Convert.ToBase64String(SHA256.ComputeHash(fileStream));
+                    byteHash = SHA256.ComputeHash(fileStream);
                 }
             }
+            string finalHash = string.Empty;
+            foreach (byte b in byteHash)
+                finalHash += b.ToString("x2");
+
+            return finalHash;
         }
 
         public class ModHashPair
@@ -49,80 +59,80 @@ namespace SkyCoop
         public static ModValidationData GetModsHash(bool Force = false)
         {
             ModValidationData Valid = new ModValidationData();
-            //if (!Force && LastRequested != null)
-            //{
-            //    return LastRequested;
-            //}
+            if (!Force && LastRequested != null)
+            {
+                return LastRequested;
+            }
 
-            //if (MyMod.DedicatedServerAppMode)
-            //{
-            //    if (File.Exists(@"Mods\serversideonly.json"))
-            //    {
-            //        MelonLogger.Msg(ConsoleColor.Yellow, "[ModsValidation][Info] Found Server Side Files List!");
-            //        string FilterJson = System.IO.File.ReadAllText("Mods\\serversideonly.json");
-            //        ServerSideOnlyFiles = JSON.Load(FilterJson).Make<List<string>>();
-            //    }
-            //}
+            if (MyMod.DedicatedServerAppMode)
+            {
+                if (File.Exists("serversideonly.json"))
+                {
+                    Logger.Log("[ModsValidation][Info] Found Server Side Files List!");
+                    string FilterJson = System.IO.File.ReadAllText("serversideonly.json");
+                    ServerSideOnlyFiles = JSON.Load(FilterJson).Make<List<string>>();
+                }
+            }
 
-            //foreach (MelonMod Mod in MelonHandler.Mods)
-            //{
-            //    string Hash = MelonHandler.GetMelonHash(Mod);
-            //    string FileName = Mod.Assembly.GetName().Name + ".dll";
-            //    if (!ServerSideOnly(FileName))
-            //    {
-            //        Valid.m_Files.Add(new ModHashPair(@"Mods\" + FileName, Hash));
-            //    }else{
-            //        MelonLogger.Msg(ConsoleColor.Yellow, "[ModsValidation][Info] Ignore " + FileName);
-            //    }
-            //}
-            //DirectoryInfo d = new DirectoryInfo("Mods");
-            //FileInfo[] Files = d.GetFiles("*.modcomponent");
+            foreach (string mod in Directory.GetFiles("Mods"))
+            {
+                if (mod.Contains(".dll") || mod.Contains(".modcomponent"))
+                {
+                    string Hash = SHA256CheckSum(mod);
+                    string FileName = mod;
+                    if (!ServerSideOnly(FileName))
+                    {
+                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                    }
+                    else
+                    {
+                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                    }
+                }
+            }
 
-            //foreach (FileInfo file in Files)
-            //{
-            //    string Hash = SHA256CheckSum("Mods\\" + file.Name);
-            //    string FileName = file.Name;
-            //    if (!ServerSideOnly(FileName))
-            //    {
-            //        Valid.m_Files.Add(new ModHashPair(@"Mods\" + FileName, Hash));
-            //    }else{
-            //        MelonLogger.Msg(ConsoleColor.Yellow, "[ModsValidation][Info] Ignore " + FileName);
-            //    }
-            //}
-            //foreach (MelonPlugin Plugin in MelonHandler.Plugins)
-            //{
-            //    string Hash = MelonHandler.GetMelonHash(Plugin);
-            //    string FileName = Plugin.Assembly.GetName().Name + ".dll";
-            //    if (!ServerSideOnly(FileName))
-            //    {
-            //        Valid.m_Files.Add(new ModHashPair(@"Plugins\" + FileName, Hash));
-            //    }else{
-            //        MelonLogger.Msg(ConsoleColor.Yellow, "[ModsValidation][Info] Ignore " + FileName);
-            //    }
-            //}
-            //string MainHash = "";
-            //string FullString = "";
-            //foreach (ModHashPair Mod in Valid.m_Files)
-            //{
-            //    if (string.IsNullOrEmpty(MainHash))
-            //    {
-            //        MainHash = Mod.m_Hash;
-            //        FullString = Mod.m_Name;
-            //    }else{
-            //        MainHash = MainHash + Mod.m_Hash;
-            //        FullString = FullString + "\n" + Mod.m_Name;
-            //    }
+            foreach (string mod in Directory.GetFiles("Plugins"))
+            {
+                if (mod.Contains(".dll"))
+                {
+                    string Hash = SHA256CheckSum(mod);
+                    string FileName = mod;
+                    if (!ServerSideOnly(FileName))
+                    {
+                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                    }
+                    else
+                    {
+                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                    }
+                }
+            }
 
-            //    //MelonLogger.Msg(ConsoleColor.Green,"[ModsValidation][Info] " +Mod.m_Name+" Hash: "+Mod.m_Hash);
-            //}
+            string MainHash = "";
+            string FullString = "";
+            foreach (ModHashPair mod in Valid.m_Files)
+            {
+                if (string.IsNullOrEmpty(MainHash))
+                {
+                    MainHash = mod.m_Hash;
+                    FullString = mod.m_Name;
+                }
+                else
+                {
+                    MainHash = MainHash + mod.m_Hash;
+                    FullString = FullString + "\n" + mod.m_Name;
+                }
 
-            //Valid.m_Hash = MainHash.GetHashCode();
-            //Valid.m_FullString = FullString;
-            //Valid.m_FullStringBase64 = MyMod.CompressString(FullString);
-            //MelonLogger.Msg(ConsoleColor.Blue,"[ModsValidation][Info] Main Hash: " + Valid.m_Hash);
-            ////MelonLogger.Msg(ConsoleColor.Magenta, "[ModsValidation][Info] Stock: " + Encoding.UTF8.GetBytes(Valid.m_FullString).Length);
-            ////MelonLogger.Msg(ConsoleColor.Magenta, "[ModsValidation][Info] Compressed: " + MyMod.CompressString(Valid.m_FullStringBase64).Length);
-            //LastRequested = Valid;
+                Logger.Log("[ModsValidation][Info] " + mod.m_Name + " Hash: " + mod.m_Hash);
+            }
+
+            Valid.m_Hash = MainHash.GetHashCode();
+            Valid.m_FullString = FullString;
+            Valid.m_FullStringBase64 = Shared.CompressString(FullString);
+            Logger.Log("[ModsValidation][Info] Main Hash: " + Valid.m_Hash);
+            Logger.Log("[ModsValidation][Info] Stock: " + Encoding.UTF8.GetBytes(Valid.m_FullString).Length);
+            Logger.Log("[ModsValidation][Info] Compressed: " + Shared.CompressString(Valid.m_FullStringBase64).Length);
+            LastRequested = Valid;
             return Valid;
         }
     }

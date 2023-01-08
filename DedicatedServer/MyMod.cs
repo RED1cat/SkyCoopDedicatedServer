@@ -109,6 +109,9 @@ namespace SkyCoop
             Shared.HostAServer(config.Ports);
             networkPort = new NetworkHelper(config.Ports);
             portOpen= true;
+
+            ModsValidation.GetModsHash();
+
             base.Initialize();
         }
 
