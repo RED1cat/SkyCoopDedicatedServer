@@ -110,7 +110,7 @@ namespace SkyCoop
             networkPort = new NetworkHelper(config.Ports);
             portOpen= true;
 
-            //ModsValidation.GetModsHash();
+            ModsValidation.GetModsHash();
 
             base.Initialize();
         }

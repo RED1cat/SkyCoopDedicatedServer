@@ -45,7 +45,7 @@ namespace SkyCoop
 
         public class ModValidationData 
         {
-            public int m_Hash = 0;
+            public long m_Hash = 0;
             public List<ModHashPair> m_Files = new List<ModHashPair>();
             public string m_FullString = "";
             public string m_FullStringBase64 = "";
@@ -76,7 +76,24 @@ namespace SkyCoop
 
             foreach (string mod in Directory.GetFiles("Mods"))
             {
-                if (mod.Contains(".dll") || mod.Contains(".modcomponent"))
+                if (mod.Contains(".dll"))
+                {
+                    string Hash = SHA256CheckSum(mod);
+                    string FileName = mod;
+                    if (!ServerSideOnly(FileName))
+                    {
+                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                    }
+                    else
+                    {
+                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                    }
+                }
+            }
+
+            foreach (string mod in Directory.GetFiles("Mods"))
+            {
+                if (mod.Contains(".modcomponent"))
                 {
                     string Hash = SHA256CheckSum(mod);
                     string FileName = mod;
