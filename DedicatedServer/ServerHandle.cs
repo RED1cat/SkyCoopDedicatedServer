@@ -890,16 +890,18 @@ namespace GameServer
                     MyMod.playersData[_fromClient].m_Container = box;
                 }
             }
-#if (!DEDICATED)
+
             if(box.m_Guid != "NULL")
             {
-                Shared.AddLootedContainer(box, true, _fromClient);
+                AddLootedContainer(box, true, _fromClient);
+#if (!DEDICATED)
                 if (box.m_LevelID == MyMod.levelid && box.m_LevelGUID == MyMod.level_guid)
                 {
                     MyMod.ApplyLootedContainers();
                 }
-            }
 #endif
+            }
+
             ServerSend.CONTAINERINTERACT(_fromClient, box, false);
         }
         public static void HARVESTPLANT(int _fromClient, Packet _packet)
