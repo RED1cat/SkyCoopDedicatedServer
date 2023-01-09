@@ -73,56 +73,68 @@ namespace SkyCoop
                     ServerSideOnlyFiles = JSON.Load(FilterJson).Make<List<string>>();
                 }
             }
-
-            foreach (string mod in Directory.GetFiles("Mods"))
+            if (Directory.Exists("Mods"))
             {
-                if (mod.Contains(".dll"))
+                foreach (string mod in Directory.GetFiles("Mods"))
                 {
-                    string Hash = SHA256CheckSum(mod);
-                    string FileName = mod;
-                    if (!ServerSideOnly(FileName))
+                    if (mod.Contains(".dll"))
                     {
-                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                        string Hash = SHA256CheckSum(mod);
+                        string FileName = mod;
+                        if (!ServerSideOnly(FileName))
+                        {
+                            Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                        }
+                        else
+                        {
+                            Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                        }
                     }
-                    else
+                }
+
+                foreach (string mod in Directory.GetFiles("Mods"))
+                {
+                    if (mod.Contains(".modcomponent"))
                     {
-                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                        string Hash = SHA256CheckSum(mod);
+                        string FileName = mod;
+                        if (!ServerSideOnly(FileName))
+                        {
+                            Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                        }
+                        else
+                        {
+                            Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                        }
                     }
                 }
             }
-
-            foreach (string mod in Directory.GetFiles("Mods"))
+            else
             {
-                if (mod.Contains(".modcomponent"))
+                Directory.CreateDirectory("Mods");
+            }
+            if (Directory.Exists("Plugins"))
+            {
+                foreach (string mod in Directory.GetFiles("Plugins"))
                 {
-                    string Hash = SHA256CheckSum(mod);
-                    string FileName = mod;
-                    if (!ServerSideOnly(FileName))
+                    if (mod.Contains(".dll"))
                     {
-                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
-                    }
-                    else
-                    {
-                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                        string Hash = SHA256CheckSum(mod);
+                        string FileName = mod;
+                        if (!ServerSideOnly(FileName))
+                        {
+                            Valid.m_Files.Add(new ModHashPair(mod, Hash));
+                        }
+                        else
+                        {
+                            Logger.Log("[ModsValidation][Info] Ignore " + FileName);
+                        }
                     }
                 }
             }
-
-            foreach (string mod in Directory.GetFiles("Plugins"))
+            else
             {
-                if (mod.Contains(".dll"))
-                {
-                    string Hash = SHA256CheckSum(mod);
-                    string FileName = mod;
-                    if (!ServerSideOnly(FileName))
-                    {
-                        Valid.m_Files.Add(new ModHashPair(mod, Hash));
-                    }
-                    else
-                    {
-                        Logger.Log("[ModsValidation][Info] Ignore " + FileName);
-                    }
-                }
+                Directory.CreateDirectory("Plugins");
             }
 
             string MainHash = "";
