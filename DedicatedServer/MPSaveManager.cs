@@ -738,7 +738,12 @@ namespace SkyCoop
 #if (DEDICATED)
         
         public static string AppPath = "";
+
+#if(!DEDICATED_LINUX)
         public static string PathSeparator = @"\";
+#else
+        public static string PathSeparator = @"/";
+#endif
         public static string GetPathForName(string name, int Seed = 0)
         {
             if (NoSaveAndLoad)
