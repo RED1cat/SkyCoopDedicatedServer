@@ -78,6 +78,20 @@ namespace GameServer
                 }
             }
         }
+        public static void SendUDPDataToAllInArea(Packet _packet, int SenderId, Vector3 SpeakerPossition, string SpeakerScene)
+        {
+            _packet.WriteLength();
+            for (int i = 1; i < MyMod.playersData.Count; i++)
+            {
+                if (i != SenderId && MyMod.playersData[i] != null && !Server.clients[i].RCON)
+                {
+                    if (MyMod.playersData[i].m_LevelGuid == SpeakerScene && Vector3.Distance(MyMod.playersData[i].m_Position, SpeakerPossition) <= Shared.LocalChatMaxDistance)
+                    {
+                        Server.clients[i].udp.SendData(_packet);
+                    }
+                }
+            }
+        }
         public static void SendUDPDataToAllButNotSender(Packet _packet, int SenderId)
         {
             _packet.WriteLength();
@@ -623,6 +637,23 @@ namespace GameServer
         }
         public static void BULLETDAMAGE(int _toClient, float _msg,int bodypart, int _From, bool Melee = false, string MeleeWeapon = "")
         {
+#if (!DEDICATED)
+            
+            if(_From == 0)
+            {
+                if (GameManager.m_PlayerObject && (SafeZoneManager.SceneIsSafe(MyMod.level_guid) || SafeZoneManager.InsideSafeZone(MyMod.level_guid, GameManager.GetPlayerTransform().position)))
+                {
+                    HUDMessage.AddMessage("You cannot attack when you in the safe zone!");
+                    return;
+                }
+                if (MyMod.playersData[_toClient] != null && MyMod.playersData[_toClient].m_IsSafe)
+                {
+                    HUDMessage.AddMessage("You cannot attack players in the safe zone!");
+                    return;
+                }
+            }
+#endif
+
             using (Packet _packet = new Packet((int)ServerPackets.BULLETDAMAGE))
             {
                 _packet.Write(_msg);
@@ -765,30 +796,20 @@ namespace GameServer
                 }
             }
         }
-        public static void CHAT(int _From, DataStr.MultiplayerChatMessage _msg, bool toEveryOne, int OnlyFor = -1)
+
+        public static void CHAT(int _From, DataStr.MultiplayerChatMessage _msg, Vector3 SpeakerPossition = default(Vector3), string SpeakerScene = "")
         {
             using (Packet _packet = new Packet((int)ServerPackets.CHAT))
             {
-                if (toEveryOne == true)
+                _packet.Write(_msg);
+                _packet.Write(_From);
+
+                if (_msg.m_Global)
                 {
-                    _packet.Write(_msg);
-                    _packet.Write(0);
-                    SendUDPDataToAll(_packet);
-                }
-                else
+                    SendUDPDataToAllButNotSender(_packet, _From);
+                } else
                 {
-                    if (OnlyFor == -1)
-                    {
-                        _packet.Write(_msg);
-                        _packet.Write(_From);
-                        SendUDPDataToAllButNotSender(_packet, _From);
-                    }
-                    else
-                    {
-                        _packet.Write(_msg);
-                        _packet.Write(_From);
-                        SendUDPData(OnlyFor, _packet);
-                    }
+                    SendUDPDataToAllInArea(_packet, _From, SpeakerPossition, SpeakerScene);
                 }
             }
         }
@@ -2322,6 +2343,14 @@ namespace GameServer
             using (Packet _packet = new Packet((int)ServerPackets.REMOVEKEYBYSEED))
             {
                 _packet.Write(Seed);
+                SendUDPData(SendTo, _packet);
+            }
+        }
+        public static void ADDHUDMESSAGE(int SendTo, string Message)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.ADDHUDMSG))
+            {
+                _packet.Write(Message);
                 SendUDPData(SendTo, _packet);
             }
         }

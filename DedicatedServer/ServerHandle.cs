@@ -190,7 +190,7 @@ namespace GameServer
                 Shared.SendMessageToChat(joinMessage, false);
             }
 
-            ServerSend.CHAT(_fromClient, joinMessage, false);
+            ServerSend.CHAT(_fromClient, joinMessage);
 
 
             if (MyMod.CurrentCustomChalleng.m_Started)
@@ -601,8 +601,26 @@ namespace GameServer
         public static void CHAT(int _fromClient, Packet _packet)
         {
             DataStr.MultiplayerChatMessage message = _packet.ReadChat();
+
+#if (!DEDICATED)
+
+            if (message.m_Global)
+            {
+                SendMessageToChat(message, false);
+            } else
+            {
+                if (MyMod.playersData[_fromClient].m_LevelGuid == MyMod.level_guid && Vector3.Distance(GameManager.GetPlayerTransform().position, MyMod.playersData[_fromClient].m_Position) <= LocalChatMaxDistance)
+                {
+                    SendMessageToChat(message, false);
+                }
+            }
+#else
             Shared.SendMessageToChat(message, false);
-            ServerSend.CHAT(_fromClient, message, false);
+#endif
+            if (MyMod.playersData[_fromClient] != null)
+            {
+                ServerSend.CHAT(_fromClient, message, MyMod.playersData[_fromClient].m_Position, MyMod.playersData[_fromClient].m_LevelGuid);
+            }
         }
         public static void CHANGENAME(int _fromClient, Packet _packet)
         {

@@ -170,6 +170,7 @@ namespace GameServer
         WEATHERVOLUNTEER,
         REREGISTERWEATHER,
         REMOVEKEYBYSEED,
+        ADDHUDMSG,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -328,6 +329,7 @@ namespace GameServer
         WEATHERVOLUNTEER,
         REREGISTERWEATHER,
         REMOVEKEYBYSEED,
+        ADDHUDMSG,
     }
 
     public class Packet : IDisposable
@@ -647,11 +649,10 @@ namespace GameServer
         }
         public void Write(DataStr.MultiplayerChatMessage obj)
         {
-            //Write(obj.m_By);
-            //Write(obj.m_Message);
             WriteUnicodeString(obj.m_By);
             WriteUnicodeString(obj.m_Message);
             Write(obj.m_Type);
+            Write(obj.m_Global);
         }
         public void Write(DataStr.MultiPlayerClientStatus obj)
         {
@@ -1205,6 +1206,7 @@ namespace GameServer
             obj.m_By = ReadUnicodeString();
             obj.m_Message = ReadUnicodeString();
             obj.m_Type = ReadInt();
+            obj.m_Global = ReadBool();
 
             return obj;
         }

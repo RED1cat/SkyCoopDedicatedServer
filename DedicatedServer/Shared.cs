@@ -30,6 +30,7 @@ namespace SkyCoop
         public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
         public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
         public static bool DSQuit = false;
+        public static float LocalChatMaxDistance = 35f;
 
 
         public enum LoggerColor
@@ -1640,10 +1641,16 @@ namespace SkyCoop
                 message.m_TextObj = Comp;
                 if (message.m_Type == 1)
                 {
-                    Comp.text = message.m_By + ": " + message.m_Message;
+                    string GlobalOrArea = " [Global] ";
+                    if (!message.m_Global)
+                    {
+                        GlobalOrArea = " [Area] ";
+                    }
+                    
+                    Comp.text = GlobalOrArea + message.m_By + ": " + message.m_Message;
                 } else
                 {
-                    Comp.text = message.m_Message;
+                    Comp.text = " "+message.m_Message;
                 }
 
                 if (message.m_Type == 0)
@@ -1668,13 +1675,13 @@ namespace SkyCoop
                 }
                 if (MyMod.iAmHost == true) // HOST
                 {
-                    ServerSend.CHAT(0, message, true);
+                    ServerSend.CHAT(0, message, GameManager.GetPlayerTransform().position, MyMod.level_guid);
                 }
             }
 #else
             if (needSync)
             {
-                ServerSend.CHAT(0, message, true);
+                ServerSend.CHAT(0, message);
             }
 #endif
 

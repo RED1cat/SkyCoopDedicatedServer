@@ -348,6 +348,7 @@ namespace SkyCoop
             public int m_Type = 0;
             public string m_Message = "";
             public string m_By = "";
+            public bool m_Global = true;
 #if (!DEDICATED)
             public UnityEngine.UI.Text m_TextObj = null;
 #endif
