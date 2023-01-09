@@ -1493,6 +1493,7 @@ namespace SkyCoop
 
         public static void AddLootedContainer(DataStr.ContainerOpenSync box, bool needSync, int Looter = 0)
         {
+            Log("Trying to add looted container " + box.m_Guid);
             if (MyMod.LootedContainers.Contains(box) == false)
             {
                 Log("Added looted container " + box.m_Guid + " Scene " + box.m_LevelGUID);
@@ -2412,6 +2413,8 @@ namespace SkyCoop
                 MyMod.ServerConfig.m_DuppedSpawns = ServerData.ItemDupes;
                 MyMod.ServerConfig.m_PlayersSpawnType = ServerData.SpawnStyle;
                 MyMod.ServerConfig.m_CheatsMode = ServerData.Cheats;
+                MyMod.ServerConfig.m_PVP = ServerData.PVP;
+
                 MyMod.DsSavePerioud = ServerData.SavingPeriod;
                 MyMod.MaxPlayers = ServerData.MaxPlayers;
                 return ServerData;

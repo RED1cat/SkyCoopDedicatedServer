@@ -462,7 +462,7 @@ namespace GameServer
         }
         public static void BULLETDAMAGE(int _fromClient, Packet _packet)
         {
-            if (!MyMod.PVP)
+            if (!MyMod.ServerConfig.m_PVP)
             {
                 ServerSend.DOORLOCKEDMSG(_fromClient, "You cannot attack players on this server.");
                 return;
