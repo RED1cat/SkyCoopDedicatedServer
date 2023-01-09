@@ -24,6 +24,7 @@ namespace SkyCoop
             public int m_CheatsMode = 2;
             public bool m_CheckModsValidation = false;
             public bool m_SaveScamProtection = false;
+            public bool m_PVP = true;
         }
         public class ServerSettingsData
         {
