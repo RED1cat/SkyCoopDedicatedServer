@@ -597,18 +597,18 @@ namespace SkyCoop
         }
         public class DedicatedServerData
         {
-            public string SaveSlot;
-            public bool ItemDupes;
-            public bool ContainersDupes;
-            public int SpawnStyle;
-            public int MaxPlayers;
-            public bool UsingSteam;
-            public int Ports;
+            public string SaveSlot = "UnspecifiedSave";
+            public bool ItemDupes = false;
+            public bool ContainersDupes = false;
+            public int SpawnStyle = 0;
+            public int MaxPlayers = 2;
+            public bool UsingSteam = false;
+            public int Ports = 26950;
             public string[] WhiteList;
-            public string ServerName;
-            public int Cheats;
-            public int SteamServerAccessibility;
-            public string RCON;
+            public string ServerName = "";
+            public int Cheats = 2;
+            public int SteamServerAccessibility = 2;
+            public string RCON = "12345";
             public int DropUnloadPeriod = 5;
             public bool SaveScamProtection = false;
             public bool ModValidationCheck = false;
