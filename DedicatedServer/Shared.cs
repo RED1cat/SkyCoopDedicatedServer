@@ -2420,7 +2420,10 @@ namespace SkyCoop
                 return ServerData;
             } else
             {
-                return new DataStr.DedicatedServerData();
+                DataStr.DedicatedServerData ServerData = new DedicatedServerData();
+                ServerData.Seed = Guid.NewGuid().GetHashCode();
+
+                return ServerData;
             }
         }
         public static void FakeDropItem(DataStr.DroppedGearItemDataPacket GearData, bool JustLoad = false)
