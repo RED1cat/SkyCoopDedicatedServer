@@ -5,23 +5,27 @@
     <RollForward>Major</RollForward>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <Configurations>Debug;Release;Linux_Debug;Linux_Release</Configurations>
+    <Configurations>Windows_Debug;Windows_Release;Linux_Debug;Linux_Release</Configurations>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;DEDICATED</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Windows_Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_WINDOWS</DefineConstants>
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Windows_Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_WINDOWS</DefineConstants>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux_Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_LINUX</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;DEDICATED</DefineConstants>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux_Release|AnyCPU'">
     <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_LINUX</DefineConstants>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Icon.ico" />
