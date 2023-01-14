@@ -970,10 +970,6 @@ namespace SkyCoop
                             other.m_Dead = false;
                         }
                         other.m_IsLoading = ClientIsLoading(i);
-                        if (MyMod.playersData[i] != null)
-                        {
-                            MyMod.playersData[i].m_IsLoading = ClientIsLoading(i);
-                        }
 
                         if (other.m_Sleep || other.m_Dead)
                         {
