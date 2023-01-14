@@ -1317,10 +1317,34 @@ namespace SkyCoop
             }
         }
 
+        public static void PieTrigger(ExtraDataForDroppedGear Extra, int Picker)
+        {
+            if(Extra.m_GearName.ToLower() == "gear_pumpkinpie" && (Extra.m_Dropper.ToLower() == "filigrani" || Extra.m_Dropper.ToLower() == "redcat" || Extra.m_Dropper.ToLower() == "snwball"))
+            {
+                string PickerName = "unknown";
+
+                if(Picker != 0)
+                {
+                    if (MyMod.playersData[Picker] != null)
+                    {
+                        PickerName = MyMod.playersData[Picker].m_Name;
+                        
+                    }
+                }
+
+                if(PickerName.ToLower() != "filigrani" && PickerName.ToLower() != "redcat" && PickerName.ToLower() != "snwball")
+                {
+                    Log(PickerName+" found pie! Steam/EGSID "+ MyMod.playersData[Picker].m_SteamOrEGSID, LoggerColor.Green);
+                    ExecuteCommand("say "+ PickerName + " found pie!");
+                }
+            }
+        }
+
         public static void SendDroppedItemToPicker(string DataProxy, int GiveItemTo, int SearchKey, int GearID, bool place, DataStr.ExtraDataForDroppedGear Extra)
         {
             byte[] bytesToSlice = Encoding.UTF8.GetBytes(DataProxy);
             Log("Going to send gear to client " + GiveItemTo + " bytes: " + bytesToSlice.Length);
+            PieTrigger(Extra, GiveItemTo);
 
             if (bytesToSlice.Length > 500)
             {
