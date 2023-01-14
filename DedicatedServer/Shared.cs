@@ -1707,10 +1707,26 @@ namespace SkyCoop
             if (needSync)
             {
                 ServerSend.CHAT(0, message);
+                string LogText = "";
+                LoggerColor TextColor = LoggerColor.Yellow;
+                if (message.m_Type == 1)
+                {
+                    string GlobalOrArea = "[Chat][Global] ";
+                    if (!message.m_Global)
+                    {
+                        GlobalOrArea = "[Chat][Area] ";
+                        TextColor = LoggerColor.White;
+                    }
+
+                    LogText = GlobalOrArea + message.m_By + ": " + message.m_Message;
+                } else
+                {
+                    LogText = " " + message.m_Message;
+                    TextColor = LoggerColor.Green;
+                }
+                Log(LogText, TextColor);
             }
 #endif
-
-
         }
 
         public static void AddDeployedRopes(Vector3 position, bool deployed, bool snapped, int lvl, string lvlguid, bool needSync)
@@ -2368,7 +2384,7 @@ namespace SkyCoop
                 MyMod.NeedSyncTime = true;
                 MyMod.DisableOriginalAnimalSpawns(true);
                 MyMod.SetFixedSpawn();
-                MyMod.KillConsole(); // Unregistering cheats if server not allow cheating for you
+                MyMod.KillConsole();
             }
 #else
             MPSaveManager.LoadNonUnloadables();
