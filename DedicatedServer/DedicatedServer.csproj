@@ -36,14 +36,12 @@
     <EmbeddedResource Include="Icon.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Mono.Nat" Version="3.0.4" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
     <PackageReference Include="TextCopy" Version="6.2.1" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Mono.Nat">
-      <HintPath>..\..\Mono.Nat.dll</HintPath>
-    </Reference>
     <Reference Include="TinyJSON">
       <HintPath>..\..\TinyJSON.dll</HintPath>
     </Reference>

@@ -107,7 +107,7 @@ namespace GameServer
 
             Log("Client "+ _fromClient+" with user name "+ _username+" connected!");
             Log("Sending init data to new client...");
-
+            AddLoadingClient(_fromClient);
             
             ServerSend.SERVERCFG(_fromClient);
             ServerSend.GEARPICKUPLIST(_fromClient);
