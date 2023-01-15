@@ -1578,7 +1578,7 @@ namespace SkyCoop
         public static void SendMessageToChat(DataStr.MultiplayerChatMessage message, bool needSync = true)
         {
 #if (!DEDICATED)
-            if (message.m_By.Contains("Filigrani") || message.m_By.Contains("REDcat"))
+            if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
             {
                 if (message.m_Message == "!debug")
                 {
