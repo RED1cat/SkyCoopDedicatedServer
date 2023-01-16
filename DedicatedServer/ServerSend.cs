@@ -930,26 +930,6 @@ namespace GameServer
                 }
             }
         }
-        public static void FURNBROKENLIST(int OnlyFor)
-        {
-            using (Packet _packet = new Packet((int)ServerPackets.FURNBROKENLIST))
-            {
-                int ReadCount = MyMod.BrokenFurniture.Count;
-
-                if(ReadCount == 0)
-                {
-                    return;
-                }
-
-                _packet.Write(ReadCount);
-
-                for (int i = 0; i < ReadCount; i++)
-                {
-                    _packet.Write(MyMod.BrokenFurniture[i]);
-                }
-                SendUDPData(OnlyFor, _packet);
-            }
-        }
         public static void FURNBREAKINGGUID(int _From, DataStr.BrokenFurnitureSync _msg, bool toEveryOne, int OnlyFor = -1)
         {
             using (Packet _packet = new Packet((int)ServerPackets.FURNBREAKINGGUID))

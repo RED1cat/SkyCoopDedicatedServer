@@ -8,6 +8,7 @@ using System.Diagnostics;
 using GameServer;
 using static SkyCoop.DataStr;
 using System.Globalization;
+using System.Security.Policy;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -65,6 +66,82 @@ namespace SkyCoop
         public static float LockpickChance = 1.3f;
         public static float LeadKeyBrokeChance = 13;
 
+        public static Dictionary<string, Dictionary<string, BrokenFurnitureSync>> RecentBrokenFurns = new Dictionary<string, Dictionary<string, BrokenFurnitureSync>>();
+        public static Dictionary<string, Dictionary<int, PickedGearSync>> RecentPickedGears = new Dictionary<string, Dictionary<int, PickedGearSync>>();
+        public static Dictionary<string, Dictionary<string, int>> RecentlyLootedContainers = new Dictionary<string, Dictionary<string, int>>();
+        public static Dictionary<string, Dictionary<string, int>> RecentlyHarvastedPlants = new Dictionary<string, Dictionary<string, int>>();
+        public static Dictionary<string, AnimalKilled> AnimalsKilled = new Dictionary<string, AnimalKilled>();
+        public static List<DeathContainerData> DeathCreates = new List<DeathContainerData>();
+
+        public static void AddBrokenFurn(BrokenFurnitureSync furn)
+        {
+            string Scene = furn.m_LevelGUID;
+            string Key = furn.m_LevelGUID + furn.m_ParentGuid;
+
+            int SaveSeed = GetSeed();
+            string SaveKey = GetKeyTemplate(SaveKeyTemplateType.Furns, Scene);
+            Dictionary<string, BrokenFurnitureSync> Dict;
+
+            if (RecentBrokenFurns.TryGetValue(Scene, out Dict))
+            {
+                Dict.Remove(Key);
+                Dict.Add(Key, furn);
+                RecentBrokenFurns.Remove(Scene);
+                RecentBrokenFurns.Add(Scene, Dict);
+                return;
+            } else
+            {
+                Dict = LoadFurnsData(Scene);
+            }
+
+            if (Dict == null)
+            {
+                Dict = new Dictionary<string, BrokenFurnitureSync>();
+            }
+            Dict.Remove(Key);
+            Dict.Add(Key, furn);
+            ValidateRootExits();
+            SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
+            RecentBrokenFurns.Add(Scene, Dict);
+        }
+        public static Dictionary<string, BrokenFurnitureSync> LoadFurnsData(string scene)
+        {
+            int SaveSeed = GetSeed();
+            string Key = GetKeyTemplate(SaveKeyTemplateType.Furns, scene);
+
+            Dictionary<string, BrokenFurnitureSync> Dict;
+            if (RecentBrokenFurns.TryGetValue(scene, out Dict))
+            {
+                return Dict;
+            }
+
+            string LoadedContent = LoadData(Key, SaveSeed);
+            if (LoadedContent != "")
+            {
+                return JSON.Load(LoadedContent).Make<Dictionary<string, BrokenFurnitureSync>>();
+            }
+            return null;
+        }
+
+        public static void SaveGlobalData()
+        {
+            Log("Dedicated server saving...");
+            Dictionary<string, string> GlobalData = new Dictionary<string, string>();
+            GlobalData.Add("pickedgears", JSON.Dump(MyMod.PickedGears));
+            GlobalData.Add("ropes", JSON.Dump(MyMod.DeployedRopes));
+            GlobalData.Add("containers", JSON.Dump(MyMod.LootedContainers));
+            GlobalData.Add("plants", JSON.Dump(MyMod.HarvestedPlants));
+            GlobalData.Add("shelters", JSON.Dump(MyMod.ShowSheltersBuilded));
+            int[] saveProxy = { MyMod.MinutesFromStartServer };
+            GlobalData.Add("rtt", JSON.Dump(saveProxy));
+            GlobalData.Add("killedanimals", JSON.Dump(Shared.AnimalsKilled));
+            GlobalData.Add("deathcreates", JSON.Dump(MyMod.DeathCreates));
+            string[] saveProxy2 = { MyMod.OveridedTime };
+            GlobalData.Add("gametime", JSON.Dump(saveProxy2));
+            string Jonny = JSON.Dump(GlobalData);
+            SaveData("GlobalServerData", Jonny, GetSeed());
+            Log("Save is done! Next save " + MyMod.DsSavePerioud + " seconds later");
+        }
 
         public class KnockData
         {
@@ -683,9 +760,14 @@ namespace SkyCoop
             {
                 SaveData(GetKeyTemplate(SaveKeyTemplateType.Openables, item.Key), JSON.Dump(item.Value), SaveSeed);
             }
+            foreach (var item in RecentBrokenFurns)
+            {
+                SaveData(GetKeyTemplate(SaveKeyTemplateType.Furns, item.Key), JSON.Dump(item.Value), SaveSeed);
+            }
             RecentVisual = new Dictionary<string, Dictionary<int, DataStr.DroppedGearItemDataPacket>>();
             RecentData = new Dictionary<string, Dictionary<int, DataStr.SlicedJsonDroppedGear>>();
             RecentOpenableThings = new Dictionary<string, Dictionary<string, bool>>();
+            RecentBrokenFurns = new Dictionary<string, Dictionary<string, BrokenFurnitureSync>>();
 
             if (watch != null)
             {
@@ -850,6 +932,7 @@ namespace SkyCoop
             DropsVisual = 1,
             DropsData = 2,
             Openables = 3,
+            Furns = 4,
         }
 
         public static string GetKeyTemplate(SaveKeyTemplateType T, string Scene, string GUID = "")
@@ -864,6 +947,8 @@ namespace SkyCoop
                     return Scene + "_Open";
                 case SaveKeyTemplateType.DropsData:
                     return Scene + "_DropsData";
+                case SaveKeyTemplateType.Furns:
+                    return Scene + "_Furns";
                 default:
                     return "_UNKNOWN";
             }
@@ -1179,26 +1264,6 @@ namespace SkyCoop
             string Name = LoadData("MultiplayerNickName");
             return Name;
         }
-        public static void SaveGlobalData()
-        {
-            Log("Dedicated server saving...");
-            Dictionary<string, string> GlobalData = new Dictionary<string, string>();
-            GlobalData.Add("furns", JSON.Dump(MyMod.BrokenFurniture));
-            GlobalData.Add("pickedgears", JSON.Dump(MyMod.PickedGears));
-            GlobalData.Add("ropes", JSON.Dump(MyMod.DeployedRopes));
-            GlobalData.Add("containers", JSON.Dump(MyMod.LootedContainers));
-            GlobalData.Add("plants", JSON.Dump(MyMod.HarvestedPlants));
-            GlobalData.Add("shelters", JSON.Dump(MyMod.ShowSheltersBuilded));
-            int[] saveProxy = { MyMod.MinutesFromStartServer };
-            GlobalData.Add("rtt", JSON.Dump(saveProxy));
-            GlobalData.Add("killedanimals", JSON.Dump(Shared.AnimalsKilled));
-            GlobalData.Add("deathcreates", JSON.Dump(MyMod.DeathCreates));
-            string[] saveProxy2 = { MyMod.OveridedTime };
-            GlobalData.Add("gametime", JSON.Dump(saveProxy2));
-            string Jonny = JSON.Dump(GlobalData);
-            SaveData("GlobalServerData", Jonny, GetSeed());
-            Log("Save is done! Next save "+MyMod.DsSavePerioud+" seconds later");
-        }
         public static string GetDictionaryString(Dictionary<string, string> Dict, string Key)
         {
             string Val;
@@ -1219,7 +1284,6 @@ namespace SkyCoop
             {
                 return;
             }
-            MyMod.BrokenFurniture = JSON.Load(GetDictionaryString(GlobalData, "furns")).Make<List<BrokenFurnitureSync>>();
             MyMod.PickedGears = JSON.Load(GetDictionaryString(GlobalData, "pickedgears")).Make<List<PickedGearSync>>();
             MyMod.DeployedRopes = JSON.Load(GetDictionaryString(GlobalData, "ropes")).Make<List<ClimbingRopeSync>>();
             MyMod.LootedContainers = JSON.Load(GetDictionaryString(GlobalData, "containers")).Make<List<ContainerOpenSync>>();

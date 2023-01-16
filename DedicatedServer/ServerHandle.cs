@@ -111,7 +111,6 @@ namespace GameServer
             
             ServerSend.SERVERCFG(_fromClient);
             ServerSend.GEARPICKUPLIST(_fromClient);
-            ServerSend.FURNBROKENLIST(_fromClient);
             ServerSend.ROPELIST(_fromClient);
             ServerSend.LOOTEDCONTAINERLIST(_fromClient);
             ServerSend.LOOTEDHARVESTABLEALL(_fromClient);
@@ -699,9 +698,12 @@ namespace GameServer
             DataStr.BrokenFurnitureSync furn = _packet.ReadFurn();
 
 #if (!DEDICATED)
-
-            MyMod.OnFurnitureDestroyed(furn.m_Guid, furn.m_ParentGuid, furn.m_LevelID, furn.m_LevelGUID, false);
+            if(furn.m_LevelGUID == MyMod.level_guid)
+            {
+                MyMod.RemoveBrokenFurniture(furn.m_Guid, furn.m_ParentGuid);
+            }
 #endif
+            MPSaveManager.AddBrokenFurn(furn);
 
             ServerSend.FURNBROKEN(_fromClient, furn, false);
         }
@@ -1162,6 +1164,14 @@ namespace GameServer
             {
                 string GUID = item.Key.Split('_')[1];
                 ServerSend.ADDDOORLOCK(_fromClient, GUID, Scene);
+            }
+            Dictionary<string, BrokenFurnitureSync> Furns = MPSaveManager.LoadFurnsData(Scene);
+            if(Furns != null)
+            {
+                foreach (var item in Furns)
+                {
+                    ServerSend.FURNBROKEN(0, item.Value, false, _fromClient);
+                }
             }
 
             Shared.ModifyDynamicGears(Scene);

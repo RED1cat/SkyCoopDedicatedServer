@@ -30,7 +30,7 @@ namespace SkyCoop
         public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
         public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
         public static bool DSQuit = false;
-        public static float LocalChatMaxDistance = 35f;
+        public static float LocalChatMaxDistance = 70f;
 
 
         public enum LoggerColor
