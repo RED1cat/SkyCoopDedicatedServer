@@ -416,6 +416,21 @@ namespace SkyCoop
 #endif
                 WeatherUpdateSecond();
                 SafeZoneManager.UpdatePlayersSafeZoneStatus();
+                for (int n = 0; n < MyMod.RecentlyPickedGears.Count; n++)
+                {
+                    DataStr.PickedGearSync currGear = MyMod.RecentlyPickedGears[n];
+                    if (currGear != null)
+                    {
+                        if (currGear.m_Recently > 0)
+                        {
+                            currGear.m_Recently = currGear.m_Recently - 1;
+                        }
+                        if (currGear.m_Recently <= 0)
+                        {
+                            MyMod.RecentlyPickedGears.RemoveAt(n);
+                        }
+                    }
+                }
             }
         }
 
@@ -480,6 +495,17 @@ namespace SkyCoop
             float NewFloat = Quat.X + Quat.Y + Quat.Z;
 #endif
             return NewFloat.GetHashCode();
+        }
+
+        public static long GetVectorHashV2(Vector3 v3)
+        {
+#if (!DEDICATED)
+            
+            string Base = v3.x.ToString() + v3.y.ToString() + v3.z.ToString();
+#else
+            string Base = v3.X.ToString() + v3.Y.ToString() + v3.Z.ToString();
+#endif
+            return GetDeterministicId(Base);
         }
 
 
@@ -1141,11 +1167,21 @@ namespace SkyCoop
                 MPSaveManager.ChangeOpenableThingState(Scene, GUID, state);
             }
         }
-        public static void SendContainerData(string DataProxy, string LevelKey, string GUID, int SendTo = 0)
+        public static string ContainerDecompressedDataBackup = "";
+
+        public static void SendContainerData(string DataProxy, string LevelKey, string GUID, string DecompressedBackup, int SendTo = 0)
         {
             byte[] bytesToSlice = Encoding.UTF8.GetBytes(DataProxy);
-            int Hash = GUID.GetHashCode();
+            string HashDummy = GUID + DataProxy;
+            int Hash = HashDummy.GetHashCode();
+            long CheckHash = GetDeterministicId(HashDummy);
             Log("Going to sent " + bytesToSlice.Length + "bytes");
+#if (!DEDICATED)
+            if (!string.IsNullOrEmpty(DecompressedBackup) && MyMod.sendMyPosition)
+            {
+                ContainerDecompressedDataBackup = DecompressedBackup;
+            }
+#endif
 
             int CHUNK_SIZE = 1000;
             int SlicesSent = 0;
@@ -1165,6 +1201,7 @@ namespace SkyCoop
                     SlicedPacket.m_GearName = LevelKey + "|" + GUID;
                     SlicedPacket.m_SendTo = 0;
                     SlicedPacket.m_Hash = Hash;
+                    SlicedPacket.m_CheckHash = CheckHash;
                     SlicedPacket.m_Str = jsonStringSlice;
 
                     if (BytesBuffer.Count != 0)
@@ -1201,6 +1238,7 @@ namespace SkyCoop
                     SlicedPacket.m_GearName = LevelKey + "|" + GUID;
                     SlicedPacket.m_SendTo = 0;
                     SlicedPacket.m_Hash = Hash;
+                    SlicedPacket.m_CheckHash = CheckHash;
                     SlicedPacket.m_Str = jsonStringSlice;
                     SlicedPacket.m_Last = true;
 
@@ -1224,6 +1262,7 @@ namespace SkyCoop
                 SlicedPacket.m_GearName = LevelKey + "|" + GUID;
                 SlicedPacket.m_SendTo = 0;
                 SlicedPacket.m_Hash = Hash;
+                SlicedPacket.m_CheckHash = CheckHash;
                 SlicedPacket.m_Str = DataProxy;
                 SlicedPacket.m_Last = true;
 
@@ -1259,6 +1298,8 @@ namespace SkyCoop
 
         public static void AddSlicedJsonDataForContainer(DataStr.SlicedJsonData jData, int From = -1)
         {
+            bool Error = false;
+            bool Finished = false;
             if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
             {
                 string previousString = "";
@@ -1279,6 +1320,7 @@ namespace SkyCoop
             if (jData.m_Last)
             {
                 string finalJsonData = "";
+                Finished = true;
                 if (MyMod.SlicedJsonDataBuffer.TryGetValue(jData.m_Hash, out finalJsonData) == true)
                 {
                     MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
@@ -1286,30 +1328,68 @@ namespace SkyCoop
                     string OriginalData = jData.m_GearName;
                     string Scene = OriginalData.Split(Convert.ToChar("|"))[0];
                     string GUID = OriginalData.Split(Convert.ToChar("|"))[1];
+                    long CheckHash = GetDeterministicId(GUID + finalJsonData);
 
+                    bool IsBase64 = IsBase64String(finalJsonData);
                     Log("Finished loading container data for " + jData.m_Hash);
+
+                    if (IsBase64)
+                    {
+                        //Log("This is base64!");
+                        
+                        if(jData.m_CheckHash == CheckHash)
+                        {
+                            //Log("Checkhash is valid!");
+                        } else{
+                            Log("Checkhash is NOT valid. Got "+ CheckHash+" expected "+ jData.m_Hash, LoggerColor.Red);
+                            Error = true;
+                        }
+                    } else
+                    {
+                        Log("This is NOT base64!", LoggerColor.Red);
+                        Error = true;
+                    }
 
 #if (!DEDICATED)
                     if (MyMod.iAmHost == true)
                     {
-                        MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
+                        if (!Error)
+                        {
+                            MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
+                        }
                     }
                     if (MyMod.sendMyPosition == true)
                     {
-                        MyMod.DiscardRepeatPacket();
-                        MyMod.FinishOpeningFakeContainer(finalJsonData);
+                        if (!Error)
+                        {
+                            MyMod.DiscardRepeatPacket();
+                            MyMod.FinishOpeningFakeContainer(finalJsonData);
+                        } else
+                        {
+                            MyMod.DiscardRepeatPacket();
+                            MyMod.RemovePleaseWait();
+                            GameManager.GetPlayerManagerComponent().SetControlMode(PlayerControlMode.Normal);
+                            string Title = "INVALID CONTAINER DATA";
+                            string Text = "Server sent invalid data, this can be network delay problem, please press Confirm to try load data again. If problem stays, message us about this problem.\n\n\n\n\n\n\nGUID: "+Scene +"_"+ GUID+ "\nCheckhash:"+CheckHash+"\nExpected:  "+jData.m_CheckHash+"\nIs base64 "+ IsBase64;
+                            InterfaceManager.m_Panel_Confirmation.AddConfirmation(Panel_Confirmation.ConfirmationType.Confirm, Title, "\n" + Text, Panel_Confirmation.ButtonLayout.Button_2, Panel_Confirmation.Background.Transperent, null, null);
+                        }
                     }
 #else
-                    MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
+                    if (!Error)
+                    {
+                        MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
+                    }
 #endif
-
-
                 }
             }
 
             if (From != -1)
             {
                 ServerSend.READYSENDNEXTSLICE(From, true);
+                if (Finished)
+                {
+                    ServerSend.FINISHEDSENDINGCONTAINER(From, Error);
+                }
             }
         }
 
@@ -1511,15 +1591,12 @@ namespace SkyCoop
             ServerSend.READYSENDNEXTSLICEGEAR(ClientID, true);
         }
 
-        public static void AddLootedContainer(DataStr.ContainerOpenSync box, bool needSync, int Looter = 0)
+        public static void AddLootedContainer(DataStr.ContainerOpenSync box, bool needSync, int Looter = 0, int State = 0)
         {
-            Log("Trying to add looted container " + box.m_Guid);
-            if (MyMod.LootedContainers.Contains(box) == false)
+            if(MyMod.iAmHost)
             {
-                Log("Added looted container " + box.m_Guid + " Scene " + box.m_LevelGUID);
-                MyMod.LootedContainers.Add(box);
+                MPSaveManager.AddLootedContainer(box);
             }
-
 #if (!DEDICATED)
 
             if (needSync)
@@ -1528,23 +1605,32 @@ namespace SkyCoop
                 {
                     if (Looter == 0)
                     {
-                        ServerSend.LOOTEDCONTAINER(0, box, true);
+                        ServerSend.LOOTEDCONTAINER(0, box, State, true);
                     } else
                     {
-                        ServerSend.LOOTEDCONTAINER(Looter, box, false);
+                        ServerSend.LOOTEDCONTAINER(Looter, box, State, false);
+                    }
+                }else if (MyMod.sendMyPosition)
+                {
+                    using (Packet _packet = new Packet((int)ClientPackets.CHANGECONTAINERSTATE))
+                    {
+                        _packet.Write(box.m_Guid);
+                        _packet.Write(MyMod.level_guid);
+                        _packet.Write(State);
+                        MyMod.SendUDPData(_packet);
                     }
                 }
             } else
             {
-                if (box.m_LevelID == MyMod.levelid && box.m_LevelGUID == MyMod.level_guid)
+                if (box.m_LevelGUID == MyMod.level_guid)
                 {
-                    MyMod.ApplyLootedContainers();
+                    MyMod.RemoveLootFromContainer(box.m_Guid, State);
                 }
             }
 #else
             if(needSync)
             {
-                ServerSend.LOOTEDCONTAINER(Looter, box, false);
+                ServerSend.LOOTEDCONTAINER(Looter, box, State, false);
             }
 #endif
         }
@@ -1817,7 +1903,7 @@ namespace SkyCoop
             ServerSend.CANCLEPICKUP(0, data, true);
 #endif
         }
-        public static void AddPickedGear(Vector3 spawn, int lvl, string lvlguid, int pickerId, int isntID, bool needSync)
+        public static void AddPickedGear(Vector3 spawn, int lvl, string lvlguid, int pickerId, int isntID, string gearName, bool needSync)
         {
             DataStr.PickedGearSync picked = new DataStr.PickedGearSync();
             picked.m_Spawn = spawn;
@@ -1825,15 +1911,14 @@ namespace SkyCoop
             picked.m_LevelGUID = lvlguid;
             picked.m_PickerID = pickerId;
             picked.m_MyInstanceID = isntID;
+            picked.m_GearName = gearName;
 
-            if (MyMod.PickedGears.Contains(picked) == false)
-            {
-                MyMod.PickedGears.Add(picked);
-            }
+            long Key = MPSaveManager.GetPickedGearKey(picked);
 
 #if (!DEDICATED)
             if (MyMod.iAmHost == true)
             {
+                MPSaveManager.AddPickedGear(picked);
                 if (MyMod.RecentlyPickedGears.Contains(picked) == false)
                 {
                     AddRecentlyPickedGear(picked);
@@ -1847,6 +1932,7 @@ namespace SkyCoop
             {
                 if (MyMod.sendMyPosition == true)
                 {
+                    Log("Sent pickup "+ Key);
                     using (Packet _packet = new Packet((int)ClientPackets.GEARPICKUP))
                     {
                         _packet.Write(picked);
@@ -1860,12 +1946,13 @@ namespace SkyCoop
                 }
             } else
             {
-                if (lvl == MyMod.levelid && lvlguid == MyMod.level_guid)
+                if (lvlguid == MyMod.level_guid)
                 {
-                    MyMod.DestoryPickedGears();
+                    MyMod.RemovePickedGear(Key);
                 }
             }
 #else
+            MPSaveManager.AddPickedGear(picked);
             if (MyMod.RecentlyPickedGears.Contains(picked) == false)
             {
                 AddRecentlyPickedGear(picked);
@@ -1982,6 +2069,7 @@ namespace SkyCoop
                 Animal.m_Hide = Animal.m_Hide - HideTaken;
                 AnimalsKilled.Remove(GUID);
                 AnimalsKilled.Add(GUID, Animal);
+                MPSaveManager.AnimalsKilledChanged = true;
             }
         }
 
@@ -1991,11 +2079,13 @@ namespace SkyCoop
             if (AnimalsKilled.TryGetValue(GUID, out Animal))
             {
                 AnimalsKilled.Remove(GUID);
+                MPSaveManager.AnimalsKilledChanged = true;
             }
         }
 
         public static int PickUpRabbit(string GUID)
         {
+            MPSaveManager.AnimalsKilledChanged = true;
             if (StunnedRabbits.ContainsKey(GUID)) // 0 is Nothing. 1 is Dead. 2 is Alive
             {
                 StunnedRabbits.Remove(GUID);
@@ -2083,6 +2173,7 @@ namespace SkyCoop
         }
         public static void ReviveRabbit(string GUID)
         {
+            MPSaveManager.AnimalsKilledChanged = true;
             ServerSend.ANIMALDELETE(0, GUID);
             Vector3 V3;
             string LevelGUID;
@@ -2184,7 +2275,7 @@ namespace SkyCoop
                 Animal.m_Guts = bh.m_Guts;
                 Animal.m_Hide = 1;
                 AnimalsKilled.Add(GUID, Animal);
-
+                MPSaveManager.AnimalsKilledChanged = true;
 #if (!DEDICATED)
                 if (LevelGUID == MyMod.level_guid)
                 {
@@ -2198,6 +2289,7 @@ namespace SkyCoop
                 {
                     BanSpawnRegion(RegionGUID);
                 }
+
             }
         }
         public static void ResetDataForSlot(int _from)
@@ -2654,6 +2746,11 @@ namespace SkyCoop
 
                 return Encoding.UTF8.GetString(buffer);
             }
+        }
+        public static bool IsBase64String(string s)
+        {
+            s = s.Trim();
+            return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None);
         }
         public static long GetDeterministicId(string m)
         {

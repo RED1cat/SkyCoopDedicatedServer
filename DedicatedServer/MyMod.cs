@@ -16,9 +16,9 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani";
             public const string Company = null;
-            public const string Version = "0.11.1";
+            public const string Version = "0.11.2";
             public const string DownloadLink = null;
-            public const int RandomGenVersion = 4;
+            public const int RandomGenVersion = 5;
         }
         
         public static bool DedicatedServerAppMode = true;
@@ -57,7 +57,6 @@ namespace SkyCoop
 
         public static List<DataStr.DeathContainerData> DeathCreates = new List<DataStr.DeathContainerData>();
         public static List<DataStr.BrokenFurnitureSync> BrokenFurniture = new List<DataStr.BrokenFurnitureSync>();
-        public static List<DataStr.PickedGearSync> PickedGears = new List<DataStr.PickedGearSync>();
         public static List<DataStr.ClimbingRopeSync> DeployedRopes = new List<DataStr.ClimbingRopeSync>();
         public static List<DataStr.ContainerOpenSync> LootedContainers = new List<DataStr.ContainerOpenSync>();
         public static List<string> HarvestedPlants = new List<string>();
@@ -99,7 +98,7 @@ namespace SkyCoop
 
         protected override void Initialize()
         {
-            Supporters.GetSupportersList(true);
+            Supporters.GetSupportersList(false);
             ResourceIndependent.Init();
 
             DataStr.DedicatedServerData config = Shared.LoadDedicatedServerConfig();
