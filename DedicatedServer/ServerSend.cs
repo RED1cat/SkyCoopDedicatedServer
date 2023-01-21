@@ -2312,5 +2312,14 @@ namespace GameServer
                 SendUDPData(For, _packet);
             }
         }
+        public static void TRIGGEREMOTE(int From, int EmoteID)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.FINISHEDSENDINGCONTAINER))
+            {
+                _packet.Write(From);
+                _packet.Write(EmoteID);
+                SendUDPDataToAllButNotSender(_packet, From);
+            }
+        }
     }
 }

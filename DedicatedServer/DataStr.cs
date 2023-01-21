@@ -548,6 +548,7 @@ namespace SkyCoop
             public bool m_ForceStandup = false;
             public bool m_FollowDollCamera = false;
             public bool m_NeedFreeHands = false;
+            public bool m_LeftHandEmote = false;
         }
         public class CustomChallengeTaskData
         {

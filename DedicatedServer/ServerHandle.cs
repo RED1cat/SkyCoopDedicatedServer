@@ -1682,5 +1682,29 @@ namespace GameServer
 #endif
             ServerSend.CHANGECONTAINERSTATE(_fromClient, GUID, State, Scene, false);
         }
+        public static void TRIGGEREMOTE(int _fromClient, Packet _packet)
+        {
+            int EmoteID = _packet.ReadInt();
+
+#if (!DEDICATED)
+            if (MyMod.playersData[_fromClient] != null && MyMod.players[_fromClient] != null)
+            {
+                if (MyMod.playersData[_fromClient].m_LevelGuid == MyMod.level_guid)
+                {
+                    Comps.MultiplayerPlayerAnimator Anim = MyMod.players[_fromClient].GetComponent<Comps.MultiplayerPlayerAnimator>();
+                    if (Anim != null)
+                    {
+                        DataStr.MultiplayerEmote Emote = MyMod.GetEmoteByID(EmoteID);
+
+                        if (Emote.m_LeftHandEmote)
+                        {
+                            Anim.DoLeftHandEmote(Emote.m_Animation);
+                        }
+                    }
+                }
+            }
+#endif
+            ServerSend.TRIGGEREMOTE(_fromClient, EmoteID);
+        }
     }
 }

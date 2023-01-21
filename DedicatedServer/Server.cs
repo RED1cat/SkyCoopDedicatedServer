@@ -348,6 +348,7 @@ namespace GameServer
                 { (int)ClientPackets.WEATHERVOLUNTEER, ServerHandle.WEATHERVOLUNTEER},
                 { (int)ClientPackets.REREGISTERWEATHER, ServerHandle.REREGISTERWEATHER},
                 { (int)ClientPackets.CHANGECONTAINERSTATE, ServerHandle.CHANGECONTAINERSTATE},
+                { (int)ClientPackets.TRIGGEREMOTE, ServerHandle.TRIGGEREMOTE},
             };
             Log("Initialized packets.");
         }

@@ -96,6 +96,7 @@ namespace SkyCoop
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            InactiveSleepTime = new TimeSpan(0);
         }
 
         protected override void Initialize()

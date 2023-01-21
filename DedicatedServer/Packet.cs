@@ -173,6 +173,7 @@ namespace GameServer
         ADDHUDMSG,
         CHANGECONTAINERSTATE,
         FINISHEDSENDINGCONTAINER,
+        TRIGGEREMOTE,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -334,6 +335,7 @@ namespace GameServer
         ADDHUDMSG,
         CHANGECONTAINERSTATE,
         FINISHEDSENDINGCONTAINER,
+        TRIGGEREMOTE,
     }
 
     public class Packet : IDisposable
