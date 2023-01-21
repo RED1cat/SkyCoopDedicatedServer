@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SkyCoop
 {
@@ -89,6 +90,7 @@ namespace SkyCoop
         }
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private FrameCounter _frameCounter = new FrameCounter();
 
         public MyMod()
         {
@@ -166,7 +168,8 @@ namespace SkyCoop
             _spriteBatch.Begin();
 
             CustomConsole.Draw(_spriteBatch, gameTime);
-
+            DrawServetInfo(_spriteBatch, gameTime);
+            
             _spriteBatch.End();
 
             base.Draw(gameTime);
@@ -179,6 +182,15 @@ namespace SkyCoop
             }
             base.OnExiting(sender, args);
         }
+        private void DrawServetInfo(SpriteBatch _spriteBatch, GameTime gameTime)
+        {
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _frameCounter.Update(deltaTime);
 
+            _spriteBatch.Draw(fontBg, new Vector2(0, 0), new Rectangle(0, 0, 100, 44), Color.White);
+
+            _spriteBatch.DrawString(font, "Players: " + PlayersOnServer.ToString(), new Vector2(5, 5), Color.Coral);
+            _spriteBatch.DrawString(font, $"FPS: {Math.Round(_frameCounter.AverageFramesPerSecond, 3)}", new Vector2(5, 25), Color.Coral);
+        }
     }
 }

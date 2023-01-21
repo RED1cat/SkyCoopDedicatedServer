@@ -39,7 +39,7 @@ namespace DedicatedServer
         
         public static void AddLine(string line, Color color)
         {
-
+            line = line.Replace("\n", "").Replace("\r", "");
             if(lineBuffer.Count >= lineBufferLimit)
             {
                 lineBuffer.RemoveAt(0);
