@@ -18,7 +18,7 @@ namespace SkyCoop
         public static string LoadedJSON = "";
         public static Dictionary<string, List<string>> SupportersData = new Dictionary<string, List<string>>();
         public static List<string> EveryOneAvailableFlairs = new List<string>();
-        public static bool DeBug = true;
+        public static bool DeBug = false;
         public static bool FlairsIDsReady = false;
         public static List<string> FlairsIDs = new List<string>();
 
@@ -91,7 +91,7 @@ namespace SkyCoop
                             Flair.SetActive(false);
                         }else {
                             Flair.SetActive(true);
-                            int DisplaySpot = FlairInx + 1;
+                            int DisplaySpot = Spot + 1;
                             DebugLog(DebugName + " equipped "+GetFlairNameByID(FlairInx)+" on spot "+ DisplaySpot);
                         }
                     }
