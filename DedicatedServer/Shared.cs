@@ -1789,25 +1789,25 @@ namespace SkyCoop
             if (needSync)
             {
                 ServerSend.CHAT(0, message);
-                string LogText = "";
-                LoggerColor TextColor = LoggerColor.Yellow;
-                if (message.m_Type == 1)
-                {
-                    string GlobalOrArea = "[Chat][Global] ";
-                    if (!message.m_Global)
-                    {
-                        GlobalOrArea = "[Chat][Area] ";
-                        TextColor = LoggerColor.White;
-                    }
-
-                    LogText = GlobalOrArea + message.m_By + ": " + message.m_Message;
-                } else
-                {
-                    LogText = " " + message.m_Message;
-                    TextColor = LoggerColor.Green;
-                }
-                Log(LogText, TextColor);
             }
+            string LogText = "";
+            LoggerColor TextColor = LoggerColor.Yellow;
+            if (message.m_Type == 1)
+            {
+                string GlobalOrArea = "[Chat][Global] ";
+                if (!message.m_Global)
+                {
+                    GlobalOrArea = "[Chat][Area] ";
+                    TextColor = LoggerColor.White;
+                }
+
+                LogText = GlobalOrArea + message.m_By + ": " + message.m_Message;
+            } else
+            {
+                LogText = " " + message.m_Message;
+                TextColor = LoggerColor.Green;
+            }
+            Log(LogText, TextColor);
 #endif
         }
 
