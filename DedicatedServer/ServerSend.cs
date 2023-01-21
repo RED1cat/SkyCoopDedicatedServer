@@ -2314,7 +2314,7 @@ namespace GameServer
         }
         public static void TRIGGEREMOTE(int From, int EmoteID)
         {
-            using (Packet _packet = new Packet((int)ServerPackets.FINISHEDSENDINGCONTAINER))
+            using (Packet _packet = new Packet((int)ServerPackets.TRIGGEREMOTE))
             {
                 _packet.Write(From);
                 _packet.Write(EmoteID);
