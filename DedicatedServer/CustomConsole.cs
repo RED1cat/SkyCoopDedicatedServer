@@ -56,8 +56,14 @@ namespace DedicatedServer
             if (line.Length > symbolLimit)
             {
                 string curLine = "";
+                char charItem;
                 foreach (char item in line)
                 {
+                    charItem = item;
+                    if ((char.IsLetterOrDigit(charItem) || char.IsSymbol(charItem) || char.IsPunctuation(charItem) || char.IsWhiteSpace(charItem)) == false)
+                    {
+                        charItem = '?';
+                    }
                     if (curLine.Length == symbolLimit)
                     {
                         Line lineToAdd1 = new Line();
@@ -69,11 +75,10 @@ namespace DedicatedServer
                         }
                         lineBuffer.Add(lineToAdd1);
                         curLine = "";
-                        
                     }
                     else
                     {
-                        curLine += item;
+                        curLine += charItem;
                     }
                 }
                 Line lineToAdd2 = new Line();
@@ -324,8 +329,6 @@ namespace DedicatedServer
                 textBoxDisplayCharacters.Append(e.Character);
             }
         }
-        
-
     }
 
 }
