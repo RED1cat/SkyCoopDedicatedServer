@@ -137,6 +137,10 @@ namespace SkyCoop
                 Directory.CreateDirectory("Plugins");
             }
 
+            Valid.m_Files.Sort(delegate (ModHashPair x, ModHashPair y) {
+                return x.m_Name.CompareTo(y.m_Name);
+            });
+
             string MainHash = "";
             string FullString = "";
             foreach (ModHashPair mod in Valid.m_Files)
