@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
+using System.Net.NetworkInformation;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -1295,7 +1296,7 @@ namespace SkyCoop
             Log("Slices sent " + SlicesSent);
 #endif
         }
-
+        public static bool CloseContainerOnCancle = false;
         public static void AddSlicedJsonDataForContainer(DataStr.SlicedJsonData jData, int From = -1)
         {
             bool Error = false;
@@ -1368,9 +1369,11 @@ namespace SkyCoop
                         {
                             MyMod.DiscardRepeatPacket();
                             MyMod.RemovePleaseWait();
+                            
                             GameManager.GetPlayerManagerComponent().SetControlMode(PlayerControlMode.Normal);
                             string Title = "INVALID CONTAINER DATA";
                             string Text = "Server sent invalid data, this can be network delay problem, please press Confirm to try load data again. If problem stays, message us about this problem.\n\n\n\n\n\n\nGUID: "+Scene +"_"+ GUID+ "\nCheckhash:"+CheckHash+"\nExpected:  "+jData.m_CheckHash+"\nIs base64 "+ IsBase64;
+                            CloseContainerOnCancle = true;
                             InterfaceManager.m_Panel_Confirmation.AddConfirmation(Panel_Confirmation.ConfirmationType.Confirm, Title, "\n" + Text, Panel_Confirmation.ButtonLayout.Button_2, Panel_Confirmation.Background.Transperent, null, null);
                         }
                     }
@@ -1798,7 +1801,7 @@ namespace SkyCoop
                 if (!message.m_Global)
                 {
                     GlobalOrArea = "[Chat][Area] ";
-                    TextColor = LoggerColor.White;
+                    TextColor = LoggerColor.Blue;
                 }
 
                 LogText = GlobalOrArea + message.m_By + ": " + message.m_Message;
@@ -2755,6 +2758,16 @@ namespace SkyCoop
         public static long GetDeterministicId(string m)
         {
             return (long)m.ToCharArray().Select((c, i) => Math.Pow(i, c % 5) * Math.Max(Math.Sqrt(c), i)).Sum();
+        }
+        public static string GetMacAddress()
+        {
+            string macAddr =
+                (
+                    from nic in NetworkInterface.GetAllNetworkInterfaces()
+                    where nic.OperationalStatus == OperationalStatus.Up
+                    select nic.GetPhysicalAddress().ToString()
+                ).FirstOrDefault();
+            return macAddr;
         }
     }
 }

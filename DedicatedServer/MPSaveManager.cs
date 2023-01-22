@@ -1551,12 +1551,17 @@ namespace SkyCoop
         }
         public static string GetSubNetworkGUID()
         {
-            string GUID = LoadData("SubNetworkGUID");
-            if(string.IsNullOrEmpty(GUID))
-            {
-                GUID = GetNewUGUID();
-                SaveData("SubNetworkGUID", GUID);
-            }
+            string GUID = "";
+            //GUID = LoadData("SubNetworkGUID");
+            //if(string.IsNullOrEmpty(GUID))
+            //{
+            //    GUID = GetNewUGUID();
+            //    SaveData("SubNetworkGUID", GUID);
+            //}
+
+            GUID = Shared.GetMacAddress();
+
+
             return GUID;
         }
     }

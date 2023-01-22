@@ -104,7 +104,7 @@ namespace GameServer
                     string SubNetworkGUID = "";
                     if (_clientId >= 0)
                     {
-                        if (_packet.UnreadLength() > 40)
+                        if (_packet.UnreadLength() > 12)
                         {
                             SubNetworkGUID = _packet.ReadString();
                         } else{
