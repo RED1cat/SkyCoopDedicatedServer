@@ -102,16 +102,14 @@ namespace GameServer
                 {
                     int _clientId = _packet.ReadInt();
                     string SubNetworkGUID = "";
-                    if (_clientId >= 0)
+                    if (_packet.UnreadLength() > 12)
                     {
-                        if (_packet.UnreadLength() > 12)
-                        {
-                            SubNetworkGUID = _packet.ReadString();
-                        } else{
-                            Log("Client without SubNetworkGUID trying to connect, rejecting");
-                            ServerSend.KICKMESSAGE(_clientEndPoint, "Your version of the mod, isn't supported\nHost using version "+MyMod.BuildInfo.Version);
-                            return;
-                        }
+                        SubNetworkGUID = _packet.ReadString();
+                    } else
+                    {
+                        Log("Client without SubNetworkGUID trying to connect, rejecting");
+                        ServerSend.KICKMESSAGE(_clientEndPoint, "Your version of the mod, isn't supported\nHost using version " + MyMod.BuildInfo.Version);
+                        return;
                     }
                     if (MyMod.DebugTrafficCheck)
                     {
