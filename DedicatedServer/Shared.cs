@@ -1751,16 +1751,16 @@ namespace SkyCoop
                 message.m_TextObj = Comp;
                 if (message.m_Type == 1)
                 {
-                    string GlobalOrArea = " [Global] ";
+                    string GlobalOrArea = "[Global] ";
                     if (!message.m_Global)
                     {
-                        GlobalOrArea = " [Area] ";
+                        GlobalOrArea = "[Area] ";
                     }
                     
                     Comp.text = GlobalOrArea + message.m_By + ": " + message.m_Message;
                 } else
                 {
-                    Comp.text = " "+message.m_Message;
+                    Comp.text = message.m_Message;
                 }
 
                 if (message.m_Type == 0)

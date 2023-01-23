@@ -477,7 +477,7 @@ namespace SkyCoop
             }
             if (!string.IsNullOrEmpty(KilledAnimalsJSON))
             {
-                Shared.AnimalsKilled = JSON.Load(UsersSavesHashJSON).Make<Dictionary<string, DataStr.AnimalKilled>>();
+                Shared.AnimalsKilled = JSON.Load(KilledAnimalsJSON).Make<Dictionary<string, DataStr.AnimalKilled>>();
             }
         }
 
