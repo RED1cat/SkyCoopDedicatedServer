@@ -2711,9 +2711,9 @@ namespace SkyCoop
                 string Reason = "";
                 if(Args.Length > 2)
                 {
-                    foreach (string Word in Args)
+                    for (int i = 2; i < Args.Length; i++)
                     {
-                        Reason += Word + " ";
+                        Reason += Args[i] + " ";
                     }
                 }
 
@@ -2758,9 +2758,9 @@ namespace SkyCoop
                 string Reason = "";
                 if (Args.Length > 2)
                 {
-                    foreach (string Word in Args)
+                    for (int i = 2; i < Args.Length; i++)
                     {
-                        Reason += Word + " ";
+                        Reason += Args[i] + " ";
                     }
                 }
                 if (string.IsNullOrEmpty(MAC))
@@ -2782,7 +2782,7 @@ namespace SkyCoop
             {
                 string[] Args = CMD.Split(' ');
                 string MAC = Args[1];
-                if (string.IsNullOrEmpty(MAC))
+                if (!string.IsNullOrEmpty(MAC))
                 {
                     if (MPSaveManager.BannedUsers.ContainsKey(MAC))
                     {
