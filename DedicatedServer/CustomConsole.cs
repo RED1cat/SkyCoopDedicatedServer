@@ -39,7 +39,7 @@ namespace DedicatedServer
         
         public static void AddLine(string line, Color color)
         {
-            line = line.Replace("\n", "").Replace("\r", "");
+            line = line.Replace("\r", "");
             if(lineBuffer.Count >= lineBufferLimit)
             {
                 lineBuffer.RemoveAt(0);
@@ -53,7 +53,7 @@ namespace DedicatedServer
                 }
             }
 
-            if (line.Length > symbolLimit)
+            if (line.Length > symbolLimit || line.Contains('\n'))
             {
                 string curLine = "";
                 char charItem;
@@ -64,8 +64,12 @@ namespace DedicatedServer
                     {
                         charItem = '?';
                     }
-                    if (curLine.Length == symbolLimit)
+                    if (curLine.Length == symbolLimit || item == '\n')
                     {
+                        if(item == '\n')
+                        {
+                            charItem = new char();
+                        }
                         Line lineToAdd1 = new Line();
                         lineToAdd1.color = color;
                         lineToAdd1.line = curLine;
@@ -111,8 +115,18 @@ namespace DedicatedServer
                 {
                     lime = lime.Replace("\r", "");
                 }
-                Logger.Log("[Console] " + lime, LoggerColor.Yellow);
-                Logger.Log("[Console] " + Shared.ExecuteCommand(lime), LoggerColor.Yellow);
+
+                if (lime.Contains('/'))
+                {
+                    lime = lime.Replace("/", "");
+                    Logger.Log("[XNAConsole] " + lime, LoggerColor.Yellow);
+                    Logger.Log("[XNAConsole] " + MyMod.ConsoleCommandExec(lime), LoggerColor.Yellow);
+                }
+                else
+                {
+                    Logger.Log("[Console] " + lime, LoggerColor.Yellow);
+                    Logger.Log("[Console] " + Shared.ExecuteCommand(lime), LoggerColor.Yellow);
+                }
 
                 if(commandLineBuffer.Count - 1> commandLineBufferLimit)
                 {

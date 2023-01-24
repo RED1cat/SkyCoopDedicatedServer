@@ -192,5 +192,16 @@ namespace SkyCoop
             _spriteBatch.DrawString(font, "Players: " + PlayersOnServer.ToString(), new Vector2(5, 5), Color.Coral);
             _spriteBatch.DrawString(font, $"FPS: {Math.Round(_frameCounter.AverageFramesPerSecond, 3)}", new Vector2(5, 25), Color.Coral);
         }
+        public static string ConsoleCommandExec(string command)
+        {
+            switch(command)
+            {
+                case "test":
+                    return "test123\n124test";
+                default:
+                    return "Unknown command";
+                    
+            }
+        }
     }
 }
