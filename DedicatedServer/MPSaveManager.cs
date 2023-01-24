@@ -831,6 +831,10 @@ namespace SkyCoop
 
             return AppPath + name;
         }
+        public static string GetSeparator()
+        {
+            return PathSeparator;
+        }
 #else
         public static string GetPathForName(string name, int Seed = 0)
         {
@@ -850,9 +854,14 @@ namespace SkyCoop
 
             return PersistentDataPath.m_Path + PersistentDataPath.m_PathSeparator + name;
         }
+
+        public static string GetSeparator()
+        {
+            return PersistentDataPath.m_PathSeparator;
+        }
 #endif
 
-        public static bool SaveData(string name, string content, int Seed = 0, string CustomPath = "")
+        public static bool SaveData(string name, string content, int Seed = 0, string CustomPath = "", string JustAdd = "")
         {
             if (NoSaveAndLoad)
             {
@@ -872,9 +881,14 @@ namespace SkyCoop
             
             string pathAndFilename = GetPathForName(name, Seed);
 
+
             if (!string.IsNullOrEmpty(CustomPath))
             {
                 pathAndFilename = CustomPath;
+            }
+            if (!string.IsNullOrEmpty(JustAdd))
+            {
+                pathAndFilename = GetPathForName("", Seed)+GetSeparator()+JustAdd;
             }
             string tempFile = pathAndFilename + "_temp";
             if (File.Exists(tempFile))
@@ -1066,8 +1080,9 @@ namespace SkyCoop
             SaveData(Key, JSON.Dump(Dict), SaveSeed);
         }
 
-        public static void AddHarvestedPlant(string GUID, string Scene)
+        public static void AddHarvestedPlant(string GUID, string Scene, int Client = 0)
         {
+            MPStats.AddPlantHarvested(Server.GetMACByID(Client));
             string Key = GUID;
             int SaveSeed = GetSeed();
             string SaveKey = GetKeyTemplate(SaveKeyTemplateType.HarvestedPlants, Scene);
@@ -1115,8 +1130,9 @@ namespace SkyCoop
             return null;
         }
 
-        public static void AddLootedContainer(ContainerOpenSync Box, int State = 0)
+        public static void AddLootedContainer(ContainerOpenSync Box, int State = 0, int Looter = 0)
         {
+            
             string Scene = Box.m_LevelGUID;
             string Key = Box.m_Guid;
             int SaveSeed = GetSeed();
@@ -1125,7 +1141,13 @@ namespace SkyCoop
 
             if (RecentlyLootedContainers.TryGetValue(Scene, out Dict))
             {
-                Dict.Remove(Key);
+                if (Dict.ContainsKey(Key))
+                {
+                    Dict.Remove(Key);
+                } else{
+                    MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+                }
+                
                 Dict.Add(Key, State);
                 RecentlyLootedContainers.Remove(Scene);
                 RecentlyLootedContainers.Add(Scene, Dict);
@@ -1139,7 +1161,16 @@ namespace SkyCoop
             {
                 Dict = new Dictionary<string, int>();
             }
-            Dict.Remove(Key);
+
+            if (Dict.ContainsKey(Key))
+            {
+                Dict.Remove(Key);
+            } else
+            {
+                MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+            }
+
+            
             Dict.Add(Key, State);
             ValidateRootExits();
             SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
@@ -1175,8 +1206,9 @@ namespace SkyCoop
             return Key;
         }
 
-        public static void AddPickedGear(PickedGearSync Gear)
+        public static void AddPickedGear(PickedGearSync Gear, int picker)
         {
+            MPStats.AddPickedGear(Server.GetMACByID(picker));
             string Scene = Gear.m_LevelGUID;
             long Key = GetPickedGearKey(Gear);
             int SaveSeed = GetSeed();

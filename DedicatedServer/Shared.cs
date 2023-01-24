@@ -400,6 +400,7 @@ namespace SkyCoop
         {
             if (MyMod.iAmHost)
             {
+                MPStats.EverySecond();
                 SecondsBeforeUnload = SecondsBeforeUnload + 1;
                 if (SecondsBeforeUnload > MPSaveManager.SaveRecentTimer)
                 {
@@ -1598,7 +1599,7 @@ namespace SkyCoop
         {
             if(MyMod.iAmHost)
             {
-                MPSaveManager.AddLootedContainer(box);
+                MPSaveManager.AddLootedContainer(box, State, Looter);
             }
 #if (!DEDICATED)
 
@@ -1921,7 +1922,7 @@ namespace SkyCoop
 #if (!DEDICATED)
             if (MyMod.iAmHost == true)
             {
-                MPSaveManager.AddPickedGear(picked);
+                MPSaveManager.AddPickedGear(picked, pickerId);
                 if (MyMod.RecentlyPickedGears.Contains(picked) == false)
                 {
                     AddRecentlyPickedGear(picked);
@@ -1955,7 +1956,7 @@ namespace SkyCoop
                 }
             }
 #else
-            MPSaveManager.AddPickedGear(picked);
+            MPSaveManager.AddPickedGear(picked, pickerId);
             if (MyMod.RecentlyPickedGears.Contains(picked) == false)
             {
                 AddRecentlyPickedGear(picked);
@@ -2691,7 +2692,16 @@ namespace SkyCoop
             } else if (Low == "save")
             {
                 MPSaveManager.SaveGlobalData();
+                MPSaveManager.SaveRecentStuff();
+                MPStats.SaveRecentStuff();
+                
                 return "Manual saving done!";
+            } else if (Low == "today" || Low == "showstats" || Low == "stats" || Low == "statistics" || Low == "statistic")
+            {
+                return "\n" + MPStats.TodayStats.GetString(true, false, false);
+            } else if (Low == "globalstats" || Low == "global stats" || Low == "stats global" || Low == "statsglobal" || Low == "alltime")
+            {
+                return "\n" + MPStats.AllTimeStats.GetString(true, false, false);
             }
 #if (DEDICATED)
             else if (Low == "next_weather" || Low == "next weather")

@@ -278,7 +278,7 @@ namespace DedicatedServer
                     keyBackSpaceIsClick = false;
                 }
             }
-            if(cursorBlink) 
+            if(cursorBlink && textBoxHasFocus) 
             {
                 textBoxDisplayCharacters.Append('_');
                 _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);

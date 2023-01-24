@@ -43,6 +43,11 @@ namespace GameServer
             udpListener.BeginReceive(UDPReceiveCallback, null);
 
             Log($"Server started on port {Port}.");
+
+            MPStats.Start();
+#if(!DEDICATED)
+            MPStats.AddPlayer(MPSaveManager.GetSubNetworkGUID(), MyMod.MyChatName);
+#endif
         }
         public static void StartSteam(int _maxPlayers, string[] whitelist = null)
         {
@@ -67,6 +72,8 @@ namespace GameServer
             SteamConnect.Main.SetLobbyServer();
             SteamConnect.Main.SetLobbyState("Playing");
             Log("Server has been runned with InGame time: " + GameManager.GetTimeOfDayComponent().GetHour() + ":" + GameManager.GetTimeOfDayComponent().GetMinutes() + " seed " + GameManager.m_SceneTransitionData.m_GameRandomSeed);
+            MPStats.Start();
+            MPStats.AddPlayer(MPSaveManager.GetSubNetworkGUID(), MyMod.MyChatName);
 #endif
         }
 
@@ -225,6 +232,21 @@ namespace GameServer
                 }
             }
 #endif
+        }
+
+        public static string GetMACByID(int ID)
+        {
+            if(ID == 0)
+            {
+                return MPSaveManager.GetSubNetworkGUID();
+            }
+            
+            Client c;
+            if(clients.TryGetValue(ID, out c))
+            {
+                return c.SubNetworkGUID;
+            }
+            return "";
         }
 
         private static void InitializeServerData()

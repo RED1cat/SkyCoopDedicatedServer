@@ -105,6 +105,7 @@ namespace GameServer
             ServerSend.GAMETIME(MyMod.OveridedTime);
 
             MyMod.playersData[_fromClient].m_Name = _username;
+            MPStats.AddPlayer(Server.clients[_fromClient].SubNetworkGUID, _username);
 
             Log("Client "+ _fromClient+" with user name "+ _username+" connected!");
             Log("Sending init data to new client...");
@@ -927,7 +928,8 @@ namespace GameServer
                     MyMod.RemoveHarvastedPlant(harveData.m_Guid);
                 }
 #endif
-                MPSaveManager.AddHarvestedPlant(harveData.m_Guid, MyMod.playersData[_fromClient].m_LevelGuid);
+                MPSaveManager.AddHarvestedPlant(harveData.m_Guid, MyMod.playersData[_fromClient].m_LevelGuid, _fromClient);
+
                 ServerSend.LOOTEDHARVESTABLE(_fromClient, harveData.m_Guid, MyMod.playersData[_fromClient].m_LevelGuid, false);
             }
 
@@ -1475,6 +1477,7 @@ namespace GameServer
                 MyMod.MakeDeathCreate(Con);
             }
 #endif
+            MPStats.AddDeath(Server.GetMACByID(_fromClient));
 
             ServerSend.ADDDEATHCONTAINER(Con, Con.m_LevelKey, _fromClient);
         }
