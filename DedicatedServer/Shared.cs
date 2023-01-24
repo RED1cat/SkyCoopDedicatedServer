@@ -2703,6 +2703,101 @@ namespace SkyCoop
             {
                 return "\n" + MPStats.AllTimeStats.GetString(true, false, false);
             }
+            else if(Low.StartsWith("kick ") || Low.StartsWith("ban "))
+            {
+                bool Ban = Low.StartsWith("ban ");
+                string[] Args = CMD.Split(' ');
+                int ID = int.Parse(Args[1]);
+                string Reason = "";
+                if(Args.Length > 2)
+                {
+                    foreach (string Word in Args)
+                    {
+                        Reason += Word + " ";
+                    }
+                }
+
+                if(ID > 0 && Server.clients.ContainsKey(ID))
+                {
+                    string Text = "You has been kicked from the server.";
+                    string MAC = "";
+                    if (Ban == true)
+                    {
+                        MAC = Server.clients[ID].SubNetworkGUID;
+                        Text = "You has been banned from the server.";
+                    }
+                    if (string.IsNullOrEmpty(Reason))
+                    {
+                        ServerSend.KICKMESSAGE(ID, Text);
+                    } else
+                    {
+                        ServerSend.KICKMESSAGE(ID, Text+"\nReason: " + Reason);
+                    }
+
+                    if (string.IsNullOrEmpty(MAC))
+                    {
+                        if (!MPSaveManager.BannedUsers.ContainsKey(MAC))
+                        {
+                            MPSaveManager.BannedUsers.Add(MAC, Reason);
+                            MPSaveManager.SaveBanned();
+                        }
+                        Server.clients[ID].udp.Disconnect();
+                        return "User " + MAC + " banned. Reason " + Reason;
+                    }
+
+                    Server.clients[ID].udp.Disconnect();
+                    return "User with ID " + ID + " kicked. Reason " + Reason;
+                } else
+                {
+                    return "Incorrect syntax";
+                }
+            }else if (Low.StartsWith("banmac "))
+            {
+                string[] Args = CMD.Split(' ');
+                string MAC = Args[1];
+                string Reason = "";
+                if (Args.Length > 2)
+                {
+                    foreach (string Word in Args)
+                    {
+                        Reason += Word + " ";
+                    }
+                }
+                if (string.IsNullOrEmpty(MAC))
+                {
+                    if (!MPSaveManager.BannedUsers.ContainsKey(MAC))
+                    {
+                        MPSaveManager.BannedUsers.Add(MAC, Reason);
+                        MPSaveManager.SaveBanned();
+                        return "User "+MAC+" banned. Reason "+ Reason;
+                    } else
+                    {
+                        return "This user already banned!";
+                    }
+                } else
+                {
+                    return "Incorrect syntax!";
+                }
+            } else if (Low.StartsWith("unbanmac ") || Low.StartsWith("unban "))
+            {
+                string[] Args = CMD.Split(' ');
+                string MAC = Args[1];
+                if (string.IsNullOrEmpty(MAC))
+                {
+                    if (MPSaveManager.BannedUsers.ContainsKey(MAC))
+                    {
+                        MPSaveManager.BannedUsers.Remove(MAC);
+                        MPSaveManager.SaveBanned();
+                        return "User " + MAC + " unbanned!";
+                    } else
+                    {
+                        return "This user isn't banned!";
+                    }
+                } else
+                {
+                    return "Incorrect syntax";
+                }
+            }
 #if (DEDICATED)
             else if (Low == "next_weather" || Low == "next weather")
             {

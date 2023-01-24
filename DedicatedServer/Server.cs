@@ -112,6 +112,20 @@ namespace GameServer
                     if (_packet.UnreadLength() > 12)
                     {
                         SubNetworkGUID = _packet.ReadString();
+
+                        string Reason;
+                        if(MPSaveManager.BannedUsers.TryGetValue(SubNetworkGUID, out Reason))
+                        {
+                            if (string.IsNullOrEmpty(Reason))
+                            {
+                                ServerSend.KICKMESSAGE(_clientEndPoint, "You has been banned from the server.");
+                                return;
+                            } else
+                            {
+                                ServerSend.KICKMESSAGE(_clientEndPoint, "You has been banned from the server." + "\nReason: " + Reason);
+                                return;
+                            }
+                        }
                     } else
                     {
                         Log("Client without SubNetworkGUID trying to connect, rejecting");
