@@ -2721,7 +2721,7 @@ namespace SkyCoop
                 {
                     string Text = "You has been kicked from the server.";
                     string MAC = "";
-                    if (Ban == true)
+                    if (Ban)
                     {
                         MAC = Server.clients[ID].SubNetworkGUID;
                         Text = "You has been banned from the server.";
@@ -2734,7 +2734,7 @@ namespace SkyCoop
                         ServerSend.KICKMESSAGE(ID, Text+"\nReason: " + Reason);
                     }
 
-                    if (string.IsNullOrEmpty(MAC))
+                    if (!string.IsNullOrEmpty(MAC))
                     {
                         if (!MPSaveManager.BannedUsers.ContainsKey(MAC))
                         {
