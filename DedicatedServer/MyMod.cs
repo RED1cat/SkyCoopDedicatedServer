@@ -284,7 +284,8 @@ namespace SkyCoop
         }
         public static string ConsoleCommandExec(string command)
         {
-            switch(command)
+            command = command.Replace("/", "");
+            switch (command)
             {
                 case "test":
                     return "test123\n124test";

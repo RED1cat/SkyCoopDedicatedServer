@@ -118,14 +118,13 @@ namespace DedicatedServer
 
                 if (lime.Contains('/'))
                 {
-                    lime = lime.Replace("/", "");
                     Logger.Log("[XNAConsole] " + lime, LoggerColor.Yellow);
                     Logger.Log("[XNAConsole] " + MyMod.ConsoleCommandExec(lime), LoggerColor.Yellow);
                 }
                 else
                 {
-                    Logger.Log("[Console] " + lime, LoggerColor.Yellow);
-                    Logger.Log("[Console] " + Shared.ExecuteCommand(lime), LoggerColor.Yellow);
+                    Logger.Log("[ServerConsole] " + lime, LoggerColor.Yellow);
+                    Logger.Log("[ServerConsole] " + Shared.ExecuteCommand(lime), LoggerColor.Yellow);
                 }
 
                 if(commandLineBuffer.Count - 1> commandLineBufferLimit)
@@ -150,118 +149,9 @@ namespace DedicatedServer
                 mouseIsClick= false;
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Back) && keyBackSpaceIsClick == false && textBoxHasFocus == true && textBoxDisplayCharacters.Length > 0)
-            {
-                textBoxDisplayCharacters.Remove(textBoxDisplayCharacters.Length - 1, 1);
+            UpdateConsolekey();
 
-                keyBackSpaceIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.Back))
-            {
-                keyBackSpaceIsClick = false;
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Enter) && keyEnterIsClick == false && textBoxHasFocus == true)
-            {
-                ReadLine();
-                keyEnterIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.Enter))
-            {
-                keyEnterIsClick = false;
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.PageUp) && keyPageUpIsClick == false)
-            {
-                if(consolePosition > 0)
-                {
-                    consolePosition--;
-                }
-                keyPageUpIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.PageUp))
-            {
-                keyPageUpIsClick = false;
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.PageDown) && keyPageDownIsClick == false)
-            {
-                if(consolePosition < lineBuffer.Count - lineLimit && lineBuffer.Count + 1 >= lineLimit)
-                {
-                    consolePosition++;
-                }
-                keyPageDownIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.PageDown))
-            {
-                keyPageDownIsClick = false;
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Up) && keyUpIsClick == false)
-            {
-                if(commandLineBuffer.Count > 0)
-                {
-                    if (commandHistoryIndex > 0)
-                    {
-                        commandHistoryIndex--;
-                    }
-                    else
-                    {
-                        commandHistoryIndex = commandLineBuffer.Count - 1;
-                    }
-                    textBoxDisplayCharacters.Clear();
-                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
-                }
-                keyUpIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.Up))
-            {
-                keyUpIsClick = false;
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Down) && keyDownIsClick == false)
-            {
-                if(commandLineBuffer.Count > 0)
-                {
-                    if (commandHistoryIndex < commandLineBuffer.Count - 1)
-                    {
-                        commandHistoryIndex++;
-                    }
-                    else
-                    {
-                        commandHistoryIndex = 0;
-                    }
-                    textBoxDisplayCharacters.Clear();
-                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
-                }
-                keyDownIsClick = true;
-            }
-            else if (Keyboard.GetState().IsKeyUp(Keys.Down))
-            {
-                keyDownIsClick = false;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
-            {
-                if (Keyboard.GetState().IsKeyDown(Keys.C) && keyCopyIsClicked == false)
-                {
-                    ClipboardService.SetText(textBoxDisplayCharacters.ToString());
-                    keyCopyIsClicked = true;
-                }
-                else if (Keyboard.GetState().IsKeyUp(Keys.C))
-                {
-                    keyCopyIsClicked = false;
-                }
-                if (Keyboard.GetState().IsKeyDown(Keys.V) && keyPasteIsClicked == false)
-                {
-                    textBoxDisplayCharacters.Clear();
-                    textBoxDisplayCharacters.Append(ClipboardService.GetText());
-                    keyPasteIsClicked = true;
-                }
-                else if (Keyboard.GetState().IsKeyUp(Keys.V))
-                {
-                    keyPasteIsClicked = false;
-                }
-            }
+            UpdateClipboard();
 
         }
         public static void Draw(SpriteBatch _spriteBatch, GameTime gameTime)
@@ -341,6 +231,123 @@ namespace DedicatedServer
             if (char.IsLetterOrDigit(e.Character) || char.IsSymbol(e.Character) || char.IsPunctuation(e.Character) || char.IsWhiteSpace(e.Character))
             {
                 textBoxDisplayCharacters.Append(e.Character);
+            }
+        }
+        private static void UpdateClipboard()
+        {
+            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.C) && keyCopyIsClicked == false)
+                {
+                    ClipboardService.SetText(textBoxDisplayCharacters.ToString());
+                    keyCopyIsClicked = true;
+                }
+                else if (Keyboard.GetState().IsKeyUp(Keys.C))
+                {
+                    keyCopyIsClicked = false;
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.V) && keyPasteIsClicked == false)
+                {
+                    textBoxDisplayCharacters.Append(ClipboardService.GetText());
+                    keyPasteIsClicked = true;
+                }
+                else if (Keyboard.GetState().IsKeyUp(Keys.V))
+                {
+                    keyPasteIsClicked = false;
+                }
+            }
+        }
+        private static void UpdateConsolekey()
+        {
+            if (Keyboard.GetState().IsKeyDown(Keys.Back) && keyBackSpaceIsClick == false && textBoxHasFocus == true && textBoxDisplayCharacters.Length > 0)
+            {
+                textBoxDisplayCharacters.Remove(textBoxDisplayCharacters.Length - 1, 1);
+
+                keyBackSpaceIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Back))
+            {
+                keyBackSpaceIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Enter) && keyEnterIsClick == false && textBoxHasFocus == true)
+            {
+                ReadLine();
+                keyEnterIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Enter))
+            {
+                keyEnterIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.PageUp) && keyPageUpIsClick == false)
+            {
+                if (consolePosition > 0)
+                {
+                    consolePosition--;
+                }
+                keyPageUpIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.PageUp))
+            {
+                keyPageUpIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.PageDown) && keyPageDownIsClick == false)
+            {
+                if (consolePosition < lineBuffer.Count - lineLimit && lineBuffer.Count + 1 >= lineLimit)
+                {
+                    consolePosition++;
+                }
+                keyPageDownIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.PageDown))
+            {
+                keyPageDownIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Down) && keyDownIsClick == false)
+            {
+                if (commandLineBuffer.Count > 0)
+                {
+                    if (commandHistoryIndex > 0)
+                    {
+                        commandHistoryIndex--;
+                    }
+                    else
+                    {
+                        commandHistoryIndex = commandLineBuffer.Count - 1;
+                    }
+                    textBoxDisplayCharacters.Clear();
+                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
+                }
+                keyDownIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Down))
+            {
+                keyDownIsClick = false;
+            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Up) && keyUpIsClick == false)
+            {
+                if (commandLineBuffer.Count > 0)
+                {
+                    if (commandHistoryIndex < commandLineBuffer.Count - 1)
+                    {
+                        commandHistoryIndex++;
+                    }
+                    else
+                    {
+                        commandHistoryIndex = 0;
+                    }
+                    textBoxDisplayCharacters.Clear();
+                    textBoxDisplayCharacters.Append(commandLineBuffer.ElementAt(commandHistoryIndex));
+                }
+                keyUpIsClick = true;
+            }
+            else if (Keyboard.GetState().IsKeyUp(Keys.Up))
+            {
+                keyUpIsClick = false;
             }
         }
     }
