@@ -1153,7 +1153,11 @@ namespace SkyCoop
                 {
                     Dict.Remove(Key);
                 } else{
-                    MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+                    
+                    if(Looter != -1)
+                    {
+                        MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+                    }
                 }
                 
                 Dict.Add(Key, State);
@@ -1175,7 +1179,10 @@ namespace SkyCoop
                 Dict.Remove(Key);
             } else
             {
-                MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+                if(Looter != -1)
+                {
+                    MPStats.AddLootedContainer(Server.GetMACByID(Looter));
+                }
             }
 
             
@@ -1202,6 +1209,47 @@ namespace SkyCoop
                 return JSON.Load(LoadedContent).Make<Dictionary<string, int>>();
             }
             return null;
+        }
+
+        public static int AddLootToScene(string Scene)
+        {
+            Dictionary<string, int> Containers = LoadLootedContainersData(Scene);
+            int Updated = 0;
+            List<KeyValuePair<string, int>> Buffer = new List<KeyValuePair<string, int>>();
+            foreach (var item in Containers)
+            {
+                Buffer.Add(item);
+            }
+            for (int i = 0; i < Buffer.Count; i++)
+            {
+                ContainerOpenSync Box = new ContainerOpenSync();
+                Box.m_Guid = Buffer[i].Key;
+                Box.m_LevelGUID = Scene;
+
+                if (Buffer[i].Value != 2)
+                {
+                    AddLootedContainer(Box, 2, -1);
+                    ServerSend.CHANGECONTAINERSTATE(0, Buffer[i].Key, 2, Scene, true);
+                    Updated++;
+                }
+            }
+
+            return Updated;
+        }
+        public static bool AddLootToContainerOnScene(string GUID, string Scene)
+        {
+            Dictionary<string, int> Containers = LoadLootedContainersData(Scene);
+
+            if (Containers.ContainsKey(GUID))
+            {
+                ContainerOpenSync Box = new ContainerOpenSync();
+                Box.m_Guid = GUID;
+                Box.m_LevelGUID = Scene;
+                AddLootedContainer(Box, 2, -1);
+                ServerSend.CHANGECONTAINERSTATE(0, GUID, 2, Scene, true);
+                return true;
+            }
+            return false;
         }
 
         public static long GetPickedGearKey(PickedGearSync Gear)

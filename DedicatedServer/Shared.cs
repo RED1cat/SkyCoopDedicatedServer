@@ -1564,7 +1564,7 @@ namespace SkyCoop
 
         public static void AddSlicedJsonDataForDrop(DataStr.SlicedJsonData jData, int ClientID)
         {
-            Log("Got Dropped Item Slice for hash:" + jData.m_Hash + " Is Last " + jData.m_Last);
+            //Log("Got Dropped Item Slice for hash:" + jData.m_Hash + " Is Last " + jData.m_Last);
             if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
             {
                 string previousString = "";
@@ -1589,7 +1589,7 @@ namespace SkyCoop
                 {
                     MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
                     AddDroppedGear(jData.m_SendTo, jData.m_Hash, finalJsonData, jData.m_GearName, jData.m_Extra);
-                    Log("Finished adding data for:" + jData.m_Hash + " total " + Encoding.UTF8.GetBytes(finalJsonData).Length + "bytes");
+                    //Log("Finished adding data for:" + jData.m_Hash + " total " + Encoding.UTF8.GetBytes(finalJsonData).Length + "bytes");
                 }
             }
             ServerSend.READYSENDNEXTSLICEGEAR(ClientID, true);
@@ -2792,6 +2792,40 @@ namespace SkyCoop
                     } else
                     {
                         return "This user isn't banned!";
+                    }
+                } else
+                {
+                    return "Incorrect syntax";
+                }
+            }
+            else if(Low.StartsWith("addloottoscene "))
+            {
+                string[] Args = CMD.Split(' ');
+                if(Args.Length == 2)
+                {
+                    string Scene = Args[1];
+                    int Updated = MPSaveManager.AddLootToScene(Scene);
+                    return "Added loot to " + Updated + " containers on scene " + Scene;
+                } else
+                {
+                    return "Incorrect syntax";
+                }
+
+            } else if (Low.StartsWith("addloot "))
+            {
+                string[] Args = CMD.Split(' ');
+                if(Args.Length == 3)
+                {
+                    string Scene = Args[1];
+                    string GUID = Args[2];
+                    bool Updated = MPSaveManager.AddLootToContainerOnScene(GUID, Scene);
+
+                    if (Updated)
+                    {
+                        return "Added loot to container with GUID " + GUID + " on scene " + Scene;
+                    } else
+                    {
+                        return "Scene " + Scene + " does not contains contaienr with GUID " + GUID +" or this container already has loot!";
                     }
                 } else
                 {
