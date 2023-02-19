@@ -119,7 +119,7 @@ namespace DedicatedServer
                 if (lime.Contains('/'))
                 {
                     Logger.Log("[XNAConsole] " + lime, LoggerColor.Yellow);
-                    Logger.Log("[XNAConsole] " + MyMod.ConsoleCommandExec(lime), LoggerColor.Yellow);
+                    Logger.Log("[XNAConsole] " + MyMod.ConsoleCommandExec(lime, true), LoggerColor.Yellow);
                 }
                 else
                 {
@@ -156,7 +156,7 @@ namespace DedicatedServer
         }
         public static void Draw(SpriteBatch _spriteBatch, GameTime gameTime)
         {
-            _spriteBatch.Draw(MyMod.fontBg, new Vector2(0, 440), new Rectangle(0, 0, 800, 40), Color.White);
+            _spriteBatch.Draw(XnaMain.fontBg, new Vector2(0, 440), new Rectangle(0, 0, 800, 40), Color.White);
 
             currentTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (currentTime >= 0.2f)
@@ -171,12 +171,12 @@ namespace DedicatedServer
             if(cursorBlink && textBoxHasFocus) 
             {
                 textBoxDisplayCharacters.Append('_');
-                _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
+                _spriteBatch.DrawString(XnaMain.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
                 textBoxDisplayCharacters.Remove(textBoxDisplayCharacters.Length - 1, 1);
             }
             else
             {
-                _spriteBatch.DrawString(MyMod.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
+                _spriteBatch.DrawString(XnaMain.font, textBoxDisplayCharacters, new Vector2(10, 448), Color.White);
             }
 
             int boundery;
@@ -203,17 +203,17 @@ namespace DedicatedServer
             {
                 string line = lineBuffer.ElementAt(i).line;
                 Color color = lineBuffer.ElementAt(i).color;
-                _spriteBatch.DrawString(MyMod.font, line, new Vector2(5, symbolHeight * index), color);
+                _spriteBatch.DrawString(XnaMain.font, line, new Vector2(5, symbolHeight * index), color);
                 index++;
             }
         }
         public static void RegisterFocusedButtonForTextInput(System.EventHandler<TextInputEventArgs> method)
         {
-            MyMod.gw.TextInput += method;
+            XnaMain.gw.TextInput += method;
         }
         public static void UnRegisterFocusedButtonForTextInput(System.EventHandler<TextInputEventArgs> method)
         {
-            MyMod.gw.TextInput -= method;
+            XnaMain.gw.TextInput -= method;
         }
         public static void CheckClickOnMyBox(Point mouseClick, bool isClicked, Rectangle r)
         {

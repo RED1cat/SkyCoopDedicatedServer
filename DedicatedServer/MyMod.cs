@@ -1,15 +1,15 @@
 ﻿using DedicatedServer;
 using GameServer;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+//using Microsoft.Xna.Framework;
+//using Microsoft.Xna.Framework.Graphics;
+//using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace SkyCoop
 {
-    public class MyMod : Game
+    public class MyMod
     {
         public static class BuildInfo
         {
@@ -70,19 +70,10 @@ namespace SkyCoop
         public static Dictionary<string, bool> OpenableThings = new Dictionary<string, bool>();
         public static Dictionary<int, string> SlicedJsonDataBuffer = new Dictionary<int, string>();
 
-        static float currentTime0 = 0f;
-        static float CurrentTime1 = 0f;
-        static float CurrentTime2 = 0f;
-        public static SpriteFont font;
-        public static Texture2D fontBg;
-        public static GameWindow gw;
-        NetworkHelper networkPort;
-        static bool portOpen = false;
-        public static List<float> StatsGraphPoints = new List<float>();
-        public static List<string> StatsGraphDates = new List<string>();
-        public static Vector2 GraphBgPossition = new Vector2(0, 0);
-        public static Rectangle GraphBgRect = new Rectangle(0, 0, 0, 0);
-        public static Graph StatsGraph;
+
+        private static NetworkHelper networkPort;
+        public static bool portOpen = false;
+
 
         public static string GetGearNameByID(int index)
         {
@@ -92,21 +83,9 @@ namespace SkyCoop
         {
             return -1;
         }
-        private GraphicsDeviceManager _graphics;
-        public static GraphicsDevice _graphicsDevice;
-        private SpriteBatch _spriteBatch;
-        private static SpriteBatch _spriteBatchStatic;
-        private FrameCounter _frameCounter = new FrameCounter();
 
-        public MyMod()
-        {
-            _graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
-            IsMouseVisible = true;
-            InactiveSleepTime = new TimeSpan(0);
-        }
 
-        protected override void Initialize()
+        public static void Initialize()
         {
             Supporters.GetSupportersList(false);
             ResourceIndependent.Init();
@@ -119,170 +98,17 @@ namespace SkyCoop
             networkPort = new NetworkHelper(config.Ports);
             portOpen= true;
 
-            ModsValidation.GetModsHash();
-
-            base.Initialize();
         }
 
-        protected override void LoadContent()
-        {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _spriteBatchStatic = _spriteBatch;
-            _graphicsDevice = GraphicsDevice;
-            gw = Window;
-            font = Content.Load<SpriteFont>("font");
-            fontBg = Content.Load<Texture2D>("fontBg");
-        }
-
-        public static void BuildGraph()
-        {
-            StatsGraph = new Graph(_graphicsDevice, _spriteBatchStatic, new Point(740, 200));
-            StatsGraph.Position = new Vector2(30, 250);
-            StatsGraph.MaxValue = Server.MaxPlayers;
-            StatsGraph.Type = Graph.GraphType.Line;
-            GraphBgPossition = new Vector2(StatsGraph.Position.X, 50);
-            GraphBgRect = new Rectangle(0, 0, StatsGraph.Size.X, StatsGraph.Size.Y + 198);
-        }
-
-        public static void NewGraph(Dictionary<string, int> DayStat)
-        {
-            BuildGraph();
-            StatsGraphPoints.Clear();
-            StatsGraphDates.Clear();
-            foreach (var item in DayStat)
-            {
-                StatsGraphPoints.Add(item.Value);
-                StatsGraphDates.Add(item.Key);
-            }
-        }
-
-        public class PlayerOnlineTime
-        {
-            public int TotalPlayers = 0;
-            public int Days = 0;
-            public float Average()
-            {
-                return TotalPlayers / Days;
-            }
-            public PlayerOnlineTime(int p, int d)
-            {
-                TotalPlayers = p;
-                Days = d;
-            }
-        }
-
-
-        public static void NewGraph(Dictionary<string, Dictionary<string, int>> DaysStat)
-        {
-            BuildGraph();
-            StatsGraphPoints.Clear();
-            StatsGraphDates.Clear();
-            Dictionary<string, PlayerOnlineTime> Buffer = new Dictionary<string, PlayerOnlineTime>();
-            foreach (var item in DaysStat)
-            {
-                Dictionary<string, int> Day = item.Value;
-                string DayKey = item.Key;
-
-                foreach (var item2 in Day)
-                {
-                    string TimeKey = item2.Key;
-                    int Players = item2.Value;
-                    if (Buffer.ContainsKey(TimeKey))
-                    {
-                        Buffer[TimeKey].TotalPlayers += Players;
-                    } else
-                    {
-                        Buffer.Add(TimeKey, new PlayerOnlineTime(Players, 1));
-                    }
-                }
-            }
-            foreach (var item in Buffer)
-            {
-                StatsGraphPoints.Add(item.Value.Average());
-                StatsGraphDates.Add(item.Key);
-            }
-        }
-
-        protected override void Update(GameTime gameTime)
-        {
-
-            Shared.OnUpdate();
-            ThreadManager.UpdateMain();
-
-            currentTime0 += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            CurrentTime1 += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            CurrentTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            if (currentTime0 >= 1f)
-            {
-                currentTime0 -= 1f;
-                Shared.EverySecond();
-            }
-            if (CurrentTime1 >= 5f)
-            {
-                CurrentTime1 -= 5f;
-                Shared.EveryInGameMinute();
-            }
-            if (CurrentTime2 >= (float)DsSavePerioud)
-            {
-                CurrentTime2 -= (float)DsSavePerioud;
-                MPSaveManager.SaveGlobalData();
-            }
-
-            CustomConsole.Updata(gameTime);
-
-            if (Shared.DSQuit)
-            {
-                this.Exit();
-            }
-
-
-            base.Update(gameTime);
-        }
-
-        protected override void Draw(GameTime gameTime)
-        {
-            GraphicsDevice.Clear(Color.DarkGray);
-            _spriteBatch.Begin();
-
-
-            CustomConsole.Draw(_spriteBatch, gameTime);
-
-
-            DrawServerInfo(_spriteBatch, gameTime);
-            
-            _spriteBatch.End();
-
-            if(StatsGraph != null)
-            {
-                _spriteBatch.Begin();
-                _spriteBatch.Draw(fontBg, GraphBgPossition, GraphBgRect, Color.White);
-                _spriteBatch.Draw(fontBg, new Vector2(StatsGraph.Position.X, StatsGraph.Position.Y+5), new Rectangle(0,0, GraphBgRect.Width, 5), Color.Gray);
-                _spriteBatch.End();
-                StatsGraph.Draw(StatsGraphPoints, Color.Orange, StatsGraphDates);
-            }
-
-            base.Draw(gameTime);
-        }
-        protected override void OnExiting(object sender, EventArgs args)
+        public static void OnExiting()
         {
             if (portOpen)
             {
                 networkPort.TryClosePort();
             }
-            base.OnExiting(sender, args);
         }
-        private void DrawServerInfo(SpriteBatch _spriteBatch, GameTime gameTime)
-        {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            _frameCounter.Update(deltaTime);
 
-            _spriteBatch.Draw(fontBg, new Vector2(0, 0), new Rectangle(0, 0, 100, 44), Color.White);
-
-            _spriteBatch.DrawString(font, "Players: " + PlayersOnServer.ToString(), new Vector2(5, 5), Color.Coral);
-            _spriteBatch.DrawString(font, $"FPS: {Math.Round(_frameCounter.AverageFramesPerSecond, 3)}", new Vector2(5, 25), Color.Coral);
-        }
-        public static string ConsoleCommandExec(string command)
+        public static string ConsoleCommandExec(string command, bool isXna = false)
         {
             command = command.Replace("/", "");
             switch (command)
@@ -290,42 +116,55 @@ namespace SkyCoop
                 case "test":
                     return "test123\n124test";
                 case "graph":
-                    if(MPStats.TodayStats.ActivitySnapshots.Count > 0)
+                    if (isXna)
                     {
-                        if(StatsGraph == null)
+                        if (MPStats.TodayStats.ActivitySnapshots.Count > 0)
                         {
-                            NewGraph(MPStats.TodayStats.ActivitySnapshots.First().Value);
-                        } else
-                        {
-                            StatsGraph = null;
-                            StatsGraphDates.Clear();
-                            StatsGraphPoints.Clear();
+                            if (Program.xnaMain.StatsGraph == null)
+                            {
+                                Program.xnaMain.NewGraph(MPStats.TodayStats.ActivitySnapshots.First().Value);
+                            }
+                            else
+                            {
+                                Program.xnaMain.StatsGraph = null;
+                                Program.xnaMain.StatsGraphDates.Clear();
+                                Program.xnaMain.StatsGraphPoints.Clear();
+                            }
+                            return "Graph Done";
                         }
-                        return "Graph Done";
-                    } else
-                    {
-                        return "ActivitySnapshots empty";
+                        else
+                        {
+                            return "ActivitySnapshots empty";
+                        }
                     }
+                    break;
                 case "globalgraph":
-                    if (MPStats.AllTimeStats.ActivitySnapshots.Count > 0)
+                    if (isXna)
                     {
-                        if (StatsGraph == null)
+                        if (MPStats.AllTimeStats.ActivitySnapshots.Count > 0)
                         {
-                            NewGraph(MPStats.AllTimeStats.ActivitySnapshots);
-                        } else
-                        {
-                            StatsGraph = null;
-                            StatsGraphDates.Clear();
-                            StatsGraphPoints.Clear();
+                            if (Program.xnaMain.StatsGraph == null)
+                            {
+                                Program.xnaMain.NewGraph(MPStats.AllTimeStats.ActivitySnapshots);
+                            }
+                            else
+                            {
+                                Program.xnaMain.StatsGraph = null;
+                                Program.xnaMain.StatsGraphDates.Clear();
+                                Program.xnaMain.StatsGraphPoints.Clear();
+                            }
+                            return "Graph Done";
                         }
-                        return "Graph Done";
-                    } else
-                    {
-                        return "ActivitySnapshots empty";
+                        else
+                        {
+                            return "ActivitySnapshots empty";
+                        }
                     }
+                    break;
                 default:
                     return "Unknown command";
             }
+            return "Unknown command";
         }
     }
 }

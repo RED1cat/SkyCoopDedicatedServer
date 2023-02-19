@@ -1,26 +1,22 @@
-﻿#if (DEDICATED_LINUX)
-using System;
-namespace DedicatedServer
+﻿namespace DedicatedServer
 {
     class Program
     {
+        public static bool NoGraphics;
+        public static XnaMain xnaMain = new XnaMain(); 
         public static void Main(string[] arg)
         {
-
-            if (arg.Length > 0)
+            if(arg.Length == 0)
             {
-
+                NoGraphics = true;
+                ConsoleMain serv = new ConsoleMain();
+                serv.Initialize();
             }
             else
             {
-                using var game = new SkyCoop.MyMod();
-                game.Run();
+                NoGraphics = false;
+                xnaMain.Run();
             }
         }
     }
 }
-#endif
-#if(DEDICATED_WINDOWS)
-using var game = new SkyCoop.MyMod();
-game.Run();
-#endif
