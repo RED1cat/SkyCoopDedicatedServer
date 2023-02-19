@@ -9,14 +9,26 @@ namespace SkyCoop
 {
     public static class Logger
     {
+#if (WINDOWS_DEBUG)
+        static bool ForceXNA = true;
+#else
+        static bool ForceXNA = false;
+#endif
         private static List<string> logBuffer = new List<string>();
         public static void Log(string message, LoggerColor lColor = LoggerColor.White)
         {
+
             Color xnaColor = ColorToXna(lColor);
             ConsoleColor consoleColor = ColorToConsoleColor(lColor);
             string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message;
+            
+            if (ForceXNA)
+            {
+                CustomConsole.AddLine(log, xnaColor);
+                return;
+            }
 
-            if(File.Exists("log.txt") == false)
+            if (File.Exists("log.txt") == false)
             {
                 File.Create("log.txt").Close();
             }
