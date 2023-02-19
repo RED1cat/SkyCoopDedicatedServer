@@ -72,14 +72,12 @@ namespace GameServer
                 return;
             }
 
+            Server.clients[_fromClient].Ready = true;
+
             string SupporterID = _packet.ReadString();
             Supporters.SupporterBenefits ConfiguratedBenefits = _packet.ReadSupporterBenefits();
             MyMod.playersData[_fromClient].m_SupporterBenefits = Supporters.VerifyBenefitsWithConfig(SupporterID, ConfiguratedBenefits);
             MyMod.playersData[_fromClient].m_SteamOrEGSID = SupporterID;
-#if (!DEDICATED)
-            Supporters.ApplyFlairsForModel(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits.m_Flairs);
-#endif
-            ServerSend.BENEFITINIT(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits);
 
             long ClientModsHash = _packet.ReadLong();
 
@@ -101,6 +99,11 @@ namespace GameServer
                     return;
                 }
             }
+
+#if (!DEDICATED)
+            Supporters.ApplyFlairsForModel(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits.m_Flairs);
+#endif
+            ServerSend.BENEFITINIT(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits);
 
             ServerSend.GAMETIME(MyMod.OveridedTime);
 
@@ -322,9 +325,6 @@ namespace GameServer
 #else
             ServerSend.GOTITEMSLICE(got.m_SendTo, got);
 #endif
-
-
-
         }
         public static void GAMETIME(int _fromClient, Packet _packet)
         {
@@ -394,6 +394,17 @@ namespace GameServer
         public static void SHOOTSYNC(int _fromClient, Packet _packet)
         {
             DataStr.ShootSync shoot = _packet.ReadShoot();
+            Vector3 pos = new Vector3(0, 0, 0);
+            if (MyMod.playersData[_fromClient] != null)
+            {
+                pos = MyMod.playersData[_fromClient].m_Position;
+            }
+
+            if(shoot.m_projectilename == "GEAR_FlareGunAmmoSingle")
+            {
+                ExpeditionManager.RegisterFlaregunShot(shoot.m_sceneguid, pos);
+            }
+
 #if (!DEDICATED)
             MyMod.DoShootSync(shoot, _fromClient);
 #endif
@@ -1070,6 +1081,11 @@ namespace GameServer
             DataStr.SlicedJsonData got = _packet.ReadSlicedGear();
             Shared.AddSlicedJsonDataForDrop(got, _fromClient);
         }
+        public static void GOTPHOTOSLICE(int _fromClient, Packet _packet)
+        {
+            DataStr.SlicedJsonData got = _packet.ReadSlicedGear();
+            Shared.AddSlicedJsonDataForPhoto(got, _fromClient);
+        }
         public static void REQUESTPICKUP(int _fromClient, Packet _packet)
         {
             int Hash = _packet.ReadInt();
@@ -1212,6 +1228,11 @@ namespace GameServer
                 {
                     ServerSend.LOOTEDHARVESTABLE(0, item.Key, Scene, false, _fromClient);
                 }
+            }
+            Dictionary<string, FakeRockCacheVisualData> RockCaches = MPSaveManager.GetRockCaches(Scene);
+            foreach (var item in RockCaches)
+            {
+                ServerSend.ADDROCKCACH(0, item.Value, item.Value.m_LevelGUID);
             }
 
             Shared.ModifyDynamicGears(Scene);
@@ -1709,6 +1730,80 @@ namespace GameServer
             }
 #endif
             ServerSend.TRIGGEREMOTE(_fromClient, EmoteID);
+        }
+        public static void PHOTOREQUEST(int _fromClient, Packet _packet)
+        {
+            string GUID = _packet.ReadString();
+            string Base64 = MPSaveManager.LoadPhoto(GUID);
+            Log("Client requested photo "+ GUID);
+            if (!string.IsNullOrEmpty(Base64))
+            {
+                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
+
+                foreach (SlicedBase64Data Slice in Slices)
+                {
+                    ServerSend.BASE64SLICE(_fromClient, Slice);
+                }
+                Log("Sent photo "+ GUID + " to client "+ _fromClient + " this was worth "+ Slices.Count+" 700 bytes each");
+            } else
+            {
+                Log("Don't have that photo");
+            }
+        }
+        public static void STARTEXPEDITION(int _fromClient, Packet _packet)
+        {
+            if (MyMod.playersData[_fromClient] != null)
+            {
+                ExpeditionManager.StartNewExpedition(Server.GetMACByID(_fromClient), MyMod.playersData[_fromClient].m_LastRegion);
+            }
+        }
+        public static void ACCEPTEXPEDITIONINVITE(int _fromClient, Packet _packet)
+        {
+            ExpeditionManager.ExpeditionInvite Invite = _packet.ReadExpeditionInvite();
+            ExpeditionManager.AcceptInvite(Invite.m_PersonToInviteMAC, Invite.m_InviterMAC);
+        }
+        public static void REQUESTEXPEDITIONINVITES(int _fromClient, Packet _packet)
+        {
+            ServerSend.REQUESTEXPEDITIONINVITES(_fromClient, ExpeditionManager.GetInviteForClient(Server.GetMACByID(_fromClient)));
+        }
+        public static void CREATEEXPEDITIONINVITE(int _fromClient, Packet _packet)
+        {
+            int InviteID = _packet.ReadInt();
+            if(InviteID != -1)
+            {
+                ExpeditionManager.CreateInviteToExpedition(Server.GetMACByID(_fromClient), Server.GetMACByID(InviteID));
+            }
+        }
+        public static void ADDROCKCACH(int _fromClient, Packet _packet)
+        {
+            DataStr.FakeRockCacheVisualData Data = _packet.ReadFakeRockCache();
+#if (!DEDICATED)
+            MyMod.AddRockCache(Data);
+#endif
+            MPSaveManager.AddRockCach(Data, _fromClient);
+        }
+
+        public static void REMOVEROCKCACH(int _fromClient, Packet _packet)
+        {
+            DataStr.FakeRockCacheVisualData Data = _packet.ReadFakeRockCache();
+            bool NotEmpty = MPSaveManager.ContainerNotEmpty(Data.m_LevelGUID, Data.m_GUID);
+            if(NotEmpty)
+            {
+                ServerSend.ADDHUDMESSAGE(_fromClient, "Rock cache should be empty!");
+                ServerSend.REMOVEROCKCACH(_fromClient, Data, -1, Data.m_LevelGUID, true);
+            } else
+            {
+                ServerSend.REMOVEROCKCACH(_fromClient, Data, 0, Data.m_LevelGUID, true);
+            }
+        }
+        public static void REMOVEROCKCACHFINISHED(int _fromClient, Packet _packet)
+        {
+            DataStr.FakeRockCacheVisualData Data = _packet.ReadFakeRockCache();
+            ServerSend.REMOVEROCKCACH(_fromClient, Data, 1, Data.m_LevelGUID);
+#if (!DEDICATED)
+            MyMod.RemoveRockCache(Data);
+#endif
+            MPSaveManager.RemoveRockCach(Data, _fromClient);
         }
     }
 }

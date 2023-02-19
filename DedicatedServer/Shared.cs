@@ -9,6 +9,7 @@ using GameServer;
 using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
+using System.Security.Policy;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -28,10 +29,29 @@ namespace SkyCoop
         public static Dictionary<string, DataStr.AnimalKilled> AnimalsKilled = new Dictionary<string, DataStr.AnimalKilled>();
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static List<RegionWeatherControler> RegionWeathers = new List<RegionWeatherControler>();
+        public static Dictionary<string, string[]> Base64Slices = new Dictionary<string, string[]>();
         public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
         public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
         public static bool DSQuit = false;
         public static float LocalChatMaxDistance = 70f;
+
+        public enum GameRegion
+        {
+            MysteryLake,
+            CoastalHighWay,
+            DesolationPoint,
+            PlesantValley,
+            TimberwolfMountain,
+            ForlornMuskeg,
+            RandomRegion,
+            FutureRegion,
+            MountainTown,
+            BrokenRailroad,
+            HushedRiverValley,
+            BleakInlet,
+            AshCanyon,
+            Blackrock,
+        }
 
 
         public enum LoggerColor
@@ -401,6 +421,7 @@ namespace SkyCoop
             if (MyMod.iAmHost)
             {
                 MPStats.EverySecond();
+                ExpeditionManager.UpdateExpeditions();
                 SecondsBeforeUnload = SecondsBeforeUnload + 1;
                 if (SecondsBeforeUnload > MPSaveManager.SaveRecentTimer)
                 {
@@ -1025,10 +1046,6 @@ namespace SkyCoop
                         }
 
                         Server.clients[i].TimeOutTime = Server.clients[i].TimeOutTime + 1;
-                        if (Server.clients[i].TimeOutTime > 15 && !Server.clients[i].RCON)
-                        {
-                            Log("Client " + i + " no responce time " + Server.clients[i].TimeOutTime);
-                        }
                         if (Server.clients[i].TimeOutTime > TimeOutForClient)
                         {
                             Server.clients[i].TimeOutTime = 0;
@@ -1639,7 +1656,60 @@ namespace SkyCoop
 #endif
         }
 
+        public static void AddSlicedJsonDataForPhoto(DataStr.SlicedJsonData jData, int ClientID)
+        {
+            //Log("Got Dropped Item Slice for hash:" + jData.m_Hash + " Is Last " + jData.m_Last);
+            if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
+            {
+                string previousString = "";
+                if (MyMod.SlicedJsonDataBuffer.TryGetValue(jData.m_Hash, out previousString) == true)
+                {
+                    string wholeString = previousString + jData.m_Str;
+                    MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
+                    MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, wholeString);
+                } else
+                {
+                    MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, jData.m_Str);
+                }
+            } else
+            {
+                MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, jData.m_Str);
+            }
 
+            if (jData.m_Last)
+            {
+                string finalJsonData = "";
+                if (MyMod.SlicedJsonDataBuffer.TryGetValue(jData.m_Hash, out finalJsonData) == true)
+                {
+                    MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
+
+                    MPSaveManager.AddPhoto(finalJsonData, false, jData.m_GearName);
+#if(!DEDICATED)
+                    MPSaveManager.AddPhoto(finalJsonData, true, jData.m_GearName);
+                    foreach (var item in MyMod.DroppedGearsObjs)
+                    {
+                        if (item.Value != null && item.Value.GetComponent<Comps.DroppedGearDummy>())
+                        {
+                            if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == jData.m_GearName)
+                            {
+                                Texture2D tex = MPSaveManager.GetPhotoTexture(jData.m_GearName);
+                                if (tex)
+                                {
+                                    item.Value.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.mainTexture = tex;
+                                }
+                            }
+                        }
+                    }
+#endif
+                    List<SlicedBase64Data> Slices = GetBase64Sliced(finalJsonData, jData.m_GearName, SlicedBase64Purpose.Photo);
+                    foreach (SlicedBase64Data Slice in Slices)
+                    {
+                        ServerSend.BASE64SLICE(Slice, MyMod.playersData[ClientID].m_LevelGuid);
+                    }
+                }
+            }
+            ServerSend.READYSENDNEXTSLICEPHOTO(ClientID, true);
+        }
 
         public static void AddLoadingClient(int clientID)
         {
@@ -1683,6 +1753,21 @@ namespace SkyCoop
                     }
                     return;
                 }
+            }
+            if (message.m_Message == "!expedition")
+            {
+                if(MyMod.ExpeditionEditorUI != null)
+                {
+                    MyMod.ExpeditionEditorSelectUI.SetActive(!MyMod.ExpeditionEditorSelectUI.activeSelf);
+                    MyMod.ExpeditionEditorUI.SetActive(false);
+                    ExpeditionEditor.DisableRadiousSpheres();
+
+                    if (MyMod.ExpeditionEditorSelectUI.activeSelf)
+                    {
+                        ExpeditionEditor.RefreshExpeditionsList();
+                    } 
+                }
+                return;
             }
             if (message.m_Message.StartsWith("!cfg"))
             {
@@ -2907,6 +2992,148 @@ namespace SkyCoop
                     select nic.GetPhysicalAddress().ToString()
                 ).FirstOrDefault();
             return macAddr;
+        }
+
+#if (!DEDICATED)
+        public static void RequestPhoto(string PhotoGUID)
+        {
+            if (MyMod.sendMyPosition)
+            {
+                using (Packet _packet = new Packet((int)ClientPackets.PHOTOREQUEST))
+                {
+                    _packet.Write(PhotoGUID);
+                    MyMod.SendUDPData(_packet);
+                }
+            }
+        }
+#endif
+
+        public static List<SlicedBase64Data> GetBase64Sliced(string FullString, string GUID, SlicedBase64Purpose Purpose)
+        {
+            long CheckSum = GetDeterministicId(FullString);
+            byte[] bytesToSlice = Encoding.UTF8.GetBytes(FullString);
+            int CHUNK_SIZE = 700;
+            List<string> SlicedStrings = new List<string>();
+            List<SlicedBase64Data> Result = new List<SlicedBase64Data>();
+
+            if (bytesToSlice.Length > CHUNK_SIZE)
+            {
+                List<byte> BytesBuffer = new List<byte>();
+                BytesBuffer.AddRange(bytesToSlice);
+
+                while (BytesBuffer.Count >= CHUNK_SIZE)
+                {
+                    byte[] sliceOfBytes = BytesBuffer.GetRange(0, CHUNK_SIZE - 1).ToArray();
+                    BytesBuffer.RemoveRange(0, CHUNK_SIZE - 1);
+                    string OneSlice = Encoding.UTF8.GetString(sliceOfBytes);
+                    SlicedStrings.Add(OneSlice);
+                }
+
+                if (BytesBuffer.Count < CHUNK_SIZE && BytesBuffer.Count != 0)
+                {
+                    byte[] LastSlice = BytesBuffer.GetRange(0, BytesBuffer.Count).ToArray();
+                    BytesBuffer.RemoveRange(0, BytesBuffer.Count);
+
+                    string OneSlice = Encoding.UTF8.GetString(LastSlice);
+                    SlicedStrings.Add(OneSlice);
+                }
+            } else
+            {
+                SlicedStrings.Add(FullString);
+            }
+
+            for (int i = 0; i < SlicedStrings.Count; i++)
+            {
+                string Slice = SlicedStrings[i];
+                SlicedBase64Data Data = new SlicedBase64Data();
+                Data.m_Slice = Slice;
+                Data.m_Slices = SlicedStrings.Count;
+                Data.m_SliceNum = i;
+                Data.m_CheckSum = CheckSum;
+                Data.m_GUID = GUID;
+                Data.m_Purpose = (int)Purpose;
+                Result.Add(Data);
+            }
+            return Result;
+        }
+
+        public static void AddBase64Slice(SlicedBase64Data Data)
+        {
+            if (!Base64Slices.ContainsKey(Data.m_GUID))
+            {
+                Base64Slices.Add(Data.m_GUID, new string[Data.m_Slices]);
+            }
+
+            if(Data.m_SliceNum <= Base64Slices[Data.m_GUID].Length-1)
+            {
+                Base64Slices[Data.m_GUID][Data.m_SliceNum] = Data.m_Slice;
+
+                if (Data.m_SliceNum == Base64Slices[Data.m_GUID].Length - 1)
+                {
+                    if(Data.m_Purpose == (int)SlicedBase64Purpose.Photo)
+                    {
+                        string PhotoGUID = Data.m_GUID;
+                        Log("Finishing photo slices for "+ Data.m_GUID);
+                        string Base64 = "";
+                        string[] StringArray = Base64Slices[Data.m_GUID];
+                        Base64Slices.Remove(Data.m_GUID);
+                        foreach (string oneSlice in StringArray)
+                        {
+                            if (!string.IsNullOrEmpty(oneSlice))
+                            {
+                                Base64 += oneSlice;
+                            } else
+                            {
+                                Log("Some slices are missing! Doing another request", LoggerColor.Red);
+#if (!DEDICATED)
+                                RequestPhoto(PhotoGUID);
+#endif
+                                return;
+                            }
+                        }
+                        bool IsBase64 = IsBase64String(Base64);
+                        long CheckSum = GetDeterministicId(Base64);
+                        Log("Final string is base64? "+IsBase64);
+                        Log("Final checksum " + CheckSum+" expected "+ Data.m_CheckSum);
+                        if (IsBase64 && CheckSum == Data.m_CheckSum)
+                        {
+                            Log("Everything correct, applying this photo");
+
+                            MPSaveManager.AddPhoto(Base64, true, PhotoGUID);
+#if (!DEDICATED)
+
+                            foreach (var item in MyMod.DroppedGearsObjs)
+                            {
+                                if (item.Value != null && item.Value.GetComponent<Comps.DroppedGearDummy>())
+                                {
+                                    if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == PhotoGUID)
+                                    {
+                                        Texture2D tex = MPSaveManager.GetPhotoTexture(PhotoGUID);
+                                        if (tex)
+                                        {
+                                            item.Value.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.mainTexture = tex;
+                                        }
+                                        MelonLogger.Msg("Found and applied on " + item.Key + " dropped gear");
+                                    }
+                                }
+                            }
+#endif
+                        } else
+                        {
+                            if (!IsBase64)
+                            {
+                                Log("Base64 string corrupted, doing another request...", LoggerColor.Red);
+                            }else if(CheckSum == Data.m_CheckSum)
+                            {
+                                Log("Checksum is incorrect, doing another request...", LoggerColor.Red);
+                            }
+#if (!DEDICATED)
+                            RequestPhoto(PhotoGUID);
+#endif
+                        }
+                    }
+                }
+            }
         }
     }
 }

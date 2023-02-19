@@ -67,6 +67,7 @@ namespace SkyCoop
             public string m_Dropper = "";
             public int m_Variant = 0;
             public string m_GearName = "";
+            public string m_PhotoGUID = "";
         }
         public class AnimalArrow
         {
@@ -233,7 +234,7 @@ namespace SkyCoop
             public float m_RadioFrequency = 0;
             public Supporters.SupporterBenefits m_SupporterBenefits = new Supporters.SupporterBenefits();
             public bool m_IsLoading = false;
-            public int m_LastRegion = 0;
+            public int m_LastRegion = (int) Shared.GameRegion.RandomRegion;
             public bool m_IsSafe = false;
             public string m_SteamOrEGSID = "";
         }
@@ -321,6 +322,8 @@ namespace SkyCoop
             public Vector3 m_camera_forward = new Vector3(0, 0, 0);
             public Vector3 m_camera_right = new Vector3(0, 0, 0);
             public Vector3 m_camera_up = new Vector3(0, 0, 0);
+            public bool m_lookat = false;
+            public string m_sceneguid = "";
         }
         public class HarvestStats //: MelonMod
         {
@@ -648,6 +651,30 @@ namespace SkyCoop
             public int CoolingHours = 0;
             public int WarmingHours = 0;
             public int PreviousStage = 10;
+        }
+
+        public enum SlicedBase64Purpose
+        {
+            Photo,
+        }
+
+
+        public class SlicedBase64Data
+        {
+            public string m_Slice = "";
+            public int m_Slices = 0;
+            public int m_SliceNum = 0;
+            public long m_CheckSum = 0;
+            public string m_GUID = "";
+            public int m_Purpose = 0;
+        }
+        public class FakeRockCacheVisualData
+        {
+            public string m_Owner = "";
+            public string m_LevelGUID = "";
+            public string m_GUID = "";
+            public Vector3 m_Position = new Vector3(0,0,0);
+            public Quaternion m_Rotation = new Quaternion(0, 0, 0, 0);
         }
     }
 }

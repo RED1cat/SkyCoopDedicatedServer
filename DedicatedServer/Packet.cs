@@ -174,6 +174,21 @@ namespace GameServer
         CHANGECONTAINERSTATE,
         FINISHEDSENDINGCONTAINER,
         TRIGGEREMOTE,
+        EXPEDITIONSYNC,
+        EXPEDITIONRESULT,
+        PHOTOREQUEST,
+        GOTPHOTOSLICE,
+        READYSENDNEXTSLICEPHOTO,
+        STARTEXPEDITION,
+        ACCEPTEXPEDITIONINVITE,
+        REQUESTEXPEDITIONINVITES,
+        CREATEEXPEDITIONINVITE,
+        NEWPLAYEREXPEDITION,
+        NEWEXPEDITIONINVITE,
+        BASE64SLICE,
+        ADDROCKCACH,
+        REMOVEROCKCACH,
+        REMOVEROCKCACHFINISHED,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -336,6 +351,21 @@ namespace GameServer
         CHANGECONTAINERSTATE,
         FINISHEDSENDINGCONTAINER,
         TRIGGEREMOTE,
+        EXPEDITIONSYNC,
+        EXPEDITIONRESULT,
+        PHOTOREQUEST,
+        GOTPHOTOSLICE,
+        READYSENDNEXTSLICEPHOTO,
+        STARTEXPEDITION,
+        ACCEPTEXPEDITIONINVITE,
+        REQUESTEXPEDITIONINVITES,
+        CREATEEXPEDITIONINVITE,
+        NEWPLAYEREXPEDITION,
+        NEWEXPEDITIONINVITE,
+        BASE64SLICE,
+        ADDROCKCACH,
+        REMOVEROCKCACH,
+        REMOVEROCKCACHFINISHED,
     }
 
     public class Packet : IDisposable
@@ -627,6 +657,8 @@ namespace GameServer
             Write(obj.m_camera_forward);
             Write(obj.m_camera_right);
             Write(obj.m_camera_up);
+            Write(obj.m_lookat);
+            Write(obj.m_sceneguid);
         }
 
         public void Write(DataStr.HarvestStats obj)
@@ -773,6 +805,7 @@ namespace GameServer
             Write(obj.m_Dropper);
             Write(obj.m_Variant);
             Write(obj.m_GearName);
+            Write(obj.m_PhotoGUID);
         }
         public void Write(DataStr.AffictionSync obj)
         {
@@ -848,6 +881,14 @@ namespace GameServer
                 Write(LIST[i]);
             }
         }
+        public void Write(List<ExpeditionManager.ExpeditionInvite> LIST)
+        {
+            Write(LIST.Count);
+            for (int i = 0; i < LIST.Count; i++)
+            {
+                Write(LIST[i]);
+            }
+        }
 
         public void Write(DataStr.CustomChallengeData DAT)
         {
@@ -883,6 +924,16 @@ namespace GameServer
             for (int i = 0; i < Count; i++)
             {
                 LIST.Add(ReadFloat());
+            }
+            return LIST;
+        }
+        public List<ExpeditionManager.ExpeditionInvite> ReadInvitesList()
+        {
+            List<ExpeditionManager.ExpeditionInvite> LIST = new List<ExpeditionManager.ExpeditionInvite>();
+            int Count = ReadInt();
+            for (int i = 0; i < Count; i++)
+            {
+                LIST.Add(ReadExpeditionInvite());
             }
             return LIST;
         }
@@ -1168,6 +1219,8 @@ namespace GameServer
             obj.m_camera_forward = ReadVector3();
             obj.m_camera_right = ReadVector3();
             obj.m_camera_up = ReadVector3();
+            obj.m_lookat = ReadBool();
+            obj.m_sceneguid = ReadString();
             return obj;
         }
         public DataStr.HarvestStats ReadHarvest(bool _moveReadPos = true)
@@ -1402,6 +1455,7 @@ namespace GameServer
             obj.m_Dropper = ReadString();
             obj.m_Variant = ReadInt();
             obj.m_GearName = ReadString();
+            obj.m_PhotoGUID = ReadString();
 
             return obj;
         }
@@ -1533,6 +1587,64 @@ namespace GameServer
             obj.WarmingHours = ReadInt();
             obj.PreviousStage = ReadInt();
 
+            return obj;
+        }
+
+        public void Write(ExpeditionManager.ExpeditionInvite obj)
+        {
+            Write(obj.m_InviterMAC);
+            Write(obj.m_InviterName);
+            Write(obj.m_PersonToInviteMAC);
+        }
+
+        public ExpeditionManager.ExpeditionInvite ReadExpeditionInvite()
+        {
+            ExpeditionManager.ExpeditionInvite obj = new ExpeditionManager.ExpeditionInvite();
+            obj.m_InviterMAC = ReadString();
+            obj.m_InviterName = ReadString();
+            obj.m_PersonToInviteMAC = ReadString();
+            return obj;
+        }
+
+        public void Write(SlicedBase64Data obj)
+        {
+            Write(obj.m_Slice);
+            Write(obj.m_Slices);
+            Write(obj.m_SliceNum);
+            Write(obj.m_CheckSum);
+            Write(obj.m_GUID);
+            Write(obj.m_Purpose);
+        }
+
+        public SlicedBase64Data ReadSlicedBase64Data()
+        {
+            SlicedBase64Data obj = new SlicedBase64Data();
+            obj.m_Slice = ReadString();
+            obj.m_Slices = ReadInt();
+            obj.m_SliceNum = ReadInt();
+            obj.m_CheckSum = ReadLong();
+            obj.m_GUID = ReadString();
+            obj.m_Purpose = ReadInt();
+            return obj;
+        }
+
+        public void Write(FakeRockCacheVisualData obj)
+        {
+            Write(obj.m_GUID);
+            Write(obj.m_LevelGUID);
+            Write(obj.m_Owner);
+            Write(obj.m_Position);
+            Write(obj.m_Rotation);
+        }
+
+        public FakeRockCacheVisualData ReadFakeRockCache()
+        {
+            FakeRockCacheVisualData obj = new FakeRockCacheVisualData();
+            obj.m_GUID = ReadString();
+            obj.m_LevelGUID = ReadString();
+            obj.m_Owner = ReadString();
+            obj.m_Position = ReadVector3();
+            obj.m_Rotation = ReadQuaternion();
             return obj;
         }
 
