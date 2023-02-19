@@ -2,10 +2,6 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SkyCoop;
 
 namespace DedicatedServer
 {
@@ -181,7 +177,7 @@ namespace DedicatedServer
             foreach (string item in Names)
             {
                 _spriteBatch.Begin();
-                _spriteBatch.DrawString(MyMod.font, item, new Vector2(Position.X+ index*Size.X/pointList.Length, Position.Y-pointList[index].Position.Y *(Size.Y/MaxValue)-15), Color.Chocolate, 0, new Vector2(0,0), 0.7f, SpriteEffects.None, 0);
+                _spriteBatch.DrawString(XnaMain.font, item, new Vector2(Position.X+ index*Size.X/pointList.Length, Position.Y-pointList[index].Position.Y *(Size.Y/MaxValue)-15), Color.Chocolate, 0, new Vector2(0,0), 0.7f, SpriteEffects.None, 0);
                 //_spriteBatch.DrawString(MyMod.font, pointList[index].Position.Y.ToString(), new Vector2(Position.X + index * Size.X / pointList.Length, Position.Y - pointList[index].Position.Y * (Size.Y / MaxValue) + 7), Color.White, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
                 _spriteBatch.End();
                 index++;
@@ -191,9 +187,9 @@ namespace DedicatedServer
             int RowLimit = 6;
             _spriteBatch.Begin();
 
-            _spriteBatch.DrawString(MyMod.font, "Time", new Vector2(Position.X + 20, Position.Y + 14), Color.Chocolate, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
-            _spriteBatch.DrawString(MyMod.font, "-", new Vector2(Position.X + 67, Position.Y + 14), Color.White, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
-            _spriteBatch.DrawString(MyMod.font, "Players On Server", new Vector2(Position.X + 80, Position.Y + 14), Color.Orange, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
+            _spriteBatch.DrawString(XnaMain.font, "Time", new Vector2(Position.X + 20, Position.Y + 14), Color.Chocolate, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
+            _spriteBatch.DrawString(XnaMain.font, "-", new Vector2(Position.X + 67, Position.Y + 14), Color.White, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
+            _spriteBatch.DrawString(XnaMain.font, "Players On Server", new Vector2(Position.X + 80, Position.Y + 14), Color.Orange, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
             for (int i = 0; i < pointList.Length; i++)
             {
                 Vector2 V2 = new Vector2(Position.X + 20 + Row * 80, Position.Y + 20 + IndexInRow*26);
@@ -206,9 +202,9 @@ namespace DedicatedServer
                 
                 //_spriteBatch.DrawString(MyMod.font, Names[i]+" - " +pointList[i].Position.Y, V2, Color.White, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
 
-                _spriteBatch.DrawString(MyMod.font, Names[i], V2, Color.Chocolate, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
-                _spriteBatch.DrawString(MyMod.font, "-", new Vector2(V2.X+37, V2.Y), Color.White, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
-                _spriteBatch.DrawString(MyMod.font, pointList[i].Position.Y.ToString(), new Vector2(V2.X + 45, V2.Y), Color.Orange, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
+                _spriteBatch.DrawString(XnaMain.font, Names[i], V2, Color.Chocolate, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
+                _spriteBatch.DrawString(XnaMain.font, "-", new Vector2(V2.X+37, V2.Y), Color.White, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
+                _spriteBatch.DrawString(XnaMain.font, pointList[i].Position.Y.ToString(), new Vector2(V2.X + 45, V2.Y), Color.Orange, 0, new Vector2(0, 0), 0.7f, SpriteEffects.None, 0);
                 
             }
             _spriteBatch.End();

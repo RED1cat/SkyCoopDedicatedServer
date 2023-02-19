@@ -12,7 +12,8 @@ namespace SkyCoop
         private static List<string> logBuffer = new List<string>();
         public static void Log(string message, LoggerColor lColor = LoggerColor.White)
         {
-            Color color = ColorToXna(lColor);
+            Color xnaColor = ColorToXna(lColor);
+            ConsoleColor consoleColor = ColorToConsoleColor(lColor);
             string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message;
 
             if(File.Exists("log.txt") == false)
@@ -38,10 +39,31 @@ namespace SkyCoop
             }
             catch
             {
-                CustomConsole.AddLine("Unable to access log.txt", Color.Red);
+                if (Program.NoGraphics)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Unable to access log.txt");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    CustomConsole.AddLine("Unable to access log.txt", Color.Red);
+                }
                 logBuffer.Add(log);
             }
-            CustomConsole.AddLine(log, color);
+            finally
+            {
+                if (Program.NoGraphics)
+                {
+                    Console.ForegroundColor = consoleColor;
+                    Console.WriteLine(log);
+                    Console.ResetColor();
+                }
+                else
+                {
+                    CustomConsole.AddLine(log, xnaColor);
+                }
+            }
         }
 
         public static Color ColorToXna(LoggerColor lColor)
@@ -62,6 +84,26 @@ namespace SkyCoop
                     return Color.White;
                 default:
                     return Color.White;
+            }
+        }
+        public static ConsoleColor ColorToConsoleColor(LoggerColor lColor)
+        {
+            switch (lColor)
+            {
+                case LoggerColor.Red:
+                    return ConsoleColor.Red;
+                case LoggerColor.Green:
+                    return ConsoleColor.Green;
+                case LoggerColor.Blue:
+                    return ConsoleColor.Blue;
+                case LoggerColor.Yellow:
+                    return ConsoleColor.Yellow;
+                case LoggerColor.Magenta:
+                    return ConsoleColor.Magenta;
+                case LoggerColor.White:
+                    return ConsoleColor.White;
+                default:
+                    return ConsoleColor.Gray;
             }
         }
     }
