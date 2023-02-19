@@ -12,7 +12,7 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Windows_Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_WINDOWS</DefineConstants>
+    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEBUG;DEDICATED_WINDOWS</DefineConstants>
     <Optimize>True</Optimize>
   </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Windows_Release|AnyCPU'">
@@ -20,7 +20,7 @@
     <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux_Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEDICATED_LINUX</DefineConstants>
+    <DefineConstants>$(DefineConstants)TRACE;DEDICATED;DEBUG;DEDICATED_LINUX</DefineConstants>
     <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Linux_Release|AnyCPU'">

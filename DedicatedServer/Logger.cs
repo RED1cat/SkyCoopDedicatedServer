@@ -9,7 +9,7 @@ namespace SkyCoop
 {
     public static class Logger
     {
-#if (WINDOWS_DEBUG)
+#if DEBUG
         static bool ForceXNA = true;
 #else
         static bool ForceXNA = false;

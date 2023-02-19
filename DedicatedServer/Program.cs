@@ -4,7 +4,7 @@
     {
         public static bool NoGraphics;
         public static XnaMain xnaMain = new XnaMain();
-#if (WINDOWS_DEBUG)
+#if DEBUG
         static bool ForceXNA = true;
 #else
         static bool ForceXNA = false;
