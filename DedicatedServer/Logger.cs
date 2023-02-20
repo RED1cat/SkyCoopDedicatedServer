@@ -1,5 +1,7 @@
 ﻿using DedicatedServer;
+using Microsoft.Extensions.Logging;
 using Microsoft.Xna.Framework;
+using NLog.Fluent;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,72 +11,23 @@ namespace SkyCoop
 {
     public static class Logger
     {
-#if DEBUG
-        static bool ForceXNA = true;
-#else
-        static bool ForceXNA = false;
-#endif
-        private static List<string> logBuffer = new List<string>();
         public static void Log(string message, LoggerColor lColor = LoggerColor.White)
         {
 
             Color xnaColor = ColorToXna(lColor);
             ConsoleColor consoleColor = ColorToConsoleColor(lColor);
-            string log = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] " + message;
-            
-            if (ForceXNA)
-            {
-                CustomConsole.AddLine(log, xnaColor);
-                return;
-            }
+            string consoleLog = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] {message}";
 
-            if (File.Exists("log.txt") == false)
+            Program.logger.Log(LogLevel.None, message);
+            if (Program.NoGraphics)
             {
-                File.Create("log.txt").Close();
+                Console.ForegroundColor = consoleColor;
+                Console.WriteLine(consoleLog);
+                Console.ResetColor();
             }
-
-            if (logBuffer.Count > 0)
+            else
             {
-                try
-                {
-                    File.AppendAllText("log.txt", logBuffer[0] + Environment.NewLine);
-                }
-                finally
-                {
-                    logBuffer.RemoveAt(0);
-                } 
-            }
-
-            try
-            {
-                File.AppendAllText("log.txt", log + Environment.NewLine);
-            }
-            catch
-            {
-                if (Program.NoGraphics)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Unable to access log.txt");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    CustomConsole.AddLine("Unable to access log.txt", Color.Red);
-                }
-                logBuffer.Add(log);
-            }
-            finally
-            {
-                if (Program.NoGraphics)
-                {
-                    Console.ForegroundColor = consoleColor;
-                    Console.WriteLine(log);
-                    Console.ResetColor();
-                }
-                else
-                {
-                    CustomConsole.AddLine(log, xnaColor);
-                }
+                CustomConsole.AddLine(consoleLog, xnaColor);
             }
         }
 
