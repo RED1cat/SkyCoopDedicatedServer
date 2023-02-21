@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
-using NLog.LayoutRenderers;
 
 namespace DedicatedServer
 {

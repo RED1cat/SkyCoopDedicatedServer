@@ -13,9 +13,9 @@ namespace DedicatedServer
 {
     internal class CustomConsole
     {
-        const int symbolLimit = 90;
-        const int symbolHeight = 18;
-        const int lineLimit = 24;
+        const int symbolLimit = 92;
+        const int symbolHeight = 19;
+        const int lineLimit = 23;
         const int lineBufferLimit = 75;
         const int commandLineBufferLimit = 10;
         static int consolePosition = 0;

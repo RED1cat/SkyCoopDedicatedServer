@@ -18,7 +18,7 @@ namespace SkyCoop
             ConsoleColor consoleColor = ColorToConsoleColor(lColor);
             string consoleLog = $"[{DateTime.Now.ToString() + '.' + DateTime.Now.Millisecond.ToString()}] {message}";
 
-            Program.logger.Log(LogLevel.None, message);
+            Program.logger.Log(LogLevel.Information, message);
             if (Program.NoGraphics)
             {
                 Console.ForegroundColor = consoleColor;

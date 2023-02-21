@@ -190,8 +190,8 @@ namespace DedicatedServer
 
             _spriteBatch.Draw(fontBg, new Vector2(0, 0), new Rectangle(0, 0, 100, 44), Color.White);
 
-            _spriteBatch.DrawString(font, "Players: " + PlayersOnServer.ToString(), new Vector2(5, 5), Color.Coral);
-            _spriteBatch.DrawString(font, $"FPS: {Math.Round(_frameCounter.AverageFramesPerSecond, 3)}", new Vector2(5, 25), Color.Coral);
+            _spriteBatch.DrawString(font, "Players: " + PlayersOnServer.ToString(), new Vector2(5, 1), Color.Coral);
+            _spriteBatch.DrawString(font, $"FPS: {Math.Round(_frameCounter.AverageFramesPerSecond, 3)}", new Vector2(5, 21), Color.Coral);
         }
     }
 }
