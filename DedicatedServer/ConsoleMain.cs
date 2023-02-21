@@ -27,9 +27,9 @@ namespace DedicatedServer
             Task.Factory.StartNew(ReadConsole);
             MyMod.Initialize();
 
-            Timer timer1 = new Timer(EverySecond, null, 0, 1000);
-            Timer timer2 = new Timer(EveryMinute, null, 0, 5000);
-            Timer timer3 = new Timer(DsSave, null, 0, MyMod.DsSavePerioud * 1000);
+            Timer timer1 = new Timer(EverySecond, null, 1000, 1000);
+            Timer timer2 = new Timer(EveryMinute, null, 5000, 5000);
+            Timer timer3 = new Timer(DsSave, null, MyMod.DsSavePerioud * 1000, MyMod.DsSavePerioud * 1000);
 
             while (true)
             {
