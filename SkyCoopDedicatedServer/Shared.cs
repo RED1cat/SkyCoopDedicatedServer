@@ -14,6 +14,7 @@ using System.Security.Policy;
 using UnityEngine;
 using MelonLoader;
 using MelonLoader.TinyJSON;
+using UnhollowerBaseLib;
 #else
 using System.Numerics;
 using TinyJSON;

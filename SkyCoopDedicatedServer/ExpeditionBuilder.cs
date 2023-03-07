@@ -103,10 +103,10 @@ namespace SkyCoop
 #else
             string Seperator = @"\";
 #endif
-            MPSaveManager.CreateFolderIfNotExist("Mods");
-            MPSaveManager.CreateFolderIfNotExist("Mods" + Seperator + "ExpeditionTemplates");
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods");
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
 
-            DirectoryInfo d = new DirectoryInfo("Mods" + Seperator + "ExpeditionTemplates");
+            DirectoryInfo d = new DirectoryInfo(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
             FileInfo[] Files = d.GetFiles("*.json");
             List<string> Names = new List<string>();
             foreach (FileInfo file in Files)
@@ -546,14 +546,28 @@ namespace SkyCoop
 
         public static string GetExpeditionJsonByAlias(string Alias)
         {
-            byte[] FileData = File.ReadAllBytes("Mods" + Seperator + "ExpeditionTemplates" + Seperator + Alias+".json");
-            string JSONString = UTF8Encoding.UTF8.GetString(FileData);
-            if (string.IsNullOrEmpty(JSONString))
+            if(Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods"))
             {
-                return "";
+                if(Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates"))
+                {
+                    byte[] FileData = File.ReadAllBytes(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates" + Seperator + Alias + ".json");
+                    string JSONString = UTF8Encoding.UTF8.GetString(FileData);
+                    if (string.IsNullOrEmpty(JSONString))
+                    {
+                        return "";
+                    }
+                    JSONString = MPSaveManager.VectorsFixUp(JSONString);
+                    return JSONString;
+                } else
+                {
+                    Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
+                }
+            } else
+            {
+                Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods");
+                Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
             }
-            JSONString = MPSaveManager.VectorsFixUp(JSONString);
-            return JSONString;
+            return "";
         }
     }
 }
