@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using static SkyCoop.ExpeditionManager;
 using System.Security.Policy;
-using Harmony;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;

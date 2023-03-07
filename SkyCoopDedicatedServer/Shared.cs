@@ -10,8 +10,6 @@ using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
 using System.Security.Policy;
-using static ParadoxNotion.Services.Logger;
-using UnhollowerBaseLib;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
