@@ -1,29 +1,16 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using SkyCoop;
 using GameServer;
 using System.Threading;
 using static SkyCoop.Shared;
 
-namespace DedicatedServer
+namespace SkyCoopDedicatedServer
 {
     public class ConsoleMain
     {
-#if DEDICATED_WINDOWS
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool FreeConsole();
-#endif
         public void Initialize()
         {
-#if DEDICATED_WINDOWS
-            AllocConsole();
-#endif
             Task.Factory.StartNew(ReadConsole);
             MyMod.Initialize();
 
@@ -39,9 +26,6 @@ namespace DedicatedServer
                     break;
                 }
             }
-#if DEDICATED_WINDOWS
-            FreeConsole();
-#endif
         }
         private void Update()
         {
@@ -61,16 +45,8 @@ namespace DedicatedServer
                         command = command.Replace("\r", "");
                     }
 
-                    if (command.Contains('/'))
-                    {
-                        Logger.Log("[XNAConsole] " + command, LoggerColor.Yellow);
-                        Logger.Log("[XNAConsole] " + MyMod.ConsoleCommandExec(command, true), LoggerColor.Yellow);
-                    }
-                    else
-                    {
-                        Logger.Log("[ServerConsole] " + command, LoggerColor.Yellow);
-                        Logger.Log("[ServerConsole] " + Shared.ExecuteCommand(command), LoggerColor.Yellow);
-                    }
+                    Logger.Log("[ServerConsole] " + command, LoggerColor.Yellow);
+                    Logger.Log("[ServerConsole] " + Shared.ExecuteCommand(command), LoggerColor.Yellow);
                 }
             }
         }

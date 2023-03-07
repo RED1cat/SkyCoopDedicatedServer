@@ -1,8 +1,5 @@
-﻿using DedicatedServer;
+﻿using SkyCoopDedicatedServer;
 using GameServer;
-//using Microsoft.Xna.Framework;
-//using Microsoft.Xna.Framework.Graphics;
-//using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -108,63 +105,5 @@ namespace SkyCoop
             }
         }
 
-        public static string ConsoleCommandExec(string command, bool isXna = false)
-        {
-            command = command.Replace("/", "");
-            switch (command)
-            {
-                case "test":
-                    return "test123\n124test";
-                case "graph":
-                    if (isXna)
-                    {
-                        if (MPStats.TodayStats.ActivitySnapshots.Count > 0)
-                        {
-                            if (Program.xnaMain.StatsGraph == null)
-                            {
-                                Program.xnaMain.NewGraph(MPStats.TodayStats.ActivitySnapshots.First().Value);
-                            }
-                            else
-                            {
-                                Program.xnaMain.StatsGraph = null;
-                                Program.xnaMain.StatsGraphDates.Clear();
-                                Program.xnaMain.StatsGraphPoints.Clear();
-                            }
-                            return "Graph Done";
-                        }
-                        else
-                        {
-                            return "ActivitySnapshots empty";
-                        }
-                    }
-                    break;
-                case "globalgraph":
-                    if (isXna)
-                    {
-                        if (MPStats.AllTimeStats.ActivitySnapshots.Count > 0)
-                        {
-                            if (Program.xnaMain.StatsGraph == null)
-                            {
-                                Program.xnaMain.NewGraph(MPStats.AllTimeStats.ActivitySnapshots);
-                            }
-                            else
-                            {
-                                Program.xnaMain.StatsGraph = null;
-                                Program.xnaMain.StatsGraphDates.Clear();
-                                Program.xnaMain.StatsGraphPoints.Clear();
-                            }
-                            return "Graph Done";
-                        }
-                        else
-                        {
-                            return "ActivitySnapshots empty";
-                        }
-                    }
-                    break;
-                default:
-                    return "Unknown command";
-            }
-            return "Unknown command";
-        }
     }
 }
