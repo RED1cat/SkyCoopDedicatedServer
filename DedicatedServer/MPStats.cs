@@ -179,7 +179,7 @@ namespace SkyCoop
 
         public static string GetRegionName(int Region)
         {
-            return Region.ToString();
+            return ExpeditionBuilder.GetRegionString(Region);
         }
 
         public class PlayerStatistic
@@ -188,6 +188,7 @@ namespace SkyCoop
             public string MAC = "";
             public int Visits = 1;
             public int Deaths = 0;
+            public int ExpeditionsCompleted = 0;
             public PlayTime TotalPlayTime = new PlayTime();
             public Dictionary<int, PlayTime> RegionsHistory = new Dictionary<int, PlayTime>();
             public ResourcesStatistic Looted = new ResourcesStatistic();
@@ -214,7 +215,8 @@ namespace SkyCoop
                     "\nPicked Gears " + Looted.GearsPicked + 
                     "\nLooted Containers " + Looted.ContainersLooted + 
                     "\nPlants Harvested " + Looted.PlantsHarvested + 
-                    "\nAnimals Killed " + Looted.AnimalsKilled;
+                    "\nAnimals Killed " + Looted.AnimalsKilled +
+                    "\nExpeditions Completed " + ExpeditionsCompleted;
 
                 if (!HideRegionPlayTime && RegionsHistory.Count > 0)
                 {
@@ -232,6 +234,7 @@ namespace SkyCoop
         {
             public int Visits = 0;
             public int UniqueVisits = 0;
+            public int ExpeditionsCompleted = 0;
             public Dictionary<string, int> VisitsHistory = new Dictionary<string, int>();
             public PlayTime OnlineTime = new PlayTime();
             public PlayTime EmptyTime = new PlayTime();
@@ -251,7 +254,8 @@ namespace SkyCoop
                     "\nPicked Gears " + Looted.GearsPicked+
                     "\nLooted Containers "+ Looted.ContainersLooted +
                     "\nPlants Harvested " +Looted.PlantsHarvested+
-                    "\nAnimals Killed "+Looted.AnimalsKilled;
+                    "\nAnimals Killed "+Looted.AnimalsKilled +
+                    "\nExpeditions Completed " + ExpeditionsCompleted;
 
                 if (!HideRegionPlayTime && RegionsHistory.Count > 0)
                 {
@@ -385,6 +389,22 @@ namespace SkyCoop
             }
             AllTimeStats.Deaths++;
         }
+        public static void AddExpedition(string MAC)
+        {
+            PlayerStatistic Stat;
+            if (TodayStats.Players.TryGetValue(MAC, out Stat))
+            {
+                Stat.ExpeditionsCompleted++;
+                TodayStats.Players[MAC] = Stat;
+            }
+            TodayStats.ExpeditionsCompleted++;
+            GetPlayerGlobalStats(MAC);
+            if (RecentPlayersGlobalStatistic.ContainsKey(MAC))
+            {
+                RecentPlayersGlobalStatistic[MAC].ExpeditionsCompleted++;
+            }
+            AllTimeStats.ExpeditionsCompleted++;
+        }
         public static void AddRegionTime(string MAC, int Region)
         {
             if(Region == (int) Shared.GameRegion.RandomRegion)
@@ -442,7 +462,6 @@ namespace SkyCoop
             {
                 AllTimeStats.RegionsHistory.Add(Region, new PlayTime());
             }
-            
         }
         public static void SetName(string MAC, string Name)
         {
@@ -563,6 +582,9 @@ namespace SkyCoop
                     }
                 }
             }
+#if (!DEDICATED)
+            AddRegionTime(Server.GetMACByID(0), (int) MyMod.GetCurrentRegion());
+#endif
             if (MyMod.PlayersOnServer == 0)
             {
                 TodayStats.EmptyTime.AddSecond();

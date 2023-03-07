@@ -11,6 +11,7 @@ namespace SkyCoop
     {
         public static ModValidationData LastRequested = null;
         public static List<string> ServerSideOnlyFiles = new List<string>();
+        public static List<string> WhitelistFiles = new List<string>();
 
         public static string SHA256CheckSum(string filePath)
         {
@@ -49,11 +50,12 @@ namespace SkyCoop
             public List<ModHashPair> m_Files = new List<ModHashPair>();
             public string m_FullString = "";
             public string m_FullStringBase64 = "";
+            public List<string> m_WhiteList = new List<string>();
         }
 
         public static bool ServerSideOnly(string Name)
         {
-            return ServerSideOnlyFiles.Contains(Name);
+            return ServerSideOnlyFiles.Contains(Name) || WhitelistFiles.Contains(Name);
         }
 
         public static ModValidationData GetModsHash(bool Force = false)
@@ -64,18 +66,26 @@ namespace SkyCoop
                 return LastRequested;
             }
 
+            string AppPath = MPSaveManager.GetBaseDirectory();
+
             if (MyMod.DedicatedServerAppMode)
             {
-                if (File.Exists("serversideonly.json"))
+                if (File.Exists(AppPath + "serversideonly.json"))
                 {
                     Logger.Log("[ModsValidation][Info] Found Server Side Files List!");
-                    string FilterJson = System.IO.File.ReadAllText("serversideonly.json");
+                    string FilterJson = System.IO.File.ReadAllText(AppPath + "serversideonly.json");
                     ServerSideOnlyFiles = JSON.Load(FilterJson).Make<List<string>>();
                 }
+                if (File.Exists(AppPath + "modswhitelist.json"))
+                {
+                    Logger.Log("[ModsValidation][Info] Found Mods White List!");
+                    string FilterJson = System.IO.File.ReadAllText(AppPath + "modswhitelist.json");
+                    WhitelistFiles = JSON.Load(FilterJson).Make<List<string>>();
+                }
             }
-            if (Directory.Exists("Mods"))
+            if (Directory.Exists(AppPath + "Mods"))
             {
-                foreach (string mod in Directory.GetFiles("Mods"))
+                foreach (string mod in Directory.GetFiles(AppPath + "Mods"))
                 {
                     if (mod.Contains(".dll"))
                     {
@@ -89,10 +99,14 @@ namespace SkyCoop
                         {
                             Logger.Log("[ModsValidation][Info] Ignore " + FileName);
                         }
+                        if (WhitelistFiles.Contains(FileName))
+                        {
+                            Valid.m_WhiteList.Add(Hash);
+                        }
                     }
                 }
 
-                foreach (string mod in Directory.GetFiles("Mods"))
+                foreach (string mod in Directory.GetFiles(AppPath + "Mods"))
                 {
                     if (mod.Contains(".modcomponent"))
                     {
@@ -106,16 +120,20 @@ namespace SkyCoop
                         {
                             Logger.Log("[ModsValidation][Info] Ignore " + FileName);
                         }
+                        if (WhitelistFiles.Contains(FileName))
+                        {
+                            Valid.m_WhiteList.Add(Hash);
+                        }
                     }
                 }
             }
             else
             {
-                Directory.CreateDirectory("Mods");
+                Directory.CreateDirectory(AppPath + "Mods");
             }
-            if (Directory.Exists("Plugins"))
+            if (Directory.Exists(AppPath + "Plugins"))
             {
-                foreach (string mod in Directory.GetFiles("Plugins"))
+                foreach (string mod in Directory.GetFiles(AppPath + "Plugins"))
                 {
                     if (mod.Contains(".dll"))
                     {
@@ -129,12 +147,16 @@ namespace SkyCoop
                         {
                             Logger.Log("[ModsValidation][Info] Ignore " + FileName);
                         }
+                        if (WhitelistFiles.Contains(FileName))
+                        {
+                            Valid.m_WhiteList.Add(Hash);
+                        }
                     }
                 }
             }
             else
             {
-                Directory.CreateDirectory("Plugins");
+                Directory.CreateDirectory(AppPath + "Plugins");
             }
 
             Valid.m_Files.Sort(delegate (ModHashPair x, ModHashPair y) {

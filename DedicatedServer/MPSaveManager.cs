@@ -9,6 +9,8 @@ using GameServer;
 using static SkyCoop.DataStr;
 using System.Globalization;
 using System.Security.Policy;
+using UnityEngine.SceneManagement;
+using Harmony;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -78,8 +80,8 @@ namespace SkyCoop
         public static string MyMAC = "";
         public static Dictionary<string, Dictionary<string, FakeRockCacheVisualData>> RockCaches = new Dictionary<string, Dictionary<string, FakeRockCacheVisualData>>();
         public static bool RockCachesChanged = false;
-
-
+        public static Dictionary<string, Dictionary<string, UniversalSyncableObject>> UniversalSyncableObjects = new Dictionary<string, Dictionary<string, UniversalSyncableObject>>();
+        public static bool UniversalSyncableObjectsChanged = false;
         public static void SaveGlobalData()
         {
             Log("Dedicated server saving...");
@@ -466,6 +468,7 @@ namespace SkyCoop
             string KilledAnimalsJSON = LoadData("KilledAnimals", SaveSeed);
             string BannedUsersJSON = LoadData("BanList");
             string RockCachesJSON = LoadData("RockCaches", SaveSeed);
+            string UniversalSyncablesJSON = LoadData("UniversalSyncables", SaveSeed);
             if (!string.IsNullOrEmpty(LockedDoorsJSON))
             {
                 LockedDoors = JSON.Load(LockedDoorsJSON).Make<Dictionary<string, Dictionary<string, string>>>();
@@ -492,6 +495,10 @@ namespace SkyCoop
             if (!string.IsNullOrEmpty(RockCachesJSON))
             {
                 RockCaches = JSON.Load(RockCachesJSON).Make<Dictionary<string, Dictionary<string, FakeRockCacheVisualData>>>();
+            }
+            if (!string.IsNullOrEmpty(UniversalSyncablesJSON))
+            {
+                UniversalSyncableObjects = JSON.Load(UniversalSyncablesJSON).Make<Dictionary<string, Dictionary<string, UniversalSyncableObject>>>();
             }
         }
 
@@ -695,6 +702,20 @@ namespace SkyCoop
         }
 #endif
 
+        public static string GetBaseDirectory()
+        {
+#if (DEDICATED)
+            if (string.IsNullOrEmpty(AppPath))
+            {
+                AppPath = AppDomain.CurrentDomain.BaseDirectory;
+                return AppPath;
+            }
+            return AppPath;
+#else
+            return "";
+#endif
+        }
+
         public static void SaveRecentStuff()
         {
             Stopwatch watch = null;
@@ -725,6 +746,11 @@ namespace SkyCoop
             {
                 RockCachesChanged = false;
                 SaveData("RockCaches", JSON.Dump(RockCaches), SaveSeed);
+            }
+            if (UniversalSyncableObjectsChanged)
+            {
+                UniversalSyncableObjectsChanged = false;
+                SaveData("UniversalSyncables", JSON.Dump(UniversalSyncableObjects), SaveSeed);
             }
 
             foreach (var item in RecentVisual)
@@ -829,7 +855,7 @@ namespace SkyCoop
         
         public static string AppPath = "";
 
-#if(!DEDICATED_LINUX)
+#if (!DEDICATED_LINUX)
         public static string PathSeparator = @"\";
 #else
         public static string PathSeparator = @"/";
@@ -943,13 +969,13 @@ namespace SkyCoop
         }
         public static void DeleteData(string name, int Seed = 0)
         {
-            Log("Attempt to delete " + name);
+            //Log("Attempt to delete " + name);
             try
             {
                 string fullPath = GetPathForName(name, Seed);
                 if (File.Exists(fullPath))
                     File.Delete(fullPath);
-                Log("File deleted!");
+                //Log("File deleted!");
             }
             catch (Exception ex)
             {
@@ -1042,7 +1068,7 @@ namespace SkyCoop
         }
         public static void RemoveContainer(string scene, string GUID)
         {
-            Log("Got request to remove "+ GUID);
+            //Log("Got request to remove "+ GUID);
             int SaveSeed = GetSeed();
             string Key = GetKeyTemplate(SaveKeyTemplateType.Container, scene, GUID);
             DeleteData(Key, SaveSeed);
@@ -1132,6 +1158,130 @@ namespace SkyCoop
             RecentlyHarvastedPlants.Add(Scene, Dict);
         }
 
+        public static void RepairBreakdowns(string Scene, List<string> BreakdownsList = default)
+        {
+            int SaveSeed = GetSeed();
+            string SaveKey = GetKeyTemplate(SaveKeyTemplateType.Furns, Scene);
+            bool RepaidAll = BreakdownsList.Count == 0;
+            Dictionary<string, BrokenFurnitureSync> Dict;
+
+            if (RecentBrokenFurns.ContainsKey(Scene))
+            {
+                foreach (var item in RecentBrokenFurns[Scene].ToList())
+                {
+                    if (RepaidAll || BreakdownsList.Contains(RecentBrokenFurns[Scene][item.Key].m_Guid))
+                    {
+                        RecentBrokenFurns[Scene][item.Key].m_Broken = false;
+                        ServerSend.FURNBROKEN(0, RecentBrokenFurns[Scene][item.Key], true);
+#if (!DEDICATED)
+                        if(Scene == MyMod.level_guid)
+                        {
+                            MyMod.RepairBrokenFurniture(RecentBrokenFurns[Scene][item.Key].m_Guid, RecentBrokenFurns[Scene][item.Key].m_ParentGuid);
+                        }
+#endif
+                    }
+                }
+                return;
+            } else
+            {
+                Dict = LoadFurnsData(Scene);
+            }
+
+            if (Dict == null)
+            {
+                return;
+            }
+            foreach (var item in Dict.ToList())
+            {
+                if (RepaidAll || BreakdownsList.Contains(Dict[item.Key].m_Guid))
+                {
+                    Dict[item.Key].m_Broken = false;
+                    ServerSend.FURNBROKEN(0, Dict[item.Key], true);
+#if (!DEDICATED)
+                    if (Scene == MyMod.level_guid)
+                    {
+                        MyMod.RepairBrokenFurniture(Dict[item.Key].m_Guid, Dict[item.Key].m_ParentGuid);
+                    }
+#endif
+                }
+            }
+            ValidateRootExits();
+            SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
+            RecentBrokenFurns.Add(Scene, Dict);
+        }
+
+        public static void ForceGrowPlants(string Scene, List<string> GrowList = default)
+        {
+            int SaveSeed = GetSeed();
+            string SaveKey = GetKeyTemplate(SaveKeyTemplateType.HarvestedPlants, Scene);
+            bool GrowAll = GrowList.Count == 0;
+            Dictionary<string, int> Dict;
+
+            if (RecentlyHarvastedPlants.ContainsKey(Scene))
+            {
+                foreach (var item in RecentlyHarvastedPlants[Scene].ToList())
+                {
+                    if(GrowAll || GrowList.Contains(item.Key))
+                    {
+                        RecentlyHarvastedPlants[Scene][item.Key] = -1;
+                        ServerSend.LOOTEDHARVESTABLE(0, item.Key, Scene, -1, true);
+#if (!DEDICATED)
+                        if (Scene == MyMod.level_guid)
+                        {
+                            MyMod.AddHarvastedPlant(item.Key);
+                        }
+#endif
+                    }
+                }
+                return;
+            } else
+            {
+                Dict = LoadHarvestedPlants(Scene);
+            }
+
+            if (Dict == null)
+            {
+                return;
+            }
+            foreach (var item in Dict.ToList())
+            {
+                if (GrowAll || GrowList.Contains(item.Key))
+                {
+                    Dict[item.Key] = -1;
+                    ServerSend.LOOTEDHARVESTABLE(0, item.Key, Scene, -1, true);
+#if (!DEDICATED)
+                    if (Scene == MyMod.level_guid)
+                    {
+                        MyMod.AddHarvastedPlant(item.Key);
+                    }
+#endif
+                }
+            }
+            ValidateRootExits();
+            SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
+            RecentlyHarvastedPlants.Add(Scene, Dict);
+        }
+
+        public static Dictionary<string, int> CheckPlantsGrow(Dictionary<string, int> input)
+        {
+            Dictionary<string, int> output = new Dictionary<string, int>();
+            foreach (var item in input)
+            {
+                string GUID = item.Key;
+                int HarvestTimeStamp = item.Value;
+                int RespawnTimeStamp = HarvestTimeStamp + 4320;// HarvestTime + 3 Days
+                if (MyMod.MinutesFromStartServer > RespawnTimeStamp) 
+                {
+                    output.Add(GUID, -1);
+                } else
+                {
+                    output.Add(GUID, HarvestTimeStamp);
+                }
+            }
+
+            return output;
+        }
+
         public static Dictionary<string, int> LoadHarvestedPlants(string scene)
         {
             int SaveSeed = GetSeed();
@@ -1140,15 +1290,64 @@ namespace SkyCoop
             Dictionary<string, int> Dict;
             if (RecentlyHarvastedPlants.TryGetValue(scene, out Dict))
             {
-                return Dict;
+                return CheckPlantsGrow(Dict);
             }
 
             string LoadedContent = LoadData(Key, SaveSeed);
             if (LoadedContent != "")
             {
-                return JSON.Load(LoadedContent).Make<Dictionary<string, int>>();
+                return CheckPlantsGrow(JSON.Load(LoadedContent).Make<Dictionary<string, int>>());
             }
             return null;
+        }
+
+        public static int GetContainerState(string Scene, string GUID)
+        {
+            Dictionary<string, int> Dict = LoadLootedContainersData(Scene);
+            if (Dict == null)
+            {
+                return -1;
+            }
+            int State;
+            if (Dict.TryGetValue(GUID, out State))
+            {
+                return State;
+            }
+            return -1;
+        }
+
+        public static void SetConstainerState(string Scene, string GUID, int State)
+        {
+            Dictionary<string, int> Dict = LoadLootedContainersData(Scene);
+            if(Dict == null)
+            {
+                Dict = new Dictionary<string, int>();
+                Dict.Add(GUID, State);
+                RecentlyLootedContainers.Remove(Scene);
+                RecentlyLootedContainers.Add(Scene, Dict);
+                ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
+#if (!DEDICATED)
+                if (MyMod.level_guid == Scene)
+                {
+                    MyMod.RemoveLootFromContainer(GUID, State);
+                }
+#endif
+            }
+
+            if (Dict.ContainsKey(GUID))
+            {
+                Dict.Remove(GUID);
+                Dict.Add(GUID, State);
+                RecentlyLootedContainers.Remove(Scene);
+                RecentlyLootedContainers.Add(Scene, Dict);
+                ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
+#if (!DEDICATED)
+                if (MyMod.level_guid == Scene)
+                {
+                    MyMod.RemoveLootFromContainer(GUID, State);
+                }
+#endif
+            }
         }
 
         public static void AddLootedContainer(ContainerOpenSync Box, int State = 0, int Looter = 0)
@@ -1350,22 +1549,7 @@ namespace SkyCoop
         {
             string Scene = furn.m_LevelGUID;
             string Key = furn.m_LevelGUID + furn.m_ParentGuid;
-
-            int SaveSeed = GetSeed();
-            string SaveKey = GetKeyTemplate(SaveKeyTemplateType.Furns, Scene);
-            Dictionary<string, BrokenFurnitureSync> Dict;
-
-            if (RecentBrokenFurns.TryGetValue(Scene, out Dict))
-            {
-                Dict.Remove(Key);
-                Dict.Add(Key, furn);
-                RecentBrokenFurns.Remove(Scene);
-                RecentBrokenFurns.Add(Scene, Dict);
-                return;
-            } else
-            {
-                Dict = LoadFurnsData(Scene);
-            }
+            Dictionary<string, BrokenFurnitureSync> Dict = LoadFurnsData(Scene);
 
             if (Dict == null)
             {
@@ -1373,8 +1557,7 @@ namespace SkyCoop
             }
             Dict.Remove(Key);
             Dict.Add(Key, furn);
-            ValidateRootExits();
-            SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
+            RecentBrokenFurns.Remove(Scene);
             RecentBrokenFurns.Add(Scene, Dict);
         }
         public static Dictionary<string, BrokenFurnitureSync> LoadFurnsData(string scene)
@@ -1391,7 +1574,9 @@ namespace SkyCoop
             string LoadedContent = LoadData(Key, SaveSeed);
             if (LoadedContent != "")
             {
-                return JSON.Load(LoadedContent).Make<Dictionary<string, BrokenFurnitureSync>>();
+                Dict = JSON.Load(LoadedContent).Make<Dictionary<string, BrokenFurnitureSync>>();
+                RecentBrokenFurns.Add(scene, Dict);
+                return Dict;
             }
             return null;
         }
@@ -1684,7 +1869,7 @@ namespace SkyCoop
 
         public static string GetSubNetworkGUID()
         {
-#if(!DEDICATED)
+#if (!DEDICATED)
 
             if (string.IsNullOrEmpty(MyMAC))
             {
@@ -1701,7 +1886,7 @@ namespace SkyCoop
             SaveData("BanList", JSON.Dump(BannedUsers));
         }
 
-#if(!DEDICATED)
+#if (!DEDICATED)
         public static Texture2D GetPhotoTexture(string GUID)
         {
             Texture2D tex = Utils.GetCachedTexture("Photo_"+ GUID);
@@ -1732,7 +1917,7 @@ namespace SkyCoop
                 GUID = GetNewUGUID();
             }
 
-#if(!DEDICATED_LINUX)
+#if (!DEDICATED_LINUX)
             string Separator = @"\";
 #else
             string Separator = @"/";
@@ -1757,7 +1942,7 @@ namespace SkyCoop
             string Separator = @"\";
 #else
             string Separator = @"/";
-#endif            
+#endif
             string Base64 = LoadPhoto(GUID, true);
             if (!string.IsNullOrEmpty(Base64))
             {
@@ -1838,6 +2023,90 @@ namespace SkyCoop
                     RockCaches[Cache.m_LevelGUID].Remove(Cache.m_GUID);
                     RockCachesChanged = true;
                 }
+            }
+        }
+
+        public static void AddUniversalSyncableObject(DataStr.UniversalSyncableObject Data)
+        {
+            Dictionary<string, UniversalSyncableObject> Dict;
+            if(UniversalSyncableObjects.TryGetValue(Data.m_Scene, out Dict))
+            {
+                if (Data.m_RemoveTime != 0 && Data.m_RemoveTime < MyMod.MinutesFromStartServer)
+                {
+                    RemoveContainer(Data.m_Scene, Data.m_GUID);
+                }
+                Dict.Remove(Data.m_GUID);
+                Dict.Add(Data.m_GUID, Data);
+            } else
+            {
+                Dict = new Dictionary<string, UniversalSyncableObject>();
+                Dict.Add(Data.m_GUID, Data);
+            }
+            UniversalSyncableObjects.Remove(Data.m_Scene);
+            UniversalSyncableObjects.Add(Data.m_Scene, Dict);
+            UniversalSyncableObjectsChanged = true;
+        }
+
+        public static void RemoveUniversalSyncableObject(string Scene, string GUID)
+        {
+            Dictionary<string, UniversalSyncableObject> Dict;
+            if (UniversalSyncableObjects.TryGetValue(Scene, out Dict))
+            {
+                Dict.Remove(GUID);
+                UniversalSyncableObjects.Remove(Scene);
+                UniversalSyncableObjects.Add(Scene, Dict);
+                ServerSend.REMOVEUNIVERSALSYNCABLE(GUID, Scene);
+                UniversalSyncableObjectsChanged = true;
+            }
+        }
+
+        public static Dictionary<string, UniversalSyncableObject> GetUniversalSyncablesForScene(string Scene)
+        {
+            Dictionary<string, UniversalSyncableObject> Dict;
+            if (UniversalSyncableObjects.TryGetValue(Scene, out Dict))
+            {
+                List<UniversalSyncableObject> List = Dict.Values.ToList();
+                for (int i = List.Count-1; i >= 0 ; i--)
+                {
+                    UniversalSyncableObject item = List[i];
+                    if(item.m_RemoveTime != 0 && item.m_RemoveTime < MyMod.MinutesFromStartServer)
+                    {
+                        Dict.Remove(item.m_GUID);
+                        RemoveContainer(Scene, item.m_GUID);
+                        ServerSend.REMOVEUNIVERSALSYNCABLE(item.m_GUID, Scene);
+                    }
+                }
+                UniversalSyncableObjects.Remove(Scene);
+                UniversalSyncableObjects.Add(Scene, Dict);
+                UniversalSyncableObjectsChanged = true;
+            } else
+            {
+                return new Dictionary<string, UniversalSyncableObject>();
+            }
+
+            return Dict;
+        }
+        public static UniversalSyncableObject GetUniversalSyncable(string Scene, string GUID)
+        {
+            Dictionary<string, UniversalSyncableObject> Dict;
+            if (UniversalSyncableObjects.TryGetValue(Scene, out Dict))
+            {
+                UniversalSyncableObject item;
+                if(Dict.TryGetValue(GUID, out item))
+                {
+                    if (item.m_RemoveTime != 0 && item.m_RemoveTime < MyMod.MinutesFromStartServer)
+                    {
+                        Dict.Remove(item.m_GUID);
+                        RemoveContainer(Scene, GUID);
+                    }
+                }
+                UniversalSyncableObjects.Remove(Scene);
+                UniversalSyncableObjects.Add(Scene, Dict);
+                UniversalSyncableObjectsChanged = true;
+                return item;
+            } else
+            {
+                return null;
             }
         }
     }

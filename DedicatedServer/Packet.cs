@@ -189,6 +189,11 @@ namespace GameServer
         ADDROCKCACH,
         REMOVEROCKCACH,
         REMOVEROCKCACHFINISHED,
+        CHARCOALDRAW,
+        CHATCOMMAND,
+        ADDUNIVERSALSYNCABLE,
+        REMOVEUNIVERSALSYNCABLE,
+        REQUESTCONTAINERSTATE,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -366,6 +371,11 @@ namespace GameServer
         ADDROCKCACH,
         REMOVEROCKCACH,
         REMOVEROCKCACHFINISHED,
+        CHARCOALDRAW,
+        CHATCOMMAND,
+        ADDUNIVERSALSYNCABLE,
+        REMOVEUNIVERSALSYNCABLE,
+        REQUESTCONTAINERSTATE,
     }
 
     public class Packet : IDisposable
@@ -710,6 +720,7 @@ namespace GameServer
             WriteUnicodeString(obj.m_Message);
             Write(obj.m_Type);
             Write(obj.m_Global);
+            Write(obj.m_Private);
         }
         public void Write(DataStr.MultiPlayerClientStatus obj)
         {
@@ -734,6 +745,7 @@ namespace GameServer
             Write(obj.m_ParentGuid);
             Write(obj.m_LevelID);
             Write(obj.m_LevelGUID);
+            Write(obj.m_Broken);
         }
         public void Write(DataStr.PickedGearSync obj)
         {
@@ -806,6 +818,7 @@ namespace GameServer
             Write(obj.m_Variant);
             Write(obj.m_GearName);
             Write(obj.m_PhotoGUID);
+            WriteUnicodeString(obj.m_ExpeditionNote);
         }
         public void Write(DataStr.AffictionSync obj)
         {
@@ -881,6 +894,14 @@ namespace GameServer
                 Write(LIST[i]);
             }
         }
+        public void Write(List<string> LIST)
+        {
+            Write(LIST.Count);
+            for (int i = 0; i < LIST.Count; i++)
+            {
+                Write(LIST[i]);
+            }
+        }
         public void Write(List<ExpeditionManager.ExpeditionInvite> LIST)
         {
             Write(LIST.Count);
@@ -924,6 +945,16 @@ namespace GameServer
             for (int i = 0; i < Count; i++)
             {
                 LIST.Add(ReadFloat());
+            }
+            return LIST;
+        }
+        public List<string> ReadStringList()
+        {
+            List<string> LIST = new List<string>();
+            int Count = ReadInt();
+            for (int i = 0; i < Count; i++)
+            {
+                LIST.Add(ReadString());
             }
             return LIST;
         }
@@ -1288,6 +1319,7 @@ namespace GameServer
             obj.m_Message = ReadUnicodeString();
             obj.m_Type = ReadInt();
             obj.m_Global = ReadBool();
+            obj.m_Private = ReadBool();
 
             return obj;
         }
@@ -1323,6 +1355,7 @@ namespace GameServer
             obj.m_ParentGuid = ReadString();
             obj.m_LevelID = ReadInt();
             obj.m_LevelGUID = ReadString();
+            obj.m_Broken = ReadBool();
 
             return obj;
         }
@@ -1456,6 +1489,7 @@ namespace GameServer
             obj.m_Variant = ReadInt();
             obj.m_GearName = ReadString();
             obj.m_PhotoGUID = ReadString();
+            obj.m_ExpeditionNote = ReadUnicodeString();
 
             return obj;
         }
@@ -1645,6 +1679,32 @@ namespace GameServer
             obj.m_Owner = ReadString();
             obj.m_Position = ReadVector3();
             obj.m_Rotation = ReadQuaternion();
+            return obj;
+        }
+
+        public void Write(UniversalSyncableObject obj)
+        {
+            Write(obj.m_Prefab);
+            Write(obj.m_Scene);
+            Write(obj.m_GUID);
+            Write(obj.m_Position);
+            Write(obj.m_Rotation);
+            Write(obj.m_CreationTime);
+            Write(obj.m_RemoveTime);
+            Write(obj.m_ExpeditionBelong);
+        }
+
+        public UniversalSyncableObject ReadUniversalSyncable()
+        {
+            UniversalSyncableObject obj = new UniversalSyncableObject();
+            obj.m_Prefab = ReadString();
+            obj.m_Scene = ReadString();
+            obj.m_GUID = ReadString();
+            obj.m_Position = ReadVector3();
+            obj.m_Rotation = ReadQuaternion();
+            obj.m_CreationTime = ReadInt();
+            obj.m_RemoveTime = ReadInt();
+            obj.m_ExpeditionBelong = ReadString();
             return obj;
         }
 

@@ -412,6 +412,9 @@ namespace GameServer
                 { (int)ClientPackets.ADDROCKCACH, ServerHandle.ADDROCKCACH},
                 { (int)ClientPackets.REMOVEROCKCACH, ServerHandle.REMOVEROCKCACH},
                 { (int)ClientPackets.REMOVEROCKCACHFINISHED, ServerHandle.REMOVEROCKCACHFINISHED},
+                { (int)ClientPackets.CHARCOALDRAW, ServerHandle.CHARCOALDRAW},
+                { (int)ClientPackets.CHATCOMMAND, ServerHandle.CHATCOMMAND},
+                { (int)ClientPackets.REQUESTCONTAINERSTATE, ServerHandle.REQUESTCONTAINERSTATE},
             };
             Log("Initialized packets.");
         }

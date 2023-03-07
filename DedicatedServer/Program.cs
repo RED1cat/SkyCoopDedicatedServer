@@ -4,14 +4,14 @@
     {
         public static bool NoGraphics;
         public static XnaMain xnaMain = new XnaMain();
-#if (WINDOWS_DEBUG)
-        static bool ForceXNA = true;
-#else
-        static bool ForceXNA = false;
-#endif
 
         public static void Main(string[] arg)
         {
+#if (WINDOWS_DEBUG)
+            bool ForceXNA = true;
+#else
+            bool ForceXNA = false;
+#endif            
             if (ForceXNA)
             {
                 NoGraphics = false;

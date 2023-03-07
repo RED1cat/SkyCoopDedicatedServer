@@ -68,6 +68,7 @@ namespace SkyCoop
             public int m_Variant = 0;
             public string m_GearName = "";
             public string m_PhotoGUID = "";
+            public string m_ExpeditionNote = "";
         }
         public class AnimalArrow
         {
@@ -234,7 +235,9 @@ namespace SkyCoop
             public float m_RadioFrequency = 0;
             public Supporters.SupporterBenefits m_SupporterBenefits = new Supporters.SupporterBenefits();
             public bool m_IsLoading = false;
-            public int m_LastRegion = (int) Shared.GameRegion.RandomRegion;
+            public int m_LastWeatherRegion = (int) Shared.GameRegion.RandomRegion;
+            public int m_LastRegion = (int)Shared.GameRegion.RandomRegion;
+
             public bool m_IsSafe = false;
             public string m_SteamOrEGSID = "";
         }
@@ -355,6 +358,7 @@ namespace SkyCoop
             public string m_Message = "";
             public string m_By = "";
             public bool m_Global = true;
+            public bool m_Private = false;
 #if (!DEDICATED)
             public UnityEngine.UI.Text m_TextObj = null;
 #endif
@@ -382,6 +386,7 @@ namespace SkyCoop
             public string m_ParentGuid = "";
             public int m_LevelID = 0;
             public string m_LevelGUID = "";
+            public bool m_Broken = true;
 
             public bool Equals(BrokenFurnitureSync other)
             {
@@ -675,6 +680,26 @@ namespace SkyCoop
             public string m_GUID = "";
             public Vector3 m_Position = new Vector3(0,0,0);
             public Quaternion m_Rotation = new Quaternion(0, 0, 0, 0);
+        }
+
+        public class UniversalSyncableObject
+        {
+            public string m_Prefab = "";
+            public string m_Scene = "";
+            public string m_GUID = "";
+            public Vector3 m_Position = new Vector3(0,0,0);
+            public Quaternion m_Rotation = new Quaternion(0,0,0,0);
+            public int m_CreationTime = 0;
+            public int m_RemoveTime = 0;
+            public string m_ExpeditionBelong = "";
+        }
+        public class UniversalSyncableObjectSpawner
+        {
+            public string m_Prefab = "";
+            public string m_GUID = "";
+            public Vector3 m_Position = new Vector3(0, 0, 0);
+            public Quaternion m_Rotation = new Quaternion(0, 0, 0, 0);
+            public string m_Content = "";
         }
     }
 }

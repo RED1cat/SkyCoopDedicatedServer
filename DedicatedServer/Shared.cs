@@ -10,6 +10,8 @@ using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
 using System.Security.Policy;
+using static ParadoxNotion.Services.Logger;
+using UnhollowerBaseLib;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -35,9 +37,18 @@ namespace SkyCoop
         public static bool DSQuit = false;
         public static float LocalChatMaxDistance = 70f;
 
+
+
+        public static int GameRegionNegativeOffset = 5;
+        public static int GameRegionPositiveOffset = 13;
         public enum GameRegion
         {
-            MysteryLake,
+            KeepersPassSouth = -5,
+            KeepersPassNorth = -4,
+            WindingRiver = -3,
+            Ravine = -2,
+            CrumblingHighWay = -1,
+            MysteryLake = 0,
             CoastalHighWay,
             DesolationPoint,
             PlesantValley,
@@ -1735,12 +1746,28 @@ namespace SkyCoop
             }
         }
 
-        public static void SendMessageToChat(DataStr.MultiplayerChatMessage message, bool needSync = true)
-        {
+
 #if (!DEDICATED)
-            if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
+        public static void SendChatCommandToHost(string Command)
+        {
+            if (MyMod.iAmHost)
             {
-                if (message.m_Message == "!debug")
+                ChatCommand(Command, 0);
+            } else
+            {
+                using (Packet _packet = new Packet((int)ClientPackets.CHATCOMMAND))
+                {
+                    _packet.Write(Command);
+                    MyMod.SendUDPData(_packet);
+                }
+            }
+        }
+        public static bool ClientOnlyChatCommand(string Command)
+        {
+            Command = Command.ToLower();
+            if (Command == "!debug")
+            {
+                if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
                 {
                     if (MyMod.DebugGUI == false)
                     {
@@ -1751,12 +1778,11 @@ namespace SkyCoop
                         MyMod.DebugGUI = false;
                         MyMod.DebugBind = false;
                     }
-                    return;
                 }
-            }
-            if (message.m_Message == "!expedition")
+                return true;
+            } else if(Command == "!expedition")
             {
-                if(MyMod.ExpeditionEditorUI != null)
+                if (MyMod.ExpeditionEditorUI != null)
                 {
                     MyMod.ExpeditionEditorSelectUI.SetActive(!MyMod.ExpeditionEditorSelectUI.activeSelf);
                     MyMod.ExpeditionEditorUI.SetActive(false);
@@ -1765,63 +1791,131 @@ namespace SkyCoop
                     if (MyMod.ExpeditionEditorSelectUI.activeSelf)
                     {
                         ExpeditionEditor.RefreshExpeditionsList();
-                    } 
+                    }
                 }
-                return;
-            }
-            if (message.m_Message.StartsWith("!cfg"))
+                return true;
+            } else if (Command == "!cfg")
             {
                 MyMod.ShowCFGData();
-                return;
+                SendFeedBackMessage("Server configuration printer to your log.");
+                return true;
+            } else if (Command == "!stats" || Command == "!today")
+            {
+                SendChatCommandToHost(Command);
+                return true;
+            } else if (Command.StartsWith("!spawn "))
+            {
+                if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
+                {
+                    string Prefab = Command.Replace("!spawn ","");
+                    GameObject reference = MyMod.LoadedBundle.LoadAsset<GameObject>(Prefab);
+
+                    if (reference == null)
+                    {
+                        reference = Resources.Load<GameObject>(Prefab);
+                    }
+
+                    if (reference == null)
+                    {
+                        SendFeedBackMessage("Can't find, trying other way..");
+                        Il2CppReferenceArray<UnityEngine.Object> Stuff = Resources.LoadAll("", GameObject.Il2CppType);
+                        foreach (var item in Stuff)
+                        {
+                            if (item.name.ToLower() == Prefab)
+                            {
+                                SendFeedBackMessage("Found it!");
+                                reference = item.Cast<GameObject>();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (reference == null)
+                    {
+                        SendFeedBackMessage("Prefab "+ Prefab + " not exist!");
+                    } else
+                    {
+                        GameObject obj = UnityEngine.Object.Instantiate<GameObject>(reference, GameManager.GetPlayerTransform().transform.position, GameManager.GetPlayerTransform().transform.rotation);
+                        GameManager.GetPlayerManagerComponent().StartPlaceMesh(obj, PlaceMeshFlags.None);
+                        SendFeedBackMessage("Created " + Prefab);
+                    }
+                }
+                return true;
+            } else if (Command.StartsWith("!test"))
+            {
+                if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
+                {
+                    SendFeedBackMessage("Searcing OutdoorSceneRoot...");
+                    foreach (var item in UnityEngine.Object.FindObjectsOfType<LoadScene>())
+                    {
+                        if (item.transform.root.GetComponent<OutdoorSceneRoot>() != null)
+                        {
+                            SendFeedBackMessage("Found instance");
+                            OutdoorSceneRoot Inst = item.transform.root.GetComponent<OutdoorSceneRoot>();
+                            SendFeedBackMessage("Inst contains "+ Inst.m_CachedPrefabs.Count+" cached prefabs");
+                            for (int i = 0; i < Inst.m_CachedPrefabs.Count; i++)
+                            {
+                                MelonLogger.Msg("[OutdoorSceneRoot] " + Inst.m_CachedPrefabs[i].m_Prefab.name);
+                            }
+                            SendFeedBackMessage("Inst master object " + Inst.m_MasterObject);
+                        }
+                    }
+
+                    SendFeedBackMessage("Contains " + OutdoorSceneRoot.m_MasterObjectDict.Count);
+                    foreach (var item in OutdoorSceneRoot.m_MasterObjectDict)
+                    {
+                        MelonLogger.Msg("[OutdoorSceneRoot] " + item.value.name);
+                    }
+                }
+                return true;
             }
 
-            if (message.m_Message == "!fasteat")
+            return false;
+        }
+#endif
+
+        public static void ChatCommand(string Command, int From = 0)
+        {
+            Command = Command.ToLower();
+            string FeedBack = "";
+            if(Command == "!stats")
             {
-                if (MyMod.iAmHost == true)
-                {
-                    if (MyMod.ServerConfig.m_FastConsumption == false)
-                    {
-                        MyMod.ServerConfig.m_FastConsumption = true;
-                    } else
-                    {
-                        MyMod.ServerConfig.m_FastConsumption = false;
-                    }
-                    message.m_Type = 0;
-                    message.m_By = MyMod.MyChatName;
-                    message.m_Message = "Server configuration parameter ServerConfig.m_FastConsumption now is " + MyMod.ServerConfig.m_FastConsumption;
-                    needSync = true;
-                    ServerSend.SERVERCFGUPDATED();
-                } else
-                {
-                    message.m_Type = 0;
-                    message.m_By = MyMod.MyChatName;
-                    message.m_Message = "You not a host to change this!";
-                    needSync = false;
-                }
+                string MAC = Server.GetMACByID(From);
+                FeedBack = MPStats.GetPlayerGlobalStats(MAC).GetString(true, false);
+            }else if(Command == "!today")
+            {
+                FeedBack = MPStats.TodayStats.GetString(false, true, true);
             }
-            if (message.m_Message == "!dupes")
+
+            if (!string.IsNullOrEmpty(FeedBack))
             {
-                if (MyMod.iAmHost == true)
-                {
-                    if (MyMod.ServerConfig.m_DuppedSpawns == false)
-                    {
-                        MyMod.ServerConfig.m_DuppedSpawns = true;
-                    } else
-                    {
-                        MyMod.ServerConfig.m_DuppedSpawns = false;
-                    }
-                    message.m_Type = 0;
-                    message.m_By = MyMod.MyChatName;
-                    message.m_Message = "Server configuration parameter ServerConfig.m_DuppedSpawns now is " + MyMod.ServerConfig.m_DuppedSpawns;
-                    needSync = true;
-                    ServerSend.SERVERCFGUPDATED();
-                } else
-                {
-                    message.m_Type = 0;
-                    message.m_By = MyMod.MyChatName;
-                    message.m_Message = "You not a host to change this!";
-                    needSync = false;
-                }
+                SendFeedBackMessage(FeedBack, From);
+            }
+        }
+
+        public static void SendFeedBackMessage(string Message, int For = 0)
+        {
+            MultiplayerChatMessage message = new MultiplayerChatMessage();
+            message.m_Message = Message;
+            message.m_Type = 0;
+
+            if(MyMod.iAmHost && For != 0)
+            {
+                ServerSend.CHATPM(For, message);
+
+            } else
+            {
+                SendMessageToChat(message, false);
+            }
+        }
+
+        public static void SendMessageToChat(MultiplayerChatMessage message, bool needSync = true)
+        {
+#if (!DEDICATED)
+
+            if (ClientOnlyChatCommand(message.m_Message))
+            {
+                return;
             }
 
             if (!MyMod.DedicatedServerAppMode)
@@ -1841,6 +1935,11 @@ namespace SkyCoop
                     if (!message.m_Global)
                     {
                         GlobalOrArea = "[Area] ";
+                    }
+
+                    if (message.m_Private)
+                    {
+                        GlobalOrArea = "[Private] ";
                     }
                     
                     Comp.text = GlobalOrArea + message.m_By + ": " + message.m_Message;
@@ -1888,6 +1987,10 @@ namespace SkyCoop
                 {
                     GlobalOrArea = "[Chat][Area] ";
                     TextColor = LoggerColor.Blue;
+                }
+                if (message.m_Private)
+                {
+                    GlobalOrArea = "[Private] ";
                 }
 
                 LogText = GlobalOrArea + message.m_By + ": " + message.m_Message;
@@ -2578,7 +2681,7 @@ namespace SkyCoop
             string Path = "Mods\\server.json";
 
 #if (DEDICATED)
-            Path = "server.json";
+            Path = MPSaveManager.GetBaseDirectory() + MPSaveManager.GetSeparator() + "server.json";
 #endif
             if (System.IO.File.Exists(Path))
             {
