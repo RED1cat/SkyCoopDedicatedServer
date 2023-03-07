@@ -1,0 +1,23 @@
+{
+   "SaveSlot": "DedicatedServer",
+   "ItemDupes": false,
+   "ContainersDupes": false,
+   "SpawnStyle": 0,
+   "MaxPlayers": 10,
+   "UsingSteam": false,
+   "Ports": 26950,
+   "WhiteList": ["11111111111111111", "22222222222222222"],
+   "ServerName": "My Dedicated server",
+   "Cheats": 2,
+   "SteamServerAccessibility": 2,
+   "RCON": "12345",
+   "DropUnloadPeriod": 30,
+   "SaveScamProtection": true,
+   "ModValidationCheck": false,
+   "ExperienceMode": 2,
+   "StartRegion": 0,
+   "Seed": 12345,
+   "PVP": false,
+   "SavingPeriod": 300,
+   "RestartPerioud": 10800
+}

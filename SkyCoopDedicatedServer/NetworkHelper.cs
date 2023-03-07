@@ -48,7 +48,7 @@ namespace SkyCoop
             }
             catch
             {
-                Logger.Log("[upnp] Error", Shared.LoggerColor.Red);
+                Logger.Log($"[upnp] Port {port} could not be opened, it may already be busy by someone, or your hardware does not support upnp", Shared.LoggerColor.Red);
                 return;
             }
             Logger.Log($"[upnp] {port} port is open", Shared.LoggerColor.Green);
