@@ -21,12 +21,6 @@ namespace SkyCoop
     {
         public static Dictionary<int, List<ExpeditionTaskTemplate>> m_ExpeditionTasks = new Dictionary<int, List<ExpeditionTaskTemplate>>();
 
-#if (DEDICATED_LINUX)
-        public static string Seperator = @"/";
-#else
-        public static string Seperator = @"\";
-#endif
-
         public static bool Initilized = false;
         public class ExpeditionGearSpawner
         {
@@ -98,15 +92,10 @@ namespace SkyCoop
             {
                 return;
             }
-#if (DEDICATED_LINUX)
-            string Seperator = @"/";
-#else
-            string Seperator = @"\";
-#endif
             MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods");
-            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
 
-            DirectoryInfo d = new DirectoryInfo(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
+            DirectoryInfo d = new DirectoryInfo(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
             FileInfo[] Files = d.GetFiles("*.json");
             List<string> Names = new List<string>();
             foreach (FileInfo file in Files)
@@ -548,9 +537,9 @@ namespace SkyCoop
         {
             if(Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods"))
             {
-                if(Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates"))
+                if(Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates"))
                 {
-                    byte[] FileData = File.ReadAllBytes(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates" + Seperator + Alias + ".json");
+                    byte[] FileData = File.ReadAllBytes(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates" + MPSaveManager.GetSeparator() + Alias + ".json");
                     string JSONString = UTF8Encoding.UTF8.GetString(FileData);
                     if (string.IsNullOrEmpty(JSONString))
                     {
@@ -560,12 +549,12 @@ namespace SkyCoop
                     return JSONString;
                 } else
                 {
-                    Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
+                    Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
                 }
             } else
             {
                 Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods");
-                Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + Seperator + "ExpeditionTemplates");
+                Directory.CreateDirectory(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
             }
             return "";
         }

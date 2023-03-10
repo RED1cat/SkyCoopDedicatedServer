@@ -849,15 +849,14 @@ namespace SkyCoop
             return Result;
         }
 
+        public static string GetSeparator()
+        {
+            return @"/";
+        }
+
 #if (DEDICATED)
         
         public static string AppPath = "";
-
-#if (!DEDICATED_LINUX)
-        public static string PathSeparator = @"\";
-#else
-        public static string PathSeparator = @"/";
-#endif
         public static string GetPathForName(string name, int Seed = 0)
         {
             if (NoSaveAndLoad)
@@ -871,14 +870,10 @@ namespace SkyCoop
 
             if (Seed != 0)
             {
-                return AppPath + Seed + PathSeparator + name;
+                return AppPath + Seed + GetSeparator() + name;
             }
 
             return AppPath + name;
-        }
-        public static string GetSeparator()
-        {
-            return PathSeparator;
         }
 #else
         public static string GetPathForName(string name, int Seed = 0)
@@ -894,15 +889,10 @@ namespace SkyCoop
 
             if (Seed != 0)
             {
-                return PersistentDataPath.m_Path + PersistentDataPath.m_PathSeparator + Seed + PersistentDataPath.m_PathSeparator + name;
+                return PersistentDataPath.m_Path + GetSeparator() + Seed + GetSeparator() + name;
             }
 
-            return PersistentDataPath.m_Path + PersistentDataPath.m_PathSeparator + name;
-        }
-
-        public static string GetSeparator()
-        {
-            return PersistentDataPath.m_PathSeparator;
+            return PersistentDataPath.m_Path + GetSeparator() + name;
         }
 #endif
 
@@ -1205,6 +1195,7 @@ namespace SkyCoop
             }
             ValidateRootExits();
             SaveData(SaveKey, JSON.Dump(Dict), SaveSeed);
+            RecentBrokenFurns.Remove(Scene);
             RecentBrokenFurns.Add(Scene, Dict);
         }
 
@@ -1820,11 +1811,11 @@ namespace SkyCoop
         public static void SaveJsonSnapshot(string Alias, string JSON)
         {
             CreateFolderIfNotExist(GetPathForName("Snapshots"));
-            CreateFolderIfNotExist(GetPathForName(@"Snapshots\"+ Alias));
+            CreateFolderIfNotExist(GetPathForName(@"Snapshots"+ GetSeparator() + Alias));
 
             DateTime DT = System.DateTime.Now;
             string FileName = DT.Hour.ToString() + "_" + DT.Minute.ToString() + "_" + DT.Second.ToString() + "_" + DT.Millisecond.ToString();
-            SaveData(FileName, JSON, 0, GetPathForName(@"Snapshots\" + Alias+@"\"+FileName));
+            SaveData(FileName, JSON, 0, GetPathForName(@"Snapshots"+ GetSeparator() + Alias+ GetSeparator() + FileName));
         }
 
         public static string VectorsFixUp(string Json)
@@ -1915,11 +1906,6 @@ namespace SkyCoop
                 GUID = GetNewUGUID();
             }
 
-#if (!DEDICATED_LINUX)
-            string Separator = @"\";
-#else
-            string Separator = @"/";
-#endif
             int SaveSeed = GetSeed();
             string SaveFolder = "Photos";
             if (Cached)
@@ -1930,42 +1916,31 @@ namespace SkyCoop
 
             CreateFolderIfNotExist(GetPathForName(SaveFolder, SaveSeed));
 
-            SaveData(GUID, Base64, 0, GetPathForName(SaveFolder + Separator + GUID, SaveSeed));
+            SaveData(GUID, Base64, 0, GetPathForName(SaveFolder + GetSeparator() + GUID, SaveSeed));
             return GUID;
         }
 
         public static void CopyPhotoToExpeditionCache(string GUID)
         {
-#if (!DEDICATED_LINUX)
-            string Separator = @"\";
-#else
-            string Separator = @"/";
-#endif
             string Base64 = LoadPhoto(GUID, true);
             if (!string.IsNullOrEmpty(Base64))
             {
-                if (!File.Exists("Mods" + Separator + "ExpeditionTemplates" + Separator + "CachedPhotos" + Separator + GUID))
+                if (!File.Exists("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID))
                 {
-                    SaveData(GUID, Base64, 0, "Mods" + Separator + "ExpeditionTemplates" + Separator + "CachedPhotos" + Separator + GUID);
+                    SaveData(GUID, Base64, 0, "Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID);
                 }
             }
         }
 
         public static string LoadPhoto(string GUID, bool Cached = false)
         {
-#if (!DEDICATED_LINUX)
-            string Separator = @"\";
-#else
-            string Separator = @"/";
-#endif
-
             CreateFolderIfNotExist("Mods");
-            CreateFolderIfNotExist("Mods" + Separator + "ExpeditionTemplates");
-            CreateFolderIfNotExist("Mods" + Separator + "ExpeditionTemplates" + Separator + "CachedPhotos");
+            CreateFolderIfNotExist("Mods" + GetSeparator() + "ExpeditionTemplates");
+            CreateFolderIfNotExist("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos");
 
-            if(File.Exists("Mods" + Separator + "ExpeditionTemplates" + Separator + "CachedPhotos" + Separator + GUID))
+            if(File.Exists("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID))
             {
-                byte[] FileData = File.ReadAllBytes("Mods" + Separator + "ExpeditionTemplates" + Separator + "CachedPhotos" + Separator + GUID);
+                byte[] FileData = File.ReadAllBytes("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID);
                 return UTF8Encoding.UTF8.GetString(FileData);
             }
 
@@ -1977,7 +1952,7 @@ namespace SkyCoop
                 SaveFolder = "CachedPhotos";
             }
 
-            return LoadData(SaveFolder + Separator + GUID, SaveSeed);
+            return LoadData(SaveFolder + GetSeparator() + GUID, SaveSeed);
         }
 
         public static void AddRockCach(FakeRockCacheVisualData Cache, int FromClient)

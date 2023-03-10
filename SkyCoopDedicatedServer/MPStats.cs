@@ -61,7 +61,10 @@ namespace SkyCoop
 
             foreach (var item in RecentPlayersGlobalStatistic)
             {
-                SaveData(item.Value.MAC, JSON.Dump(item.Value), SaveSeed, "", "Statistic" + GetSeparator() + "Global" + GetSeparator() + item.Value.MAC);
+                if (!string.IsNullOrEmpty(item.Value.MAC))
+                {
+                    SaveData(item.Value.MAC, JSON.Dump(item.Value), SaveSeed, "", "Statistic" + GetSeparator() + "Global" + GetSeparator() + item.Value.MAC);
+                }
             }
             RecentPlayersGlobalStatistic.Clear();
             SaveData("AllTime", JSON.Dump(AllTimeStats), SaveSeed, "", "Statistic" + GetSeparator() + "AllTime");
