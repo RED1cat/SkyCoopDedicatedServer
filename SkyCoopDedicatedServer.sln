@@ -5,22 +5,22 @@ VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkyCoopDedicatedServer", "SkyCoopDedicatedServer\SkyCoopDedicatedServer.csproj", "{C8DF1E8F-8B30-4632-A457-D521E367B6FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyCoopDedicatedServerKickstarter", "SkyCoopDedicatedServerKickstarter\SkyCoopDedicatedServerKickstarter.csproj", "{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Linux_Debug|Any CPU = Linux_Debug|Any CPU
-		Linux_Release|Any CPU = Linux_Release|Any CPU
-		Windows_Debug|Any CPU = Windows_Debug|Any CPU
-		Windows_Release|Any CPU = Windows_Release|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Linux_Debug|Any CPU.ActiveCfg = Linux_Debug|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Linux_Debug|Any CPU.Build.0 = Linux_Debug|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Linux_Release|Any CPU.ActiveCfg = Linux_Release|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Linux_Release|Any CPU.Build.0 = Linux_Release|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Windows_Debug|Any CPU.ActiveCfg = Windows_Debug|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Windows_Debug|Any CPU.Build.0 = Windows_Debug|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Windows_Release|Any CPU.ActiveCfg = Windows_Release|Any CPU
-		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Windows_Release|Any CPU.Build.0 = Windows_Release|Any CPU
+		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8DF1E8F-8B30-4632-A457-D521E367B6FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Debug|Any CPU.ActiveCfg = Server Kickstarter|Any CPU
+		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Debug|Any CPU.Build.0 = Server Kickstarter|Any CPU
+		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Release|Any CPU.ActiveCfg = Server Kickstarter|Any CPU
+		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Release|Any CPU.Build.0 = Server Kickstarter|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
