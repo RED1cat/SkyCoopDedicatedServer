@@ -701,5 +701,16 @@ namespace SkyCoop
             public Quaternion m_Rotation = new Quaternion(0, 0, 0, 0);
             public string m_Content = "";
         }
+
+        public class Vector2Int
+        {
+            public int X = 0;
+            public int Y = 0;
+            public Vector2Int(int x, int y)
+            {
+                X = x; 
+                Y = y;
+            }
+        }
     }
 }

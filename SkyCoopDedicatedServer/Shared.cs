@@ -1702,7 +1702,7 @@ namespace SkyCoop
                         {
                             if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == jData.m_GearName)
                             {
-                                Texture2D tex = MPSaveManager.GetPhotoTexture(jData.m_GearName);
+                                Texture2D tex = MPSaveManager.GetPhotoTexture(jData.m_GearName, item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_GearName);
                                 if (tex)
                                 {
                                     item.Value.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.mainTexture = tex;
@@ -2763,6 +2763,14 @@ namespace SkyCoop
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
         {
+#if (DEDICATED)
+            string Dedi = MyMod.ExecuteCommand(CMD, _fromClient);
+
+            if (!string.IsNullOrEmpty(Dedi))
+            {
+                return Dedi;
+            }
+#endif
             string Low = CMD.ToLower();
             if(_fromClient != -1)
             {
@@ -3210,7 +3218,7 @@ namespace SkyCoop
                                 {
                                     if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == PhotoGUID)
                                     {
-                                        Texture2D tex = MPSaveManager.GetPhotoTexture(PhotoGUID);
+                                        Texture2D tex = MPSaveManager.GetPhotoTexture(PhotoGUID, item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_GearName);
                                         if (tex)
                                         {
                                             item.Value.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.mainTexture = tex;

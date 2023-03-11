@@ -1876,7 +1876,7 @@ namespace SkyCoop
         }
 
 #if (!DEDICATED)
-        public static Texture2D GetPhotoTexture(string GUID)
+        public static Texture2D GetPhotoTexture(string GUID, string GearName)
         {
             Texture2D tex = Utils.GetCachedTexture("Photo_"+ GUID);
             if (tex != null)
@@ -1888,7 +1888,8 @@ namespace SkyCoop
             if (!string.IsNullOrEmpty(Base64))
             {
                 Log("Loaded texture from local file");
-                tex = new Texture2D(MyMod.PhotoW, MyMod.PhotoH);
+                DataStr.Vector2Int Resolution = MyMod.GetGearResolution(GearName);
+                tex = new Texture2D(Resolution.X, Resolution.Y);
                 ImageConversion.LoadImage(tex, Convert.FromBase64String(Base64));
                 Utils.CacheTexture("Photo_" + GUID, tex);
                 return tex;

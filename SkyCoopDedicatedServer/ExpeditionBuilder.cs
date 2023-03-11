@@ -86,18 +86,18 @@ namespace SkyCoop
             public List<DataStr.UniversalSyncableObjectSpawner> m_Objects = new List<DataStr.UniversalSyncableObjectSpawner>();
         }
 
-        public static void Init()
+        public static void Init(bool Force = false)
         {
-            if (Initilized)
+            if (Initilized && !Force)
             {
                 return;
             }
+            m_ExpeditionTasks.Clear();
             MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods");
             MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
 
             DirectoryInfo d = new DirectoryInfo(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
             FileInfo[] Files = d.GetFiles("*.json");
-            List<string> Names = new List<string>();
             foreach (FileInfo file in Files)
             {
                 byte[] FileData = File.ReadAllBytes(file.FullName);
