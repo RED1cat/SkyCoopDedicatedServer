@@ -94,7 +94,6 @@ namespace SkyCoop
             Shared.HostAServer(config.Ports);
             networkPort = new NetworkHelper(config.Ports);
             portOpen= true;
-
         }
 
         public static void OnExiting()
@@ -103,6 +102,14 @@ namespace SkyCoop
             {
                 networkPort.TryClosePort();
             }
+        }
+        public static string ExecuteCommand(string command, int client = -1)
+        {
+            if(command == "shutdown" & client == -1) 
+            {
+                OnExiting();
+            }
+            return "";
         }
 
     }

@@ -12,13 +12,16 @@ namespace SkyCoopDedicatedServerKickstarter
 
         public static void Main()
         {
-            if (Type.GetType("Mono.Runtime") != null)
+            switch (Environment.OSVersion.Platform)
             {
-                ServerFile = @$"{AppPath}../SkyCoopDedicatedServer"; //linux
-            }
-            else
-            {
-                ServerFile = @$"{AppPath}../SkyCoopDedicatedServer.exe"; //windows
+                case PlatformID.Win32NT:
+                    ServerFile = @$"{AppPath}../SkyCoopDedicatedServer.exe";
+                    break;
+                case PlatformID.Unix:
+                    ServerFile = @$"{AppPath}../SkyCoopDedicatedServer";
+                    break;
+                default:
+                    return;
             }
             Process process = new Process();
             process.StartInfo.UseShellExecute = false;
