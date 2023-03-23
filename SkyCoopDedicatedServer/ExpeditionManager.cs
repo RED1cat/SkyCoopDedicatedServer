@@ -7,6 +7,7 @@ using GameServer;
 using System.Security.Policy;
 using static SkyCoop.DataStr;
 using static SkyCoop.ExpeditionBuilder;
+using System.Net.Sockets;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -21,6 +22,7 @@ namespace SkyCoop
     {
         public static Dictionary<string, bool> m_TrackableGears = new Dictionary<string, bool>();
         public static List<Expedition> m_ActiveExpeditions = new List<Expedition>();
+        public static Expedition m_ActiveCrashSite = null;
         public static Dictionary<string, int> m_UnavailableGearSpawners = new Dictionary<string, int>();
         public static Dictionary<int, string> m_GearSpawnerGears = new Dictionary<int, string>();
         public static List<ExpeditionInvite> m_Invites = new List<ExpeditionInvite>();
@@ -56,6 +58,7 @@ namespace SkyCoop
             FLAREGUNSHOT,
             CHARCOAL,
             STAYINZONE,
+            CRASHSITE,
         }
 
         public enum ExpeditionCompleteOrder
@@ -64,7 +67,6 @@ namespace SkyCoop
             LINEALHIDDEN, // Next tasks hidden, previous visible, can be done if previous task is completed.
             LINEALLAST, // Only this task will be visible, can be done if previous task is completed.
             ANYORDER, // Next tasks will be visible, can be done in any time.
-
         }
 
         public class ExpeditionInvite
@@ -124,6 +126,82 @@ namespace SkyCoop
                 MyMod.DoExpeditionState(2);
 #endif
             }
+        }
+
+        public static void MayInviteToCrashSite(int ClientID)
+        {
+            string MAC = Server.GetMACByID(ClientID);
+            if(m_ActiveCrashSite != null)
+            {
+                if (!m_ActiveCrashSite.m_Players.Contains(MAC))
+                {
+                    ServerSend.EXPEDITIONRESULT(ClientID, 5);
+                    m_ActiveCrashSite.m_Players.Add(MAC);
+                    return;
+                }
+            }
+        }
+
+        public static void StartCrashSite()
+        {
+            if(m_ActiveCrashSite != null)
+            {
+                return;
+            }
+            
+            List<string> MACs = Server.GetMACsOfPlayers();
+            List<string> InviteMACs = new List<string>();
+            foreach (string MAC in MACs)
+            {
+                bool ClientBusy = false;
+                for (int i = 0; i < m_ActiveExpeditions.Count; i++)
+                {
+                    if (m_ActiveExpeditions[i].m_Players.Contains(MAC))
+                    {
+                        ClientBusy = true;
+                        break;
+                    }
+                }
+                if (!ClientBusy)
+                {
+                    InviteMACs.Add(MAC);
+                }
+            }
+
+
+            Expedition Exp = BuildBasicExpedition(0, "CrashSiteTest");
+
+            if (Exp == null)
+            {
+                return;
+            }
+
+            DebugLog("CrashSite created");
+            DebugLog("CrashSite Tasks:");
+            for (int i = 0; i < Exp.m_Tasks.Count; i++)
+            {
+                DebugLog("CrashSite Task[" + i + "] " + Exp.m_Tasks[i].m_Alias + " Type " + Exp.m_Tasks[i].m_Type.ToString());
+            }
+
+            foreach (string MAC in InviteMACs)
+            {
+                int ClientID = Server.GetIDByMAC(MAC);
+                Exp.m_Players.Add(MAC);
+
+                if(ClientID != -1)
+                {
+                    ServerSend.EXPEDITIONRESULT(ClientID, 5);
+                }
+            }
+            Exp.m_GUID = MPSaveManager.GetNewUGUID();
+            m_ActiveExpeditions.Add(Exp);
+            m_ActiveCrashSite = Exp;
+            MultiplayerChatMessage Message = new MultiplayerChatMessage();
+            Message.m_Message = "Plane with a valuable cargo crashed somewhere on " + GetRegionString(Exp.m_RegionBelong)+ ", find the crash site before other players do.";
+            Message.m_Type = 0;
+            Message.m_By = "[Server]";
+            Shared.SendMessageToChat(Message, true);
+            Shared.WebhookCrashSiteSpawn(Message.m_Message);
         }
 
         public static void AcceptInvite(string Accepter, string Inviter)
@@ -362,15 +440,71 @@ namespace SkyCoop
             }
         }
 
+        public static void CompleteCrashSite(int RemoveID, List<int> ClosePlayers)
+        {
+            List<int> PlayersIDs = m_ActiveExpeditions[RemoveID].GetExpeditionPlayersIDs();
+
+            if (RemoveID != -1)
+            {
+                foreach (int ClientID in PlayersIDs)
+                {
+                    int FinishState = -1;
+                    if (ClosePlayers.Contains(ClientID))
+                    {
+                        FinishState = 4;
+                    }
+
+                    if (ClientID == 0)
+                    {
+#if (!DEDICATED)
+                        MyMod.DoExpeditionState(FinishState);
+#endif
+                    } else
+                    {
+                        ServerSend.EXPEDITIONRESULT(ClientID, FinishState);
+                    }
+
+                    if (FinishState == 1)
+                    {
+                        string MAC = Server.GetMACByID(ClientID);
+                        if (!string.IsNullOrEmpty(MAC))
+                        {
+                            MPStats.AddCrashSite(MAC);
+                        }
+                    }
+                }
+                m_ActiveExpeditions.RemoveAt(RemoveID);
+                m_ActiveCrashSite = null;
+            }
+            MultiplayerChatMessage Message = new MultiplayerChatMessage();
+            Message.m_Message = "Crash site has been found!";
+            Message.m_Type = 0;
+            Message.m_By = "[Server]";
+            Shared.SendMessageToChat(Message, true);
+            Shared.WebhookCrashSiteFound();
+
+        }
+
         public static void UpdateExpeditions()
         {
             //DebugLog("UpdateExpeditions() m_ActiveExpeditions.Count "+ m_ActiveExpeditions.Count);
             for (int i = m_ActiveExpeditions.Count - 1; i > -1; i--)
             {
-                m_ActiveExpeditions[i].UpdateTasks();
-                if (m_ActiveExpeditions[i].m_Completed)
+                Expedition Exp = m_ActiveExpeditions[i];
+                Exp.UpdateTasks();
+                if (Exp.m_Completed)
                 {
-                    CompleteExpedition(i);
+                    if (Exp.m_Tasks.Count > 0)
+                    {
+                        ExpeditionTask Task = Exp.m_Tasks[Exp.m_Tasks.Count - 1];
+                        if (Task.m_Type == ExpeditionTaskType.CRASHSITE)
+                        {
+                            CompleteCrashSite(i, Task.GetCrashSiteNearPlayers());
+                        }
+                    } else
+                    {
+                        CompleteExpedition(i);
+                    }
                 }
             }
             for (int i = m_Invites.Count - 1; i > -1; i--)
@@ -666,6 +800,7 @@ namespace SkyCoop
             public List<string> m_SpecificPlants = new List<string>();
             public List<string> m_SpecificBreakdowns = new List<string>();
             public List<UniversalSyncableObjectSpawner> m_ObjectSpawners = new List<UniversalSyncableObjectSpawner>();
+            public bool m_ObjectsSpawned = false;
             public bool m_RestockSceneContainers = false;
             public bool m_IsComplete = false;
             public string m_ObjectiveGearSpawnerGUID = "";
@@ -681,6 +816,47 @@ namespace SkyCoop
             public bool m_TimeAdd = true;
             public int m_SecondsInZone = 0;
             public int m_StayInZoneSeconds = 300;
+
+            public void SpawnObjects()
+            {
+                if (!m_ObjectsSpawned)
+                {
+                    DebugLog("m_ObjectSpawners.Count " + m_ObjectSpawners.Count);
+                    if (m_ObjectSpawners.Count > 0)
+                    {
+                        foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
+                        {
+                            UniversalSyncableObject Obj = new UniversalSyncableObject();
+                            Obj.m_Prefab = Spawner.m_Prefab;
+                            Obj.m_GUID = Spawner.m_GUID;
+                            Obj.m_Position = Spawner.m_Position;
+                            Obj.m_Rotation = Spawner.m_Rotation;
+
+                            MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID);
+                            if (!string.IsNullOrEmpty(Spawner.m_Content))
+                            {
+                                MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
+                                MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 1);
+                            } else
+                            {
+                                MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 2);
+                            }
+
+                            Obj.m_ExpeditionBelong = m_Expedition.m_GUID;
+                            Obj.m_Scene = m_Scene;
+                            Obj.m_CreationTime = MyMod.MinutesFromStartServer;
+                            Obj.m_RemoveTime = MyMod.MinutesFromStartServer + 1440;
+
+                            MPSaveManager.AddUniversalSyncableObject(Obj);
+#if (!DEDICATED)
+                            MyMod.SpawnUniversalSyncableObject(Obj);
+#endif
+                            ServerSend.ADDUNIVERSALSYNCABLE(Obj);
+                        }
+                    }
+                }
+                m_ObjectsSpawned = true;
+            }
             public void SpawnReward()
             {
                 if (m_RewardAlreadySpawned)
@@ -730,39 +906,6 @@ namespace SkyCoop
                 {
                     MPSaveManager.RepairBreakdowns(m_Scene, m_SpecificBreakdowns);
                 }
-                DebugLog("m_ObjectSpawners.Count " + m_ObjectSpawners.Count);
-                if (m_ObjectSpawners.Count > 0)
-                {
-                    foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
-                    {
-                        UniversalSyncableObject Obj = new UniversalSyncableObject();
-                        Obj.m_Prefab = Spawner.m_Prefab;
-                        Obj.m_GUID = Spawner.m_GUID;
-                        Obj.m_Position = Spawner.m_Position;
-                        Obj.m_Rotation = Spawner.m_Rotation;
-
-                        MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID);
-                        if (!string.IsNullOrEmpty(Spawner.m_Content))
-                        {
-                            MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
-                            MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 1);
-                        } else
-                        {
-                            MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 2);
-                        }
-
-                        Obj.m_ExpeditionBelong = m_Expedition.m_GUID;
-                        Obj.m_Scene = m_Scene;
-                        Obj.m_CreationTime = MyMod.MinutesFromStartServer;
-                        Obj.m_RemoveTime = MyMod.MinutesFromStartServer + 1440;
-
-                        MPSaveManager.AddUniversalSyncableObject(Obj);
-#if (!DEDICATED)
-                        MyMod.SpawnUniversalSyncableObject(Obj);
-#endif
-                        ServerSend.ADDUNIVERSALSYNCABLE(Obj);
-                    }
-                }
             }
 
             public int GetCompleteProcent()
@@ -780,8 +923,11 @@ namespace SkyCoop
 
                 m_IsComplete = true;
 
-                m_Expedition.OnTaskCompleted(this);
 
+                if(m_Type != ExpeditionTaskType.CRASHSITE)
+                {
+                    m_Expedition.OnTaskCompleted(this);
+                }
                 SpawnReward();
             }
 
@@ -813,9 +959,33 @@ namespace SkyCoop
                     }
                 }
             }
+
+            public List<int> GetCrashSiteNearPlayers()
+            {
+                List<int> PlayersIDs = new List<int>();
+                for (int i = 0; i < MyMod.playersData.Count; i++)
+                {
+                    if (MyMod.playersData[i] != null)
+                    {
+                        MultiPlayerClientData PlayerData = MyMod.playersData[i];
+
+                        if(PlayerData.m_LevelGuid == m_Scene && Vector3.Distance(PlayerData.m_Position, m_ZoneCenter) <= m_ZoneRadius *2)
+                        {
+                            PlayersIDs.Add(i);
+                        }
+                    }
+                }
+                return PlayersIDs;
+            }
+
             public void Update(List<DataStr.MultiPlayerClientData> PlayersData)
             {
                 m_LastPlayersAmout = PlayersData.Count;
+
+                if (!m_ObjectsSpawned)
+                {
+                    SpawnObjects();
+                }
 
                 if (!m_DidFlareShots)
                 {
@@ -865,23 +1035,24 @@ namespace SkyCoop
                         OnCompleted();
                         return;
                     }
-                } else{
+                } else if (m_Type == ExpeditionTaskType.ENTERSCENE)
+                {
                     foreach (DataStr.MultiPlayerClientData PlayerData in PlayersData)
                     {
-                        if (m_Type == ExpeditionTaskType.ENTERSCENE)
+                        if (PlayerData.m_LevelGuid == m_Scene)
                         {
-                            if (PlayerData.m_LevelGuid == m_Scene)
-                            {
-                                OnCompleted();
-                                return;
-                            }
-                        } else if (m_Type == ExpeditionTaskType.ENTERZONE)
+                            OnCompleted();
+                            return;
+                        }
+                    }
+                } else if(m_Type == ExpeditionTaskType.CRASHSITE)
+                {
+                    foreach (DataStr.MultiPlayerClientData PlayerData in PlayersData)
+                    {
+                        if (PlayerData.m_LevelGuid == m_Scene && Vector3.Distance(PlayerData.m_Position, m_ZoneCenter) <= m_ZoneRadius)
                         {
-                            if (PlayerData.m_LevelGuid == m_Scene && Vector3.Distance(PlayerData.m_Position, m_ZoneCenter) <= m_ZoneRadius)
-                            {
-                                OnCompleted();
-                                return;
-                            }
+                            OnCompleted();
+                            break;
                         }
                     }
                 }

@@ -2367,10 +2367,18 @@ namespace GameServer
         }
         public static void EXPEDITIONRESULT(int For, int State)
         {
-            using (Packet _packet = new Packet((int)ServerPackets.EXPEDITIONRESULT))
+            if(For == 0)
             {
-                _packet.Write(State);
-                SendUDPData(For, _packet);
+#if (!DEDICATED)
+                MyMod.DoExpeditionState(State);
+#endif
+            } else
+            {
+                using (Packet _packet = new Packet((int)ServerPackets.EXPEDITIONRESULT))
+                {
+                    _packet.Write(State);
+                    SendUDPData(For, _packet);
+                }
             }
         }
         public static void REQUESTEXPEDITIONINVITES(int For, List<ExpeditionManager.ExpeditionInvite> Invites)

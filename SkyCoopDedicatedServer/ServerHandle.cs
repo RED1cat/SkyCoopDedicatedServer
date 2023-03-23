@@ -103,6 +103,10 @@ namespace GameServer
 #if (!DEDICATED)
             Supporters.ApplyFlairsForModel(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits.m_Flairs);
 #endif
+
+            WebhookPlayerJoin(_username);
+
+
             ServerSend.BENEFITINIT(_fromClient, MyMod.playersData[_fromClient].m_SupporterBenefits);
 
             ServerSend.GAMETIME(MyMod.OveridedTime);
@@ -1264,6 +1268,7 @@ namespace GameServer
             }
 
             Shared.RemoveLoadingClient(_fromClient);
+            ExpeditionManager.MayInviteToCrashSite(_fromClient);
         }
         public static void GOTCONTAINERSLICE(int _fromClient, Packet _packet)
         {
@@ -1802,6 +1807,25 @@ namespace GameServer
                 ServerSend.REMOVEROCKCACH(_fromClient, Data, -1);
             } else
             {
+#if (!DEDICATED)
+                if((MyMod.MyContainer != null && MyMod.MyContainer.m_Guid == Data.m_GUID) || (Pathes.FakeRockCacheCallback != null && Pathes.FakeRockCacheCallback.m_GUID == Data.m_GUID))
+                {
+                    ServerSend.ADDHUDMESSAGE(_fromClient, MyMod.MyChatName + " INTERACTING WITH THIS!");
+                    ServerSend.REMOVEROCKCACH(_fromClient, Data, -1);
+                }
+#endif
+                for (int i = 0; i < MyMod.playersData.Count; i++)
+                {
+                    if (MyMod.playersData[i] != null && i != _fromClient)
+                    {
+                        if ((MyMod.playersData[i].m_BrakingObject != null && MyMod.playersData[i].m_BrakingObject.m_Guid == Data.m_GUID) || (MyMod.playersData[i].m_Container != null && MyMod.playersData[i].m_Container.m_Guid == Data.m_GUID))
+                        {
+                            ServerSend.ADDHUDMESSAGE(_fromClient, MyMod.playersData[i].m_Name + " INTERACTING WITH THIS!");
+                            ServerSend.REMOVEROCKCACH(_fromClient, Data, -1);
+                            return;
+                        }
+                    }
+                }
                 ServerSend.REMOVEROCKCACH(_fromClient, Data, 0);
             }
         }

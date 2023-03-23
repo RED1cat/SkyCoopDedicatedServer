@@ -4,12 +4,10 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using GameServer;
 using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
-using System.Security.Policy;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -1058,6 +1056,8 @@ namespace SkyCoop
                         Server.clients[i].TimeOutTime = Server.clients[i].TimeOutTime + 1;
                         if (Server.clients[i].TimeOutTime > TimeOutForClient)
                         {
+                            bool SendLeave = false;
+                            string Leaver = MyMod.playersData[i].m_Name;
                             Server.clients[i].TimeOutTime = 0;
 
                             if (!Server.clients[i].RCON)
@@ -1066,8 +1066,9 @@ namespace SkyCoop
                                 DisconnectMessage.m_Type = 0;
                                 DisconnectMessage.m_By = MyMod.playersData[i].m_Name;
                                 DisconnectMessage.m_Message = MyMod.playersData[i].m_Name + " disconnected!";
-                                SendMessageToChat(DisconnectMessage, true);
                                 ServerSend.KICKMESSAGE(i, "The host has disconnected you from the server due to a long period without receiving data from you.");
+                                SendMessageToChat(DisconnectMessage, true);
+                                SendLeave = true;
                             } else
                             {
                                 ServerSend.KICKMESSAGE(i, "Your RCON session is over, please reconnect.");
@@ -1078,6 +1079,10 @@ namespace SkyCoop
                             ResetDataForSlot(i);
                             Log("Client " + i + " processing disconnect");
                             Server.clients[i].udp.Disconnect();
+                            if (SendLeave)
+                            {
+                                WebhookPlayerLeave(Leaver);
+                            }
                         }
                         if (MyMod.playersData[i] != null)
                         {
@@ -1694,7 +1699,7 @@ namespace SkyCoop
                     MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
 
                     MPSaveManager.AddPhoto(finalJsonData, false, jData.m_GearName);
-#if(!DEDICATED)
+#if (!DEDICATED)
                     MPSaveManager.AddPhoto(finalJsonData, true, jData.m_GearName);
                     foreach (var item in MyMod.DroppedGearsObjs)
                     {
@@ -3244,6 +3249,47 @@ namespace SkyCoop
                     }
                 }
             }
+        }
+
+        public static int GetPlayersOnServer()
+        {
+            int Count = 0;
+            for (int i = 1; i <= Server.MaxPlayers; i++)
+            {
+                if (Server.clients[i] != null && Server.clients[i].IsBusy() == true && !Server.clients[i].RCON)
+                {
+                    Count++;
+                }
+            }
+            return Count;
+        }
+
+        public static void WebhookPlayerJoin(string PlayerName)
+        {
+#if (DEDICATED)            
+            int Players = GetPlayersOnServer();
+            DiscordManager.PlayerJoined(PlayerName, Players);
+#endif
+        }
+        public static void WebhookPlayerLeave(string PlayerName)
+        {
+#if (DEDICATED)            
+            int Players = GetPlayersOnServer();
+            DiscordManager.PlayerLeave(PlayerName, Players);
+#endif
+        }
+
+        public static void WebhookCrashSiteSpawn(string Text)
+        {
+#if (DEDICATED)            
+            DiscordManager.CrashSiteSpawn(Text);
+#endif
+        }
+        public static void WebhookCrashSiteFound()
+        {
+#if (DEDICATED)            
+            DiscordManager.CrashSiteFound();
+#endif
         }
     }
 }

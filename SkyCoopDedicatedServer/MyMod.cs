@@ -94,6 +94,7 @@ namespace SkyCoop
             Shared.HostAServer(config.Ports);
             networkPort = new NetworkHelper(config.Ports);
             portOpen= true;
+            DiscordManager.Init();
 
         }
 
@@ -104,6 +105,27 @@ namespace SkyCoop
                 networkPort.TryClosePort();
             }
         }
+        public static string ExecuteCommand(string CMD, int _fromClient = -1)
+        {
+            if(CMD.StartsWith("webhook "))
+            {
+                string Message = CMD.Replace("webhook ", "");
+                DiscordManager.SendMessage(Message);
+                return "Webhook Message: "+ Message+", sent";
+            }
+            if (CMD.StartsWith("webstats"))
+            {
+                string Message = CMD.Replace("webhook ", "");
+                DiscordManager.TodayStats(MPStats.TodayStats.GetString(false, true, true));
+                return "Sent";
+            }
+            if (CMD.StartsWith("crashsite"))
+            {
+                ExpeditionManager.StartCrashSite();
+                return "Crashsite!";
+            }
 
+            return "";
+        }
     }
 }

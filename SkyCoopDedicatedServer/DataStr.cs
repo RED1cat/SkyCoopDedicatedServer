@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 #if (DEDICATED)
 using System.Numerics;
 #else
@@ -711,6 +708,25 @@ namespace SkyCoop
                 X = x; 
                 Y = y;
             }
+        }
+        public class WebhookSettings
+        {
+            public string Name = "";
+            public string URL = "";
+        }
+
+        public class ExpeditionInteractiveData
+        {
+            public Vector3 m_Position = new Vector3(0,0,0);
+            public Quaternion m_Rotation = new Quaternion(0,0,0,0);
+            public Vector3 m_Scale = new Vector3(1,1,1);
+            public string m_ObjectText = "Object";
+            public string m_InteractText = "Interacting...";
+            public float m_InteractTime = 1f;
+            public string m_Tool = "";
+            public string m_Material = "";
+            public int m_MaterialCount = 1;
+            public string m_GUID = "";
         }
     }
 }

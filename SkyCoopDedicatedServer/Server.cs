@@ -263,6 +263,23 @@ namespace GameServer
             return "";
         }
 
+        public static List<string> GetMACsOfPlayers()
+        {
+            List<string> All = new List<string>();
+#if (!DEDICATED)
+            All.Add(MPSaveManager.GetSubNetworkGUID());
+#endif
+
+            for (int i = 1; i <= MaxPlayers; i++)
+            {
+                if (clients[i].IsBusy())
+                {
+                    All.Add(clients[i].SubNetworkGUID);
+                }
+            }
+            return All;
+        }
+
         public static int GetIDByMAC(string MAC)
         {
             if (MAC == MPSaveManager.GetSubNetworkGUID())

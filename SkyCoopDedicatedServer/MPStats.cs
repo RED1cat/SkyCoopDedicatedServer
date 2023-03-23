@@ -42,13 +42,20 @@ namespace SkyCoop
         }
         
         
-        public static void StartDay()
+        public static void StartDay(bool SendWebhook = false)
         {
             DateTime DT = System.DateTime.Now;
             DataDay = DT.Day;
             string FileName = DT.Day + "_" + DT.Month + "_" + DT.Year;
             TodayStats = LoadDayStats(FileName);
             Log("[MPStats] Starting statistic for "+ DT.Day + "." + DT.Month + "." + DT.Year, Shared.LoggerColor.Blue);
+
+            if (SendWebhook)
+            {
+#if (DEDICATED)
+                DiscordManager.TodayStats(TodayStats.GetString(false, true, true));
+#endif
+            }
         }
 
 
@@ -192,6 +199,7 @@ namespace SkyCoop
             public int Visits = 1;
             public int Deaths = 0;
             public int ExpeditionsCompleted = 0;
+            public int CrashSitesFound = 0;
             public PlayTime TotalPlayTime = new PlayTime();
             public Dictionary<int, PlayTime> RegionsHistory = new Dictionary<int, PlayTime>();
             public ResourcesStatistic Looted = new ResourcesStatistic();
@@ -219,7 +227,8 @@ namespace SkyCoop
                     "\nLooted Containers " + Looted.ContainersLooted + 
                     "\nPlants Harvested " + Looted.PlantsHarvested + 
                     "\nAnimals Killed " + Looted.AnimalsKilled +
-                    "\nExpeditions Completed " + ExpeditionsCompleted;
+                    "\nExpeditions Completed " + ExpeditionsCompleted +
+                    "\nCrash Sites Found "+ CrashSitesFound;
 
                 if (!HideRegionPlayTime && RegionsHistory.Count > 0)
                 {
@@ -238,6 +247,7 @@ namespace SkyCoop
             public int Visits = 0;
             public int UniqueVisits = 0;
             public int ExpeditionsCompleted = 0;
+            public int CrashSitesFound = 0;
             public Dictionary<string, int> VisitsHistory = new Dictionary<string, int>();
             public PlayTime OnlineTime = new PlayTime();
             public PlayTime EmptyTime = new PlayTime();
@@ -258,7 +268,8 @@ namespace SkyCoop
                     "\nLooted Containers "+ Looted.ContainersLooted +
                     "\nPlants Harvested " +Looted.PlantsHarvested+
                     "\nAnimals Killed "+Looted.AnimalsKilled +
-                    "\nExpeditions Completed " + ExpeditionsCompleted;
+                    "\nExpeditions Completed " + ExpeditionsCompleted +
+                    "\nCrash Sites Found "+ CrashSitesFound;
 
                 if (!HideRegionPlayTime && RegionsHistory.Count > 0)
                 {
@@ -408,6 +419,22 @@ namespace SkyCoop
             }
             AllTimeStats.ExpeditionsCompleted++;
         }
+        public static void AddCrashSite(string MAC)
+        {
+            PlayerStatistic Stat;
+            if (TodayStats.Players.TryGetValue(MAC, out Stat))
+            {
+                Stat.ExpeditionsCompleted++;
+                TodayStats.Players[MAC] = Stat;
+            }
+            TodayStats.CrashSitesFound++;
+            GetPlayerGlobalStats(MAC);
+            if (RecentPlayersGlobalStatistic.ContainsKey(MAC))
+            {
+                RecentPlayersGlobalStatistic[MAC].CrashSitesFound++;
+            }
+            AllTimeStats.CrashSitesFound++;
+        }
         public static void AddRegionTime(string MAC, int Region)
         {
             if(Region == (int) Shared.GameRegion.RandomRegion)
@@ -529,7 +556,7 @@ namespace SkyCoop
                 if (DataDay != DT.Day)
                 {
                     SaveRecentStuff();
-                    StartDay();
+                    StartDay(true);
                 } else
                 {
                     if(DT.Minute == 0 || DT.Minute == 30)
