@@ -1292,9 +1292,11 @@ namespace SkyCoop
 
         public static int GetContainerState(string Scene, string GUID)
         {
+            //Log("GetContainerState " + GUID);
             Dictionary<string, int> Dict = LoadLootedContainersData(Scene);
             if (Dict == null)
             {
+                //Log("Dict for " + Scene+" is null");
                 return -1;
             }
             int State;
@@ -1302,11 +1304,18 @@ namespace SkyCoop
             {
                 return State;
             }
+            //Log("Dict has not " + GUID);
+            //Log("Showing off dict for scene " + Scene);
+            //foreach (var item in Dict)
+            //{
+            //    Log("Key " + item.Key+" Val "+item.Value);
+            //}
             return -1;
         }
 
         public static void SetConstainerState(string Scene, string GUID, int State)
         {
+            //Log("SetConstainerState "+GUID+" State "+State);
             Dictionary<string, int> Dict = LoadLootedContainersData(Scene);
             if(Dict == null)
             {
@@ -1318,25 +1327,32 @@ namespace SkyCoop
 #if (!DEDICATED)
                 if (MyMod.level_guid == Scene)
                 {
+                    //Log("SetConstainerState Calls remove loot");
                     MyMod.RemoveLootFromContainer(GUID, State);
                 }
 #endif
+                //Log("Container State for " + GUID + " State "+ GetContainerState(Scene, GUID));
+
+                return;
             }
 
             if (Dict.ContainsKey(GUID))
             {
                 Dict.Remove(GUID);
-                Dict.Add(GUID, State);
-                RecentlyLootedContainers.Remove(Scene);
-                RecentlyLootedContainers.Add(Scene, Dict);
-                ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
-#if (!DEDICATED)
-                if (MyMod.level_guid == Scene)
-                {
-                    MyMod.RemoveLootFromContainer(GUID, State);
-                }
-#endif
             }
+            Dict.Add(GUID, State);
+            RecentlyLootedContainers.Remove(Scene);
+            RecentlyLootedContainers.Add(Scene, Dict);
+            ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
+
+            //Log("Container State for " + GUID + " State " + GetContainerState(Scene, GUID));
+#if (!DEDICATED)
+            if (MyMod.level_guid == Scene)
+            {
+                //Log("SetConstainerState Calls remove loot");
+                MyMod.RemoveLootFromContainer(GUID, State);
+            }
+#endif
         }
 
         public static void AddLootedContainer(ContainerOpenSync Box, int State = 0, int Looter = 0)

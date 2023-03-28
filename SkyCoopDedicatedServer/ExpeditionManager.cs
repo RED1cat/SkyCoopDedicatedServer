@@ -26,6 +26,7 @@ namespace SkyCoop
         public static Dictionary<string, int> m_UnavailableGearSpawners = new Dictionary<string, int>();
         public static Dictionary<int, string> m_GearSpawnerGears = new Dictionary<int, string>();
         public static List<ExpeditionInvite> m_Invites = new List<ExpeditionInvite>();
+        public static int NextCrashSiteIn = 3600 *2;
 
         public static bool Debug = true;
 
@@ -168,8 +169,16 @@ namespace SkyCoop
                 }
             }
 
+            string CrashSiteAlias = GetRandomCrashSiteName();
 
-            Expedition Exp = BuildBasicExpedition(0, "CrashSiteTest");
+            if (string.IsNullOrEmpty(CrashSiteAlias))
+            {
+                DebugLog("Wasn't able to find any valid crashsites!");
+                return;
+            }
+            DebugLog("CrashSite "+ CrashSiteAlias+" going to be loaded!");
+
+            Expedition Exp = BuildBasicExpedition(0, CrashSiteAlias);
 
             if (Exp == null)
             {
@@ -515,6 +524,17 @@ namespace SkyCoop
                     m_Invites.RemoveAt(i);
                 }
             }
+            if(m_ActiveCrashSite == null)
+            {
+                NextCrashSiteIn--;
+                if (NextCrashSiteIn <= 0)
+                {
+                    int OneHour = 3600;
+                    System.Random RNG = new System.Random();
+                    NextCrashSiteIn = RNG.Next(OneHour * 3, OneHour * 6);
+                    StartCrashSite();
+                }
+            }
         }
 
         public class Expedition
@@ -832,7 +852,17 @@ namespace SkyCoop
                             Obj.m_Position = Spawner.m_Position;
                             Obj.m_Rotation = Spawner.m_Rotation;
 
+                            Obj.m_ExpeditionBelong = m_Expedition.m_GUID;
+                            Obj.m_Scene = m_Scene;
+                            Obj.m_CreationTime = MyMod.MinutesFromStartServer;
+                            Obj.m_RemoveTime = MyMod.MinutesFromStartServer + 1440;
+
+                            MPSaveManager.AddUniversalSyncableObject(Obj);
+
                             MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID);
+#if (!DEDICATED)
+                            MyMod.SpawnUniversalSyncableObject(Obj);
+#endif
                             if (!string.IsNullOrEmpty(Spawner.m_Content))
                             {
                                 MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
@@ -841,16 +871,6 @@ namespace SkyCoop
                             {
                                 MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 2);
                             }
-
-                            Obj.m_ExpeditionBelong = m_Expedition.m_GUID;
-                            Obj.m_Scene = m_Scene;
-                            Obj.m_CreationTime = MyMod.MinutesFromStartServer;
-                            Obj.m_RemoveTime = MyMod.MinutesFromStartServer + 1440;
-
-                            MPSaveManager.AddUniversalSyncableObject(Obj);
-#if (!DEDICATED)
-                            MyMod.SpawnUniversalSyncableObject(Obj);
-#endif
                             ServerSend.ADDUNIVERSALSYNCABLE(Obj);
                         }
                     }
@@ -1045,14 +1065,24 @@ namespace SkyCoop
                             return;
                         }
                     }
-                } else if(m_Type == ExpeditionTaskType.CRASHSITE)
+                } else if(m_Type == ExpeditionTaskType.ENTERZONE)
                 {
                     foreach (DataStr.MultiPlayerClientData PlayerData in PlayersData)
                     {
                         if (PlayerData.m_LevelGuid == m_Scene && Vector3.Distance(PlayerData.m_Position, m_ZoneCenter) <= m_ZoneRadius)
                         {
                             OnCompleted();
-                            break;
+                            return;
+                        }
+                    }
+                } else if (m_Type == ExpeditionTaskType.CRASHSITE)
+                {
+                    foreach (DataStr.MultiPlayerClientData PlayerData in PlayersData)
+                    {
+                        if (PlayerData.m_LevelGuid == m_Scene && Vector3.Distance(PlayerData.m_Position, m_ZoneCenter) <= m_ZoneRadius)
+                        {
+                            OnCompleted();
+                            return;
                         }
                     }
                 }

@@ -3,6 +3,9 @@ using GameServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Net.Sockets;
+using System.Net;
 
 namespace SkyCoop
 {
@@ -96,6 +99,9 @@ namespace SkyCoop
             portOpen= true;
             DiscordManager.Init();
 
+
+            //SteamMaster.PingSteamMaster();
+            //SteamMaster.SendSignalToMaster();
         }
 
         public static void OnExiting()

@@ -93,6 +93,9 @@ namespace SkyCoop
                 return;
             }
             m_ExpeditionTasks.Clear();
+            int OneHour = 3600;
+            System.Random RNG = new System.Random();
+            NextCrashSiteIn = RNG.Next(OneHour * 3, OneHour * 6);
             MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods");
             MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
 
@@ -118,6 +121,50 @@ namespace SkyCoop
 
             }
             Initilized = true;
+        }
+
+        public static string GetRandomCrashSiteName()
+        {
+            List<string> CrashSites = new List<string>();
+            if (Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods"))
+            {
+                string ExpeditionFolder = MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates";
+
+                if (Directory.Exists(ExpeditionFolder))
+                {
+                    DirectoryInfo d = new DirectoryInfo(ExpeditionFolder);
+                    FileInfo[] Files = d.GetFiles("*.json");
+                    foreach (FileInfo file in Files)
+                    {
+                        if (!file.Name.StartsWith("Crashsite"))
+                        {
+                            continue;
+                        }
+                        byte[] FileData = File.ReadAllBytes(file.FullName);
+                        string JSONString = UTF8Encoding.UTF8.GetString(FileData);
+                        if (string.IsNullOrEmpty(JSONString))
+                        {
+                            continue;
+                        }
+                        CrashSites.Add(file.Name.Replace(".json",""));
+                    }
+                }
+
+                if (CrashSites.Count > 0)
+                {
+                    if(CrashSites.Count > 1)
+                    {
+                        return CrashSites[new System.Random().Next(0, CrashSites.Count - 1)];
+                    } else
+                    {
+                        return CrashSites[0];
+                    }
+                } else
+                {
+                    return "";
+                }
+            }
+            return "";
         }
         
         

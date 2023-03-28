@@ -55,7 +55,16 @@ namespace SkyCoop
                 username = WebHookName,
                 content = Message
             };
-            webhook.PostData(obj);
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
 
         public static void PlayerJoined(string PlayerName, int Players)
@@ -91,7 +100,16 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
-            webhook.PostData(obj);
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
 
         public static void PlayerLeave(string PlayerName, int Players)
@@ -126,7 +144,17 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
-            webhook.PostData(obj);
+
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
 
         public static void TodayStats(string Stats)
@@ -161,7 +189,16 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
-            webhook.PostData(obj);
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
 
         public static void CrashSiteSpawn(string Text)
@@ -196,7 +233,16 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
-            webhook.PostData(obj);
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
         public static void CrashSiteFound()
         {
@@ -220,7 +266,7 @@ namespace SkyCoop
                         {
                             new Field()
                             {
-                                name = "Next one in few hours later.",
+                                name = "Someone managed to find crash site.",
                                 value = ""
                             }
                         }
@@ -230,7 +276,16 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
-            webhook.PostData(obj);
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
         }
     }
 }
