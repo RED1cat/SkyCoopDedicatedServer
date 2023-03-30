@@ -133,12 +133,12 @@ namespace SkyCoopDedicatedServer
                 catch (System.Net.Sockets.SocketException)
                 {
                     MasterSend[0].BeginReceive(MasterCallback, null);
-                    Logger.Log("[SteamMaster] Expection " + BitConverter.ToString(_data), Shared.LoggerColor.Red);
+                    Logger.Log("[SteamMaster] Expection", Shared.LoggerColor.Red);
                     return;
                 }
                 if (_data == null)
                 {
-                    Logger.Log("[SteamMaster] _data == null " + BitConverter.ToString(_data), Shared.LoggerColor.Red);
+                    Logger.Log("[SteamMaster] _data == null", Shared.LoggerColor.Red);
                     return;
                 }
                 Logger.Log("[SteamMaster] HandleMasterCallBack " + BitConverter.ToString(_data), Shared.LoggerColor.Magenta);

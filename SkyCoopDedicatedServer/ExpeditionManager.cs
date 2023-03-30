@@ -143,13 +143,13 @@ namespace SkyCoop
             }
         }
 
-        public static void StartCrashSite()
+        public static void StartCrashSite(int CrashSiteID = -1)
         {
-            if(m_ActiveCrashSite != null)
+            if (m_ActiveCrashSite != null)
             {
                 return;
             }
-            
+
             List<string> MACs = Server.GetMACsOfPlayers();
             List<string> InviteMACs = new List<string>();
             foreach (string MAC in MACs)
@@ -169,14 +169,21 @@ namespace SkyCoop
                 }
             }
 
-            string CrashSiteAlias = GetRandomCrashSiteName();
+            string CrashSiteAlias = GetRandomCrashSiteName(CrashSiteID);
 
             if (string.IsNullOrEmpty(CrashSiteAlias))
             {
-                DebugLog("Wasn't able to find any valid crashsites!");
+                if (CrashSiteID == -1)
+                {
+                    DebugLog("Wasn't able to find any valid crashsites!");
+                } else
+                {
+                    DebugLog("Wasn't able to find crashsites with index " + CrashSiteID);
+                }
+
                 return;
             }
-            DebugLog("CrashSite "+ CrashSiteAlias+" going to be loaded!");
+            DebugLog("CrashSite " + CrashSiteAlias + " going to be loaded!");
 
             Expedition Exp = BuildBasicExpedition(0, CrashSiteAlias);
 
@@ -197,7 +204,7 @@ namespace SkyCoop
                 int ClientID = Server.GetIDByMAC(MAC);
                 Exp.m_Players.Add(MAC);
 
-                if(ClientID != -1)
+                if (ClientID != -1)
                 {
                     ServerSend.EXPEDITIONRESULT(ClientID, 5);
                 }
@@ -206,7 +213,7 @@ namespace SkyCoop
             m_ActiveExpeditions.Add(Exp);
             m_ActiveCrashSite = Exp;
             MultiplayerChatMessage Message = new MultiplayerChatMessage();
-            Message.m_Message = "Plane with a valuable cargo crashed somewhere on " + GetRegionString(Exp.m_RegionBelong)+ ", find the crash site before other players do.";
+            Message.m_Message = "Plane with a valuable cargo crashed somewhere on " + GetRegionString(Exp.m_RegionBelong) + ", find the crash site before other players do.";
             Message.m_Type = 0;
             Message.m_By = "[Server]";
             Shared.SendMessageToChat(Message, true);
@@ -403,6 +410,27 @@ namespace SkyCoop
             }
         }
 
+        public static void CompleteCrashsite(int FinishState = -2, string GUID = "")
+        {
+            int RemoveID = -1;
+            if (string.IsNullOrEmpty(GUID) && m_ActiveCrashSite != null)
+            {
+                GUID = m_ActiveCrashSite.m_GUID;
+            }
+            for (int i = 0; i < m_ActiveExpeditions.Count; i++)
+            {
+                if (m_ActiveExpeditions[i].m_GUID == GUID)
+                {
+                    RemoveID = i;
+                    break;
+                }
+            }
+            if (RemoveID != -1)
+            {
+                CompleteCrashSite(RemoveID, new List<int>(), FinishState);
+            }
+        }
+
         public static void CompleteExpedition(string GUID, int FinishState = 1)
         {
             int RemoveID = -1;
@@ -445,11 +473,18 @@ namespace SkyCoop
                         }
                     }
                 }
+                if (FinishState == 0)
+                {
+                    foreach (ExpeditionTask Task in m_ActiveExpeditions[RemoveID].m_Tasks)
+                    {
+                        Task.RemoveAllObjects();
+                    }
+                }
                 m_ActiveExpeditions.RemoveAt(RemoveID);
             }
         }
 
-        public static void CompleteCrashSite(int RemoveID, List<int> ClosePlayers)
+        public static void CompleteCrashSite(int RemoveID, List<int> ClosePlayers, int DefaultFinishState = -1)
         {
             List<int> PlayersIDs = m_ActiveExpeditions[RemoveID].GetExpeditionPlayersIDs();
 
@@ -457,7 +492,7 @@ namespace SkyCoop
             {
                 foreach (int ClientID in PlayersIDs)
                 {
-                    int FinishState = -1;
+                    int FinishState = DefaultFinishState;
                     if (ClosePlayers.Contains(ClientID))
                     {
                         FinishState = 4;
@@ -473,7 +508,7 @@ namespace SkyCoop
                         ServerSend.EXPEDITIONRESULT(ClientID, FinishState);
                     }
 
-                    if (FinishState == 1)
+                    if (FinishState == 4)
                     {
                         string MAC = Server.GetMACByID(ClientID);
                         if (!string.IsNullOrEmpty(MAC))
@@ -482,15 +517,35 @@ namespace SkyCoop
                         }
                     }
                 }
+
+                if(DefaultFinishState == -2)
+                {
+                    foreach (ExpeditionTask Task in m_ActiveExpeditions[RemoveID].m_Tasks)
+                    {
+                        Task.RemoveAllObjects();
+                    }
+                }
+
                 m_ActiveExpeditions.RemoveAt(RemoveID);
                 m_ActiveCrashSite = null;
             }
             MultiplayerChatMessage Message = new MultiplayerChatMessage();
-            Message.m_Message = "Crash site has been found!";
+
+            if(DefaultFinishState == -1)
+            {
+                Message.m_Message = "Crash site has been found!";
+                Shared.WebhookCrashSiteFound();
+            } else if(DefaultFinishState == -2)
+            {
+                Message.m_Message = "Time is up, no one has found the crash site.";
+                Shared.WebhookCrashSiteTimeOver();
+            }
+
+            
             Message.m_Type = 0;
             Message.m_By = "[Server]";
             Shared.SendMessageToChat(Message, true);
-            Shared.WebhookCrashSiteFound();
+            
 
         }
 
@@ -624,8 +679,22 @@ namespace SkyCoop
                 int Completed = 0;
                 m_TimeLeft--;
                 if(m_TimeLeft <= 0)
-                {
-                    CompleteExpedition(m_GUID, 0);
+                { 
+                    if (m_Tasks.Count > 0)
+                    {
+                        ExpeditionTask Task = m_Tasks[m_Tasks.Count - 1];
+                        if (Task.m_Type == ExpeditionTaskType.CRASHSITE)
+                        {
+                            CompleteCrashsite(-2, m_GUID);
+                        } else
+                        {
+                            CompleteExpedition(m_GUID, 0);
+                        }
+                    } else
+                    {
+                        CompleteExpedition(m_GUID, 0);
+                    }
+                    return;
                 }
 
                 List<DataStr.MultiPlayerClientData> PlayersData = GetExpeditionPlayersData();
@@ -980,9 +1049,33 @@ namespace SkyCoop
                 }
             }
 
+            public void RemoveAllObjects()
+            {
+                if (m_ObjectsSpawned)
+                {
+                    foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
+                    {
+                        MPSaveManager.RemoveUniversalSyncableObject(m_Scene, Spawner.m_GUID);
+#if (!DEDICATED)
+                        if (MyMod.level_guid == m_Scene)
+                        {
+                            MyMod.RemoveObjectByGUID(Spawner.m_GUID);
+                        }
+#endif
+                    }
+                }
+            }
+
             public List<int> GetCrashSiteNearPlayers()
             {
                 List<int> PlayersIDs = new List<int>();
+
+#if (!DEDICATED)
+                if(MyMod.level_guid == m_Scene && Vector3.Distance(GameManager.GetPlayerTransform().position, m_ZoneCenter) <= m_ZoneRadius * 2)
+                {
+                    PlayersIDs.Add(0);
+                }
+#endif
                 for (int i = 0; i < MyMod.playersData.Count; i++)
                 {
                     if (MyMod.playersData[i] != null)

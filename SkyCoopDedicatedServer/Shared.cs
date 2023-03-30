@@ -3291,5 +3291,12 @@ namespace SkyCoop
             DiscordManager.CrashSiteFound();
 #endif
         }
+
+        public static void WebhookCrashSiteTimeOver()
+        {
+#if (DEDICATED)            
+            DiscordManager.CrashSiteTimeOver();
+#endif
+        }
     }
 }

@@ -123,7 +123,7 @@ namespace SkyCoop
             Initilized = true;
         }
 
-        public static string GetRandomCrashSiteName()
+        public static string GetRandomCrashSiteName(int Index = -1)
         {
             List<string> CrashSites = new List<string>();
             if (Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods"))
@@ -146,18 +146,30 @@ namespace SkyCoop
                         {
                             continue;
                         }
-                        CrashSites.Add(file.Name.Replace(".json",""));
+                        CrashSites.Add(file.Name.Replace(".json", ""));
                     }
                 }
 
                 if (CrashSites.Count > 0)
                 {
-                    if(CrashSites.Count > 1)
+                    if (Index == -1)
                     {
-                        return CrashSites[new System.Random().Next(0, CrashSites.Count - 1)];
+                        if (CrashSites.Count > 1)
+                        {
+                            return CrashSites[new System.Random().Next(0, CrashSites.Count - 1)];
+                        } else
+                        {
+                            return CrashSites[0];
+                        }
                     } else
                     {
-                        return CrashSites[0];
+                        if (CrashSites.Count - 1 >= Index)
+                        {
+                            return CrashSites[Index];
+                        } else
+                        {
+                            return "";
+                        }
                     }
                 } else
                 {
@@ -166,8 +178,8 @@ namespace SkyCoop
             }
             return "";
         }
-        
-        
+
+
         public static Expedition BuildBasicExpedition(int Region, string Alias = "", bool DebugFlag = false)
         {
             bool FoundValid = false;

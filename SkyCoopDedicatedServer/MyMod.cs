@@ -17,7 +17,7 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani";
             public const string Company = null;
-            public const string Version = "0.11.2";
+            public const string Version = "0.11.3";
             public const string DownloadLink = null;
             public const int RandomGenVersion = 5;
         }
@@ -130,7 +130,12 @@ namespace SkyCoop
                 ExpeditionManager.StartCrashSite();
                 return "Crashsite!";
             }
-
+            if (CMD.StartsWith("crashsite "))
+            {
+                int Index = int.Parse(CMD.Replace("crashsite ", ""));
+                ExpeditionManager.StartCrashSite(Index);
+                return "Crashsite!";
+            }
             return "";
         }
     }

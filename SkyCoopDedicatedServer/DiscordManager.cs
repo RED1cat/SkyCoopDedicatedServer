@@ -287,5 +287,49 @@ namespace SkyCoop
                 throw;
             }
         }
+
+        public static void CrashSiteTimeOver()
+        {
+            if (!Initilized)
+            {
+                return;
+            }
+
+            WebhookObject obj = new WebhookObject()
+            {
+                embeds = new Embed[]
+                {
+                    new Embed()
+                    {
+                        author = new Author()
+                        {
+                            name = "Crash Site Has Not Been Found!",
+                        },
+                        color = 0xff0015,
+                        fields = new Field[]
+                        {
+                            new Field()
+                            {
+                                name = "Time is up, no one has found the crash site.",
+                                value = ""
+                            }
+                        }
+                    }
+                },
+
+                username = WebHookName,
+                content = ""
+            };
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
+        }
     }
 }
