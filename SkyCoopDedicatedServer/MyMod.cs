@@ -17,7 +17,7 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani";
             public const string Company = null;
-            public const string Version = "0.11.3";
+            public const string Version = "0.11.4";
             public const string DownloadLink = null;
             public const int RandomGenVersion = 5;
         }
@@ -125,16 +125,44 @@ namespace SkyCoop
                 DiscordManager.TodayStats(MPStats.TodayStats.GetString(false, true, true));
                 return "Sent";
             }
-            if (CMD.StartsWith("crashsite"))
+            if (CMD.StartsWith("crashsite") && !CMD.StartsWith("crashsite "))
             {
                 ExpeditionManager.StartCrashSite();
-                return "Crashsite!";
-            }
-            if (CMD.StartsWith("crashsite "))
+                return "Random Crashsite!";
+            } else if (CMD.StartsWith("crashsite "))
             {
                 int Index = int.Parse(CMD.Replace("crashsite ", ""));
                 ExpeditionManager.StartCrashSite(Index);
-                return "Crashsite!";
+                return "Crashsite by index " + Index + "!";
+            }
+
+            if (CMD.StartsWith("whencrashsite"))
+            {
+                string Result = "Next Crashsite in ";
+                int Seconds = ExpeditionManager.NextCrashSiteIn;
+                ExpeditionManager.Expedition Crashsite = ExpeditionManager.GetActiveCrashSite();
+                if (Crashsite != null)
+                {
+                    Seconds += Crashsite.m_TimeLeft;
+                    Result += Seconds + " seconds later, or faster, if someone find current crashsite, cooldown is " + ExpeditionManager.NextCrashSiteIn;
+                } else
+                {
+                    Result += Seconds + " seconds later, no active crashsite";
+                }
+
+                
+                return Result;
+            }
+            if (CMD == "canclecrashsite")
+            {
+                ExpeditionManager.Expedition Crashsite = ExpeditionManager.GetActiveCrashSite();
+                if (Crashsite != null)
+                {
+                    ExpeditionManager.CompleteCrashsite(-2, Crashsite.m_GUID);
+                    ExpeditionManager.m_ActiveCrashSiteGUID = "";
+                    return "Crashsite cancled";
+                }
+                return "No active crashsites";
             }
             return "";
         }
