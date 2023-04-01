@@ -30,6 +30,7 @@ namespace SkyCoopDedicatedServerKickstarter
             if (File.Exists(ServerFile) && ServerFile != string.Empty)
             {
                 process.Start();
+                process.WaitForExit();
 
                 while (true)
                 {
@@ -37,6 +38,7 @@ namespace SkyCoopDedicatedServerKickstarter
                     {
                         Logger.LogError("otval dedicted");
                         process.Start();
+                        process.WaitForExit();
                     }
                 }
             }
