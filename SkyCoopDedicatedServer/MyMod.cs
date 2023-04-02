@@ -44,6 +44,7 @@ namespace SkyCoop
         public static int RestartPerioud = -1;
         public static int SecondsWithoutSaving = 0;
         public static int DsSavePerioud = 60;
+        public static string CustomServerName = "Dedicated Server";
 
         public static string OveridedTime = "12:0";
         public static string level_guid = "";
