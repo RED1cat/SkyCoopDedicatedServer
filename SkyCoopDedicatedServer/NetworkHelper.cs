@@ -1,6 +1,8 @@
 ﻿using Mono.Nat;
+using System.Net.NetworkInformation;
+using System.Text;
 
-namespace SkyCoop
+namespace SkyCoopDedicatedServer
 {
     class NetworkHelper
     {
@@ -8,6 +10,8 @@ namespace SkyCoop
         private string externalIp;
         private int port;
         bool upnpIsEnable = false;
+        static string addressForCheckingInternetConnection = "8.8.8.8";
+        static int attemptsToEstablishAConnection = 0;
 
         public string GetExternalIp
         {
@@ -34,7 +38,7 @@ namespace SkyCoop
         {
             this.port = port;
 
-            Logger.Log("[upnp] Try open port for upnp", Shared.LoggerColor.Green);
+            SkyCoop.Logger.Log("[NetworkHelper] Try open port for upnp", SkyCoop.Shared.LoggerColor.Green);
             NatUtility.DeviceFound += DeviceFound;
             NatUtility.StartDiscovery();
         }
@@ -48,11 +52,11 @@ namespace SkyCoop
             }
             catch
             {
-                Logger.Log($"[upnp] Port {port} could not be opened, it may already be busy by someone, or your hardware does not support upnp", Shared.LoggerColor.Red);
+                SkyCoop.Logger.Log($"[NetworkHelper] Port {port} could not be opened, it may already be busy by someone, or your hardware does not support upnp", SkyCoop.Shared.LoggerColor.Red);
                 return;
             }
-            Logger.Log($"[upnp] {port} port is open", Shared.LoggerColor.Green);
-            Logger.Log($"[upnp] External ip= {externalIp}", Shared.LoggerColor.Green);
+            SkyCoop.Logger.Log($"[NetworkHelper] {port} port is open", SkyCoop.Shared.LoggerColor.Green);
+            SkyCoop.Logger.Log($"[NetworkHelper] External ip= {externalIp}", SkyCoop.Shared.LoggerColor.Green);
             upnpIsEnable = true;
             NatUtility.StopDiscovery();
         }
@@ -60,15 +64,43 @@ namespace SkyCoop
         {
             if (upnpIsEnable == true)
             {
-                Logger.Log("[upnp] Try close port", Shared.LoggerColor.Green);
+                SkyCoop.Logger.Log("[NetworkHelper] Try close port", SkyCoop.Shared.LoggerColor.Green);
                 try
                 {
                     device.DeletePortMap(new Mapping(Protocol.Udp, port, port));
                 }
                 catch
                 {
-                    Logger.Log("[upnp] Can't close port", Shared.LoggerColor.Red);
+                    SkyCoop.Logger.Log("[NetworkHelper] Can't close port", SkyCoop.Shared.LoggerColor.Red);
                 }
+            }
+        }
+        public void СheckingInternetConnection()
+        {
+            PingOptions options = new PingOptions();
+            options.DontFragment= true;
+
+            //SkyCoop.Logger.Log($"[NetworkHelper] Attempt to check the Internet connection with the IP address: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Blue);
+
+            PingReply reply = new Ping().Send(addressForCheckingInternetConnection, 5000, Encoding.ASCII.GetBytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), options);
+            if(reply.Status == IPStatus.Success)
+            {
+                //SkyCoop.Logger.Log("[NetworkHelper] Internet connection is established", SkyCoop.Shared.LoggerColor.Green);
+
+                if(attemptsToEstablishAConnection == 5 || attemptsToEstablishAConnection > 5)
+                {
+                    SkyCoop.Logger.Log("[NetworkHelper] Attempt to reopen the port", SkyCoop.Shared.LoggerColor.Green);
+
+                    TryClosePort();
+                    Program.networkPort = new NetworkHelper(GameServer.Server.Port);
+
+                    attemptsToEstablishAConnection= 0;
+                }
+            }
+            if(reply.Status != IPStatus.Success)
+            {
+                SkyCoop.Logger.Log($"[NetworkHelper] It was not possible to establish a connection with this IP: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Red);
+                attemptsToEstablishAConnection++;
             }
         }
     }

@@ -32,19 +32,28 @@ namespace SkyCoopDedicatedServerKickstarter
                 process.Start();
                 process.WaitForExit();
 
+                if (process.ExitCode == 1)
+                {
+                    Environment.Exit(0);
+                }
                 while (true)
                 {
                     if (process.HasExited)
                     {
-                        Logger.LogError("otval dedicted");
+                        Logger.LogError("The server has an error, an attempt to restart it");
                         process.Start();
                         process.WaitForExit();
+
+                        if(process.ExitCode == 1)
+                        {
+                            Environment.Exit(0);
+                        }
                     }
                 }
             }
             else
             {
-                Logger.LogInformation("otval");
+                Logger.LogInformation("server file not found");
             }
         }
     }

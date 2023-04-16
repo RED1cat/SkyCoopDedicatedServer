@@ -15,15 +15,17 @@ namespace SkyCoopDedicatedServer
             MyMod.Initialize();
 
             Timer timer1 = new Timer(EverySecond, null, 1000, 1000);
-            Timer timer2 = new Timer(EveryMinute, null, 5000, 5000);
+            Timer timer2 = new Timer(EveryGameMinute, null, 5000, 5000);
             Timer timer3 = new Timer(DsSave, null, MyMod.DsSavePerioud * 1000, MyMod.DsSavePerioud * 1000);
+            Timer timer4 = new Timer(EveryMinute, null, 60000, 60000);
 
             while (true)
             {
                 Update();
                 if (Shared.DSQuit)
                 {
-                    break;
+                    OnExiting();
+                    Environment.Exit(1);
                 }
             }
         }
@@ -54,13 +56,21 @@ namespace SkyCoopDedicatedServer
         {
             Shared.EverySecond();
         }
-        private void EveryMinute(object obj)
+        private void EveryGameMinute(object obj)
         {
             Shared.EveryInGameMinute();
         }
         private void DsSave(object obj)
         {
             MPSaveManager.SaveGlobalData();
+        }
+        private void EveryMinute(object obj)
+        {
+            Program.networkPort.СheckingInternetConnection();
+        }
+        private void OnExiting()
+        {
+            Program.networkPort.TryClosePort();
         }
     }
 }
