@@ -1835,11 +1835,14 @@ namespace GameServer
             }
         }
 
-        public static void CUREAFFLICTION(int _toClient, DataStr.AffictionSync _msg)
+        public static void CUREAFFLICTION(int _toClient, int FromWho, DataStr.AffictionSync Aff, int FirstAidSkill, bool Medkit)
         {
             using (Packet _packet = new Packet((int)ServerPackets.CUREAFFLICTION))
             {
-                _packet.Write(_msg);
+                _packet.Write(Aff);
+                _packet.Write(FirstAidSkill);
+                _packet.Write(Medkit);
+                _packet.Write(FromWho);
                 _packet.Write(_toClient);
 
                 SendTCPData(_toClient, _packet);
