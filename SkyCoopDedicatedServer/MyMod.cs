@@ -1,11 +1,5 @@
 ﻿using SkyCoopDedicatedServer;
-using GameServer;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Net.Sockets;
-using System.Net;
 
 namespace SkyCoop
 {
@@ -72,9 +66,6 @@ namespace SkyCoop
         public static Dictionary<int, string> SlicedJsonDataBuffer = new Dictionary<int, string>();
 
 
-        private static NetworkHelper networkPort;
-        public static bool portOpen = false;
-
 
         public static string GetGearNameByID(int index)
         {
@@ -96,8 +87,8 @@ namespace SkyCoop
             MPSaveManager.LoadGlobalData();
 
             Shared.HostAServer(config.Ports);
-            networkPort = new NetworkHelper(config.Ports);
-            portOpen= true;
+            Program.networkPort = new NetworkHelper(config.Ports);
+
             DiscordManager.Init();
 
 
@@ -105,13 +96,6 @@ namespace SkyCoop
             //SteamMaster.SendSignalToMaster();
         }
 
-        public static void OnExiting()
-        {
-            if (portOpen)
-            {
-                networkPort.TryClosePort();
-            }
-        }
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
         {
             if(CMD.StartsWith("webhook "))
