@@ -1,4 +1,5 @@
 ﻿using SkyCoopDedicatedServer;
+using System;
 using System.Collections.Generic;
 
 namespace SkyCoop
@@ -148,6 +149,10 @@ namespace SkyCoop
                     return "Crashsite cancled";
                 }
                 return "No active crashsites";
+            }
+            if (CMD == "reboot")
+            {
+                Environment.Exit(0);
             }
             return "";
         }

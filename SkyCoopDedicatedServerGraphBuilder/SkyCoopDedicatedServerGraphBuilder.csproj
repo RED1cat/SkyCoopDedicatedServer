@@ -5,9 +5,9 @@
     <RollForward>Major</RollForward>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-    <Configurations>Debug;Release;Graph Builder</Configurations>
+    <Configurations>Debug;Release;GraphBuilder</Configurations>
   </PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Graph Builder|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GraphBuilder|AnyCPU'">
 		<BaseOutputPath>../Output/Debug</BaseOutputPath>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<ApplicationIcon>Icon.ico</ApplicationIcon>
