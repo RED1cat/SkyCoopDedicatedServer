@@ -40,12 +40,20 @@ namespace SkyCoopDedicatedServerKickstarter
                 {
                     if (process.HasExited)
                     {
-                        Logger.LogError("The server has an error, an attempt to restart it");
+                        if (process.ExitCode == 0)
+                        {
+                            Logger.LogError("The server is rebooting");
+                        }
+                        else
+                        {
+                            Logger.LogError("The server has an error, an attempt to restart it");
+                        }
                         process.Start();
                         process.WaitForExit();
 
                         if(process.ExitCode == 1)
                         {
+                            Logger.LogError("The server is shutting down");
                             Environment.Exit(0);
                         }
                     }
