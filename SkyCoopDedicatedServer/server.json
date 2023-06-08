@@ -12,11 +12,11 @@
    "SteamServerAccessibility": 2,
    "RCON": "12345",
    "DropUnloadPeriod": 30,
-   "SaveScamProtection": true,
+   "SaveScamProtection": false,
    "ModValidationCheck": false,
    "ExperienceMode": 2,
    "StartRegion": 0,
-   "Seed": 12345,
+   "Seed": 444444,
    "PVP": false,
    "SavingPeriod": 300,
    "RestartPerioud": 10800

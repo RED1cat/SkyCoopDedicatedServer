@@ -33,7 +33,6 @@ namespace SkyCoopDedicatedServer
         {
             Shared.OnUpdate();
             ThreadManager.UpdateMain();
-
         }
         private void ReadConsole()
         {
