@@ -1959,13 +1959,20 @@ namespace SkyCoop
 
         public static string LoadPhoto(string GUID, bool Cached = false)
         {
-            CreateFolderIfNotExist("Mods");
-            CreateFolderIfNotExist("Mods" + GetSeparator() + "ExpeditionTemplates");
-            CreateFolderIfNotExist("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos");
+            string PathMods = "Mods";
 
-            if(File.Exists("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID))
+            if (!string.IsNullOrEmpty(GetBaseDirectory()))
             {
-                byte[] FileData = File.ReadAllBytes("Mods" + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID);
+                PathMods = GetBaseDirectory() + GetSeparator()+"Mods";
+            }
+
+            CreateFolderIfNotExist(PathMods);
+            CreateFolderIfNotExist(PathMods + GetSeparator() + "ExpeditionTemplates");
+            CreateFolderIfNotExist(PathMods + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos");
+
+            if(File.Exists(PathMods + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID))
+            {
+                byte[] FileData = File.ReadAllBytes(PathMods + GetSeparator() + "ExpeditionTemplates" + GetSeparator() + "CachedPhotos" + GetSeparator() + GUID);
                 return UTF8Encoding.UTF8.GetString(FileData);
             }
 
