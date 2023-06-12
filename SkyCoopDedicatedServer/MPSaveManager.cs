@@ -461,6 +461,7 @@ namespace SkyCoop
         public static void LoadNonUnloadables()
         {
             ExpeditionBuilder.Init();
+            ExpeditionManager.InitClues();
             int SaveSeed = GetSeed();
             Log("LoadNonUnloadables Seed "+ SaveSeed);
             string LockedDoorsJSON = LoadData("LockedDoors", SaveSeed);
@@ -1316,12 +1317,12 @@ namespace SkyCoop
             //Log("Showing off dict for scene " + Scene);
             //foreach (var item in Dict)
             //{
-            //    Log("Key " + item.Key+" Val "+item.Value);
+            //    Log("Key " + item.Key + " Val " + item.Value);
             //}
             return -1;
         }
 
-        public static void SetConstainerState(string Scene, string GUID, int State)
+        public static void SetConstainerState(string Scene, string GUID, int State, bool DontNotify = false)
         {
             //Log("SetConstainerState "+GUID+" State "+State);
             Dictionary<string, int> Dict = LoadLootedContainersData(Scene);
@@ -1331,16 +1332,19 @@ namespace SkyCoop
                 Dict.Add(GUID, State);
                 RecentlyLootedContainers.Remove(Scene);
                 RecentlyLootedContainers.Add(Scene, Dict);
-                ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
-#if (!DEDICATED)
-                if (MyMod.level_guid == Scene)
-                {
-                    //Log("SetConstainerState Calls remove loot");
-                    MyMod.RemoveLootFromContainer(GUID, State);
-                }
-#endif
-                //Log("Container State for " + GUID + " State "+ GetContainerState(Scene, GUID));
 
+                if (!DontNotify)
+                {
+                    ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
+#if (!DEDICATED)
+                    if (MyMod.level_guid == Scene)
+                    {
+                        //Log("SetConstainerState Calls remove loot");
+                        MyMod.RemoveLootFromContainer(GUID, State);
+                    }
+#endif
+                    //Log("Container State for " + GUID + " State "+ GetContainerState(Scene, GUID));
+                }
                 return;
             }
 
@@ -1351,16 +1355,21 @@ namespace SkyCoop
             Dict.Add(GUID, State);
             RecentlyLootedContainers.Remove(Scene);
             RecentlyLootedContainers.Add(Scene, Dict);
-            ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
 
-            //Log("Container State for " + GUID + " State " + GetContainerState(Scene, GUID));
-#if (!DEDICATED)
-            if (MyMod.level_guid == Scene)
+
+            if (!DontNotify)
             {
-                //Log("SetConstainerState Calls remove loot");
-                MyMod.RemoveLootFromContainer(GUID, State);
-            }
+                ServerSend.CHANGECONTAINERSTATE(0, GUID, State, Scene, true);
+
+                //Log("Container State for " + GUID + " State " + GetContainerState(Scene, GUID));
+#if (!DEDICATED)
+                if (MyMod.level_guid == Scene)
+                {
+                    //Log("SetConstainerState Calls remove loot");
+                    MyMod.RemoveLootFromContainer(GUID, State);
+                }
 #endif
+            }
         }
 
         public static void AddLootedContainer(ContainerOpenSync Box, int State = 0, int Looter = 0)
@@ -2091,6 +2100,17 @@ namespace SkyCoop
 
             return Dict;
         }
+
+        public static bool NeverSeenExpeditions()
+        {
+            return !IsFileExist("SeenExpeditions");
+        }
+
+        public static void SeenExpeditions()
+        {
+            SaveData("SeenExpeditions", "");
+        }
+
         public static UniversalSyncableObject GetUniversalSyncable(string Scene, string GUID)
         {
             Dictionary<string, UniversalSyncableObject> Dict;
