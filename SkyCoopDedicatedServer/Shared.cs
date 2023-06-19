@@ -3270,15 +3270,23 @@ namespace SkyCoop
                                     }
                                 }
                             }
+                            if (MyMod.iAmHost)
+                            {
+                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, Data.m_GUID, SlicedBase64Purpose.Photo);
+                                foreach (SlicedBase64Data Slice in Slices)
+                                {
+                                    ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
+                                }
+                            }
 #else
                                 MPSaveManager.AddPhoto(Base64, true, PhotoGUID);
                                 MPSaveManager.AddPhoto(Base64, false, PhotoGUID);
+                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, Data.m_GUID, SlicedBase64Purpose.Photo);
+                                foreach (SlicedBase64Data Slice in Slices)
+                                {
+                                    ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
+                                }
 #endif
-                            List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, Data.m_GUID, SlicedBase64Purpose.Photo);
-                            foreach (SlicedBase64Data Slice in Slices)
-                            {
-                                ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
-                            }
                         } else
                         {
                             if (!IsBase64)
