@@ -1260,8 +1260,7 @@ namespace GameServer
         }
         public static void GOTCONTAINERSLICE(int _fromClient, Packet _packet)
         {
-            DataStr.SlicedJsonData got = _packet.ReadSlicedGear();
-            Shared.AddSlicedJsonDataForContainer(got, _fromClient);
+
         }
         public static void REQUESTOPENCONTAINER(int _fromClient, Packet _packet)
         {

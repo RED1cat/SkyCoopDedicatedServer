@@ -559,6 +559,7 @@ namespace SkyCoop
                     Neighbors.Add((int)Shared.GameRegion.CoastalHighWay);
                     Neighbors.Add((int)Shared.GameRegion.CrumblingHighWay);
                     Neighbors.Add((int)Shared.GameRegion.WindingRiver);
+                    Neighbors.Add((int)Shared.GameRegion.DesolationPoint);
                     break;
                 default:
                     break;

@@ -1207,232 +1207,38 @@ namespace SkyCoop
             }
         }
         public static string ContainerDecompressedDataBackup = "";
+        public static string ContainerGUIDDataBackup = "";
 
         public static void SendContainerData(string DataProxy, string LevelKey, string GUID, string DecompressedBackup, int SendTo = 0)
         {
-            byte[] bytesToSlice = Encoding.UTF8.GetBytes(DataProxy);
-            string HashDummy = GUID + DataProxy;
-            int Hash = HashDummy.GetHashCode();
-            long CheckHash = GetDeterministicId(HashDummy);
-            Log("Going to sent " + bytesToSlice.Length + "bytes");
 #if (!DEDICATED)
             if (!string.IsNullOrEmpty(DecompressedBackup) && MyMod.sendMyPosition)
             {
                 ContainerDecompressedDataBackup = DecompressedBackup;
             }
+            ContainerGUIDDataBackup = GUID;
 #endif
-
-            int CHUNK_SIZE = 1000;
-            int SlicesSent = 0;
-
-            if (bytesToSlice.Length > CHUNK_SIZE)
+            List<SlicedBase64Data> Data = GetBase64Sliced(DataProxy, GUID + "|" + LevelKey, SlicedBase64Purpose.Container);
+            foreach (SlicedBase64Data Slice in Data)
             {
-                List<byte> BytesBuffer = new List<byte>();
-                BytesBuffer.AddRange(bytesToSlice);
-
-                while (BytesBuffer.Count >= CHUNK_SIZE)
-                {
-                    byte[] sliceOfBytes = BytesBuffer.GetRange(0, CHUNK_SIZE - 1).ToArray();
-                    BytesBuffer.RemoveRange(0, CHUNK_SIZE - 1);
-
-                    string jsonStringSlice = Encoding.UTF8.GetString(sliceOfBytes);
-                    DataStr.SlicedJsonData SlicedPacket = new DataStr.SlicedJsonData();
-                    SlicedPacket.m_GearName = LevelKey + "|" + GUID;
-                    SlicedPacket.m_SendTo = 0;
-                    SlicedPacket.m_Hash = Hash;
-                    SlicedPacket.m_CheckHash = CheckHash;
-                    SlicedPacket.m_Str = jsonStringSlice;
-
-                    if (BytesBuffer.Count != 0)
-                    {
-                        SlicedPacket.m_Last = false;
-                    } else
-                    {
-                        SlicedPacket.m_Last = true;
-                    }
-
-#if (!DEDICATED)
-                    if (SendTo == 0)
-                    {
-                        MyMod.AddCarefulSlice(SlicedPacket);
-                    } else
-                    {
-                        ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
-                    }
-#else
-                    ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
-#endif
-
-
-                    SlicesSent = SlicesSent + 1;
-                }
-
-                if (BytesBuffer.Count < CHUNK_SIZE && BytesBuffer.Count != 0)
-                {
-                    byte[] LastSlice = BytesBuffer.GetRange(0, BytesBuffer.Count).ToArray();
-                    BytesBuffer.RemoveRange(0, BytesBuffer.Count);
-
-                    string jsonStringSlice = Encoding.UTF8.GetString(LastSlice);
-                    DataStr.SlicedJsonData SlicedPacket = new DataStr.SlicedJsonData();
-                    SlicedPacket.m_GearName = LevelKey + "|" + GUID;
-                    SlicedPacket.m_SendTo = 0;
-                    SlicedPacket.m_Hash = Hash;
-                    SlicedPacket.m_CheckHash = CheckHash;
-                    SlicedPacket.m_Str = jsonStringSlice;
-                    SlicedPacket.m_Last = true;
-
-#if (!DEDICATED)
-
-                    if (SendTo == 0)
-                    {
-                        MyMod.AddCarefulSlice(SlicedPacket);
-                    } else
-                    {
-                        ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
-                    }
-#else
-                    ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
-#endif
-                    SlicesSent = SlicesSent + 1;
-                }
-            } else
-            {
-                DataStr.SlicedJsonData SlicedPacket = new DataStr.SlicedJsonData();
-                SlicedPacket.m_GearName = LevelKey + "|" + GUID;
-                SlicedPacket.m_SendTo = 0;
-                SlicedPacket.m_Hash = Hash;
-                SlicedPacket.m_CheckHash = CheckHash;
-                SlicedPacket.m_Str = DataProxy;
-                SlicedPacket.m_Last = true;
-
-#if (!DEDICATED)
+#if (!DEDICATED)                
                 if (SendTo == 0)
                 {
-                    MyMod.AddCarefulSlice(SlicedPacket);
+                    using (Packet __packet = new Packet((int)ClientPackets.GOTPHOTOSLICE))
+                    {
+                        __packet.Write(Slice);
+                        MyMod.SendUDPData(__packet);
+                    }
                 } else
                 {
-                    ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
+                    ServerSend.BASE64SLICE(SendTo, Slice);
                 }
 #else
-                ServerSend.GOTCONTAINERSLICE(SendTo, SlicedPacket);
+                ServerSend.BASE64SLICE(SendTo, Slice);
 #endif
-                SlicesSent = SlicesSent + 1;
             }
-
-#if (!DEDICATED)
-
-            if (MyMod.iAmHost == true)
-            {
-                Log("Slices sent " + SlicesSent);
-            } else
-            {
-                Log("Prepared " + SlicesSent + " slices to send");
-                Log("Starting send slices");
-                MyMod.SendNextCarefulSlice();
-            }
-#else
-            Log("Slices sent " + SlicesSent);
-#endif
         }
         public static bool CloseContainerOnCancle = false;
-        public static void AddSlicedJsonDataForContainer(DataStr.SlicedJsonData jData, int From = -1)
-        {
-            bool Error = false;
-            bool Finished = false;
-            if (MyMod.SlicedJsonDataBuffer.ContainsKey(jData.m_Hash))
-            {
-                string previousString = "";
-                if (MyMod.SlicedJsonDataBuffer.TryGetValue(jData.m_Hash, out previousString) == true)
-                {
-                    string wholeString = previousString + jData.m_Str;
-                    MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
-                    MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, wholeString);
-                } else
-                {
-                    MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, jData.m_Str);
-                }
-            } else
-            {
-                MyMod.SlicedJsonDataBuffer.Add(jData.m_Hash, jData.m_Str);
-            }
-
-            if (jData.m_Last)
-            {
-                string finalJsonData = "";
-                Finished = true;
-                if (MyMod.SlicedJsonDataBuffer.TryGetValue(jData.m_Hash, out finalJsonData) == true)
-                {
-                    MyMod.SlicedJsonDataBuffer.Remove(jData.m_Hash);
-
-                    string OriginalData = jData.m_GearName;
-                    string Scene = OriginalData.Split(Convert.ToChar("|"))[0];
-                    string GUID = OriginalData.Split(Convert.ToChar("|"))[1];
-                    long CheckHash = GetDeterministicId(GUID + finalJsonData);
-
-                    bool IsBase64 = IsBase64String(finalJsonData);
-                    Log("Finished loading container data for " + jData.m_Hash);
-
-                    if (IsBase64)
-                    {
-                        //Log("This is base64!");
-                        
-                        if(jData.m_CheckHash == CheckHash)
-                        {
-                            //Log("Checkhash is valid!");
-                        } else{
-                            Log("Checkhash is NOT valid. Got "+ CheckHash+" expected "+ jData.m_Hash, LoggerColor.Red);
-                            Error = true;
-                        }
-                    } else
-                    {
-                        Log("This is NOT base64!", LoggerColor.Red);
-                        Error = true;
-                    }
-
-#if (!DEDICATED)
-                    if (MyMod.iAmHost == true)
-                    {
-                        if (!Error)
-                        {
-                            MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
-                        }
-                    }
-                    if (MyMod.sendMyPosition == true)
-                    {
-                        if (!Error)
-                        {
-                            MyMod.DiscardRepeatPacket();
-                            MyMod.FinishOpeningFakeContainer(finalJsonData);
-                        } else
-                        {
-                            MyMod.DiscardRepeatPacket();
-                            MyMod.RemovePleaseWait();
-                            
-                            GameManager.GetPlayerManagerComponent().SetControlMode(PlayerControlMode.Normal);
-                            string Title = "INVALID CONTAINER DATA";
-                            string Text = "Server sent invalid data, this can be network delay problem, please press Confirm to try load data again. If problem stays, message us about this problem.\n\n\n\n\n\n\nGUID: "+Scene +"_"+ GUID+ "\nCheckhash:"+CheckHash+"\nExpected:  "+jData.m_CheckHash+"\nIs base64 "+ IsBase64;
-                            CloseContainerOnCancle = true;
-                            InterfaceManager.m_Panel_Confirmation.AddConfirmation(Panel_Confirmation.ConfirmationType.Confirm, Title, "\n" + Text, Panel_Confirmation.ButtonLayout.Button_2, Panel_Confirmation.Background.Transperent, null, null);
-                        }
-                    }
-#else
-                    if (!Error)
-                    {
-                        MPSaveManager.SaveContainer(Scene, GUID, finalJsonData);
-                    }
-#endif
-                }
-            }
-
-            if (From != -1)
-            {
-                ServerSend.READYSENDNEXTSLICE(From, true);
-                if (Finished)
-                {
-                    ServerSend.FINISHEDSENDINGCONTAINER(From, Error);
-                }
-            }
-        }
 
         public static void PieTrigger(ExtraDataForDroppedGear Extra, int Picker)
         {
@@ -3200,6 +3006,9 @@ namespace SkyCoop
 
         public static void AddBase64Slice(SlicedBase64Data Data, int FromClient = 0)
         {
+            SlicedBase64Purpose Purpose = (SlicedBase64Purpose)Data.m_Purpose;
+
+
             if (!Base64Slices.ContainsKey(Data.m_GUID))
             {
                 Base64Slices.Add(Data.m_GUID, new string[Data.m_Slices]);
@@ -3211,57 +3020,66 @@ namespace SkyCoop
 
                 if (Data.m_SliceNum == Base64Slices[Data.m_GUID].Length - 1)
                 {
-                    if(Data.m_Purpose == (int)SlicedBase64Purpose.Photo)
-                    {
-                        string PhotoGUID = Data.m_GUID;
-                        Log("Finishing photo slices for "+ Data.m_GUID);
-                        string Base64 = "";
-                        string[] StringArray = Base64Slices[Data.m_GUID];
-                        Base64Slices.Remove(Data.m_GUID);
-                        foreach (string oneSlice in StringArray)
-                        {
-                            if (!string.IsNullOrEmpty(oneSlice))
-                            {
-                                Base64 += oneSlice;
-                            } else
-                            {
-                                Log("Some slices are missing! Doing another request", LoggerColor.Red);
-                                RequestPhoto(PhotoGUID, FromClient);
-                                return;
-                            }
-                        }
-                        bool IsBase64 = IsBase64String(Base64);
-                        long CheckSum = GetDeterministicId(Base64);
-                        long CheckSumAlt = -CheckSum - 1;
-                        Log("Final string is base64? "+IsBase64);
-                        Log("Final checksum " + CheckSum+" expected "+ Data.m_CheckSum);
-                        if(Data.m_CheckSum == CheckSumAlt)
-                        {
-                            // eeh, that fine, skip check sum validation
-                            Log("Final checksum minory diffirent.");
-                            CheckSum = Data.m_CheckSum;
-                        }
+                    string GUID = Data.m_GUID;
+                    string Scene = "";
 
-                        if (IsBase64 && CheckSum == Data.m_CheckSum)
+                    if(Purpose == SlicedBase64Purpose.Container)
+                    {
+                        GUID = Data.m_GUID.Split('|')[0];
+                        Scene = Data.m_GUID.Split('|')[1];
+                    }
+                    Log("Finishing base64 slices for " + GUID);
+                    string Base64 = "";
+                    string[] StringArray = Base64Slices[Data.m_GUID];
+                    Base64Slices.Remove(Data.m_GUID);
+                    foreach (string oneSlice in StringArray)
+                    {
+                        if (!string.IsNullOrEmpty(oneSlice))
                         {
-                            Log("Everything correct, applying this photo");
+                            Base64 += oneSlice;
+                        } else
+                        {
+                            Log("Some slices are missing! Doing another request", LoggerColor.Red);
+                            if (Purpose == SlicedBase64Purpose.Photo)
+                            {
+                                RequestPhoto(GUID, FromClient);
+                            }
+                            return;
+                        }
+                    }
+                    bool IsBase64 = IsBase64String(Base64);
+                    long CheckSum = GetDeterministicId(Base64);
+                    long CheckSumAlt = -CheckSum - 1;
+                    Log("Final string is base64? " + IsBase64);
+                    Log("Final checksum " + CheckSum + " expected " + Data.m_CheckSum);
+                    if (Data.m_CheckSum == CheckSumAlt)
+                    {
+                        // eeh, that fine, skip check sum validation
+                        Log("Final checksum minory diffirent.");
+                        CheckSum = Data.m_CheckSum;
+                    }
+
+                    if (IsBase64 && CheckSum == Data.m_CheckSum)
+                    {
+                        Log("Everything correct");
 #if (!DEDICATED)
+                        if(Purpose == SlicedBase64Purpose.Photo)
+                        {
                             if (MyMod.sendMyPosition)
                             {
-                                MPSaveManager.AddPhoto(Base64, true, PhotoGUID);
+                                MPSaveManager.AddPhoto(Base64, true, GUID);
                             } else
                             {
-                                MPSaveManager.AddPhoto(Base64, true, PhotoGUID);
-                                MPSaveManager.AddPhoto(Base64, false, PhotoGUID);
+                                MPSaveManager.AddPhoto(Base64, true, GUID);
+                                MPSaveManager.AddPhoto(Base64, false, GUID);
                             }
-
                             foreach (var item in MyMod.DroppedGearsObjs)
                             {
                                 if (item.Value != null && item.Value.GetComponent<Comps.DroppedGearDummy>())
                                 {
-                                    if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == PhotoGUID)
+                                    if (item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_PhotoGUID == GUID)
                                     {
-                                        Texture2D tex = MPSaveManager.GetPhotoTexture(PhotoGUID, item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_GearName);
+                                        Texture2D tex = MPSaveManager.GetPhotoTexture(GUID, item.Value.GetComponent<Comps.DroppedGearDummy>().m_Extra.m_GearName);
                                         if (tex)
                                         {
                                             item.Value.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.mainTexture = tex;
@@ -3272,31 +3090,71 @@ namespace SkyCoop
                             }
                             if (MyMod.iAmHost)
                             {
-                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, Data.m_GUID, SlicedBase64Purpose.Photo);
+                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
                                 foreach (SlicedBase64Data Slice in Slices)
                                 {
                                     ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
                                 }
+                            }
+                        }
+#else
+                        if (Purpose == SlicedBase64Purpose.Photo)
+                        {
+                            MPSaveManager.AddPhoto(Base64, true, GUID);
+                            MPSaveManager.AddPhoto(Base64, false, GUID);
+                            List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
+                            foreach (SlicedBase64Data Slice in Slices)
+                            {
+                                ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
+                            }
+                        }
+#endif
+
+                        if(Purpose == SlicedBase64Purpose.Container)
+                        {
+#if (!DEDICATED)
+                            if (MyMod.iAmHost == true)
+                            {
+                                MPSaveManager.SaveContainer(Scene, GUID, Base64);
+                            }
+                            if (MyMod.sendMyPosition == true)
+                            {
+                                MyMod.DiscardRepeatPacket();
+                                MyMod.FinishOpeningFakeContainer(Base64);
                             }
 #else
-                                MPSaveManager.AddPhoto(Base64, true, PhotoGUID);
-                                MPSaveManager.AddPhoto(Base64, false, PhotoGUID);
-                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, Data.m_GUID, SlicedBase64Purpose.Photo);
-                                foreach (SlicedBase64Data Slice in Slices)
-                                {
-                                    ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
-                                }
+                            MPSaveManager.SaveContainer(Scene, GUID, Base64);
 #endif
-                        } else
+                            ServerSend.FINISHEDSENDINGCONTAINER(FromClient, false);
+                        }
+                    } else
+                    {
+                        if (!IsBase64)
                         {
-                            if (!IsBase64)
-                            {
-                                Log("Base64 string corrupted, doing another request...", LoggerColor.Red);
-                            }else if(CheckSum == Data.m_CheckSum)
-                            {
-                                Log("Checksum is incorrect, doing another request...", LoggerColor.Red);
-                            }
-                            RequestPhoto(PhotoGUID, FromClient);
+                            Log("Base64 string corrupted, doing another request...", LoggerColor.Red);
+                        } else if (CheckSum == Data.m_CheckSum)
+                        {
+                            Log("Checksum is incorrect, doing another request...", LoggerColor.Red);
+                        }
+                        
+                        if(Purpose == SlicedBase64Purpose.Photo)
+                        {
+                            RequestPhoto(GUID, FromClient);
+                        }
+                        if(Purpose == SlicedBase64Purpose.Container)
+                        {
+#if (!DEDICATED)
+                            MyMod.DiscardRepeatPacket();
+                            MyMod.RemovePleaseWait();
+
+                            GameManager.GetPlayerManagerComponent().SetControlMode(PlayerControlMode.Normal);
+                            string Title = "INVALID CONTAINER DATA";
+                            string Text = "Server sent invalid data, this can be network delay problem, please press Confirm to try load data again. If problem stays, message us about this problem.\n\n\n\n\n\n\nGUID: " + Scene + "_" + GUID + "\nCheckhash:" + CheckSum + "\nExpected:  " + Data.m_CheckSum + "\nIs base64 " + IsBase64;
+                            CloseContainerOnCancle = true;
+                            InterfaceManager.m_Panel_Confirmation.AddConfirmation(Panel_Confirmation.ConfirmationType.Confirm, Title, "\n" + Text, Panel_Confirmation.ButtonLayout.Button_2, Panel_Confirmation.Background.Transperent, null, null);
+#else
+                            ServerSend.FINISHEDSENDINGCONTAINER(FromClient, true);
+#endif
                         }
                     }
                 }
@@ -3318,7 +3176,7 @@ namespace SkyCoop
 
         public static void WebhookPlayerJoin(string PlayerName)
         {
-#if (DEDICATED)            
+#if (DEDICATED)
             int Players = GetPlayersOnServer();
             DiscordManager.PlayerJoined(PlayerName, Players);
 #endif
@@ -3329,7 +3187,7 @@ namespace SkyCoop
             {
                 return;
             }
-#if (DEDICATED)            
+#if (DEDICATED)
             int Players = GetPlayersOnServer();
             DiscordManager.PlayerLeave(PlayerName, Players);
 #endif
@@ -3337,20 +3195,20 @@ namespace SkyCoop
 
         public static void WebhookCrashSiteSpawn(string Text)
         {
-#if (DEDICATED)            
+#if (DEDICATED)
             DiscordManager.CrashSiteSpawn(Text);
 #endif
         }
         public static void WebhookCrashSiteFound()
         {
-#if (DEDICATED)            
+#if (DEDICATED)
             DiscordManager.CrashSiteFound();
 #endif
         }
 
         public static void WebhookCrashSiteTimeOver()
         {
-#if (DEDICATED)            
+#if (DEDICATED)
             DiscordManager.CrashSiteTimeOver();
 #endif
         }

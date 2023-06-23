@@ -659,6 +659,7 @@ namespace SkyCoop
         public enum SlicedBase64Purpose
         {
             Photo,
+            Container,
         }
 
 
