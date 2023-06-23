@@ -3040,7 +3040,7 @@ namespace SkyCoop
                             Base64 += StringArray[i];
                         } else
                         {
-                            int MaxSlices = Base64Slices[Data.m_GUID].Length - 1;
+                            int MaxSlices = Data.m_Slices-1;
                             Log("Some slices are missing! Doing another request", LoggerColor.Red);
                             Log("Problem accured on "+i+"/"+ MaxSlices + " slice", LoggerColor.Red);
                             if (Purpose == SlicedBase64Purpose.Photo)
