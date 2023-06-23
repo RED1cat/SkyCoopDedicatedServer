@@ -3032,17 +3032,42 @@ namespace SkyCoop
                     string Base64 = "";
                     string[] StringArray = Base64Slices[Data.m_GUID];
                     Base64Slices.Remove(Data.m_GUID);
-                    foreach (string oneSlice in StringArray)
+
+                    for (int i = 0; i < StringArray.Length; i++)
                     {
-                        if (!string.IsNullOrEmpty(oneSlice))
+                        if (!string.IsNullOrEmpty(StringArray[i]))
                         {
-                            Base64 += oneSlice;
+                            Base64 += StringArray[i];
                         } else
                         {
+                            int MaxSlices = Base64Slices[Data.m_GUID].Length - 1;
                             Log("Some slices are missing! Doing another request", LoggerColor.Red);
+                            Log("Problem accured on "+i+"/"+ MaxSlices + " slice", LoggerColor.Red);
                             if (Purpose == SlicedBase64Purpose.Photo)
                             {
                                 RequestPhoto(GUID, FromClient);
+                            }
+                            if (Purpose == SlicedBase64Purpose.Container)
+                            {
+#if (DEDICATED)
+                                ServerSend.FINISHEDSENDINGCONTAINER(FromClient, true);
+#else
+                                if (MyMod.iAmHost)
+                                {
+                                    ServerSend.FINISHEDSENDINGCONTAINER(FromClient, true);
+                                }
+                                if (MyMod.sendMyPosition)
+                                {
+                                    MyMod.DiscardRepeatPacket();
+                                    MyMod.RemovePleaseWait();
+
+                                    GameManager.GetPlayerManagerComponent().SetControlMode(PlayerControlMode.Normal);
+                                    string Title = "INVALID CONTAINER DATA";
+                                    string Text = "Wasn't able to get all chunks of container data, please try again or cancel.\n\n\n\n\n\n\nGUID: " + GUID;
+                                    CloseContainerOnCancle = true;
+                                    InterfaceManager.m_Panel_Confirmation.AddConfirmation(Panel_Confirmation.ConfirmationType.Confirm, Title, "\n" + Text, Panel_Confirmation.ButtonLayout.Button_2, Panel_Confirmation.Background.Transperent, null, null);
+                                }
+#endif
                             }
                             return;
                         }
@@ -3116,6 +3141,7 @@ namespace SkyCoop
                             if (MyMod.iAmHost == true)
                             {
                                 MPSaveManager.SaveContainer(Scene, GUID, Base64);
+                                ServerSend.FINISHEDSENDINGCONTAINER(FromClient, false);
                             }
                             if (MyMod.sendMyPosition == true)
                             {
@@ -3124,8 +3150,8 @@ namespace SkyCoop
                             }
 #else
                             MPSaveManager.SaveContainer(Scene, GUID, Base64);
-#endif
                             ServerSend.FINISHEDSENDINGCONTAINER(FromClient, false);
+#endif
                         }
                     } else
                     {

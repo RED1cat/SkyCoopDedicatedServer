@@ -155,6 +155,11 @@ namespace SkyCoop
             {
                 Environment.Exit(0);
             }
+            if (CMD == "ip")
+            {
+                YDNS.UpdateIP();
+                return "Updating IP address";
+            }
             return "";
         }
     }

@@ -57,6 +57,7 @@ namespace SkyCoopDedicatedServer
             }
             SkyCoop.Logger.Log($"[NetworkHelper] {port} port is open", SkyCoop.Shared.LoggerColor.Green);
             SkyCoop.Logger.Log($"[NetworkHelper] External ip= {externalIp}", SkyCoop.Shared.LoggerColor.Green);
+            YDNS.UpdateIP();
             upnpIsEnable = true;
             NatUtility.StopDiscovery();
         }
