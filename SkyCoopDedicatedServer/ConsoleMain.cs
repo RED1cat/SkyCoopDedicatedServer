@@ -18,7 +18,6 @@ namespace SkyCoopDedicatedServer
             Timer timer2 = new Timer(EveryGameMinute, null, 5000, 5000);
             Timer timer3 = new Timer(DsSave, null, MyMod.DsSavePerioud * 1000, MyMod.DsSavePerioud * 1000);
             Timer timer4 = new Timer(EveryMinute, null, 60000, 60000);
-            Timer timer5 = new Timer(EveryHour, null, 3600000, 3600000);
 
             while (true)
             {
@@ -67,10 +66,6 @@ namespace SkyCoopDedicatedServer
         private void EveryMinute(object obj)
         {
             Program.networkPort.СheckingInternetConnection();
-        }
-        public void EveryHour(object obj)
-        {
-            YDNS.UpdateIP();
         }
         private void OnExiting()
         {
