@@ -739,5 +739,31 @@ namespace SkyCoop
             public ExpeditionManager.ExpeditionInteractiveImpact m_Impact = ExpeditionManager.ExpeditionInteractiveImpact.EVERY;
             public string m_ObjectGroupToRemove = "";
         }
+        public class Base64SliceBase
+        {
+            public string[] m_Slices = null;
+            public int m_SlicesGot = 0;
+            public int m_SlicesNum = 0;
+
+            public Base64SliceBase(int SlicesNum)
+            {
+                m_SlicesNum = SlicesNum;
+                m_Slices = new string[SlicesNum];
+            }
+
+            public void SetSlice(int Index, string Slice)
+            {
+                if(Index <= m_Slices.Length - 1)
+                {
+                    m_Slices[Index] = Slice;
+                    m_SlicesGot++;
+                }
+            }
+
+            public bool IsReady()
+            {
+                return m_SlicesGot == m_SlicesNum;
+            }
+        }
     }
 }
