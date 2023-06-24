@@ -96,6 +96,7 @@ namespace SkyCoop
             //SteamMaster.PingSteamMaster();
             //SteamMaster.SendSignalToMaster();
             Logger.Log("Server running on version "+ BuildInfo.Version);
+            Logger.Log("Build Mark 5");
         }
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
