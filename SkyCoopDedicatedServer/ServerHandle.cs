@@ -1741,13 +1741,7 @@ namespace GameServer
             Log("Client requested photo "+ GUID);
             if (!string.IsNullOrEmpty(Base64))
             {
-                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
-
-                foreach (SlicedBase64Data Slice in Slices)
-                {
-                    ServerSend.BASE64SLICE(_fromClient, Slice);
-                }
-                Log("Sent photo "+ GUID + " to client "+ _fromClient + " this was worth "+ Slices.Count+" 700 bytes each");
+                Shared.SendSlicedBase64Data(GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo), _fromClient);
             } else
             {
                 Log("Don't have that photo");

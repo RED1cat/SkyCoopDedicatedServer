@@ -666,9 +666,9 @@ namespace SkyCoop
         public class SlicedBase64Data
         {
             public string m_Slice = "";
-            public int m_Slices = 0;
-            public int m_SliceNum = 0;
-            public long m_CheckSum = 0;
+            public int m_LastSliceIndex = 0;
+            public int m_SliceIndex = 0;
+            public string m_CheckSum = "";
             public string m_GUID = "";
             public int m_Purpose = 0;
         }

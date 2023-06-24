@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
 using static SkyCoop.ExpeditionBuilder;
+using System.Security.Cryptography;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -1218,56 +1219,14 @@ namespace SkyCoop
             }
             ContainerGUIDDataBackup = GUID;
 #endif
-            List<SlicedBase64Data> Data = GetBase64Sliced(DataProxy, GUID + "|" + LevelKey, SlicedBase64Purpose.Container);
-            foreach (SlicedBase64Data Slice in Data)
-            {
-#if (!DEDICATED)                
-                if (SendTo == 0)
-                {
-                    using (Packet __packet = new Packet((int)ClientPackets.GOTPHOTOSLICE))
-                    {
-                        __packet.Write(Slice);
-                        MyMod.SendUDPData(__packet);
-                    }
-                } else
-                {
-                    ServerSend.BASE64SLICE(SendTo, Slice);
-                }
-#else
-                ServerSend.BASE64SLICE(SendTo, Slice);
-#endif
-            }
+            SendSlicedBase64Data(GetBase64Sliced(DataProxy, GUID + "|" + LevelKey, SlicedBase64Purpose.Container), SendTo);
         }
         public static bool CloseContainerOnCancle = false;
-
-        public static void PieTrigger(ExtraDataForDroppedGear Extra, int Picker)
-        {
-            if(Extra.m_GearName.ToLower() == "gear_pumpkinpie" && (Extra.m_Dropper.ToLower() == "filigrani" || Extra.m_Dropper.ToLower() == "redcat" || Extra.m_Dropper.ToLower() == "snwball"))
-            {
-                string PickerName = "unknown";
-
-                if(Picker != 0)
-                {
-                    if (MyMod.playersData[Picker] != null)
-                    {
-                        PickerName = MyMod.playersData[Picker].m_Name;
-                        
-                    }
-                }
-
-                if(PickerName.ToLower() != "filigrani" && PickerName.ToLower() != "redcat" && PickerName.ToLower() != "snwball")
-                {
-                    Log(PickerName+" found pie! Steam/EGSID "+ MyMod.playersData[Picker].m_SteamOrEGSID, LoggerColor.Green);
-                    ExecuteCommand("say "+ PickerName + " found pie!");
-                }
-            }
-        }
 
         public static void SendDroppedItemToPicker(string DataProxy, int GiveItemTo, int SearchKey, int GearID, bool place, DataStr.ExtraDataForDroppedGear Extra)
         {
             byte[] bytesToSlice = Encoding.UTF8.GetBytes(DataProxy);
             Log("Going to send gear to client " + GiveItemTo + " bytes: " + bytesToSlice.Length);
-            PieTrigger(Extra, GiveItemTo);
 
             if (bytesToSlice.Length > 500)
             {
@@ -2955,47 +2914,143 @@ namespace SkyCoop
             }
         }
 
+        public static string SHA256CheckSum(string base64)
+        {
+            if (string.IsNullOrEmpty(base64))
+            {
+                return "null";
+            }
+            byte[] byteHash;
+            using (SHA256 SHA256 = SHA256Managed.Create())
+            {
+                byteHash = SHA256.ComputeHash(Encoding.UTF8.GetBytes(base64));
+            }
+            string finalHash = string.Empty;
+            foreach (byte b in byteHash)
+            {
+                finalHash += b.ToString("x2");
+            }
+            return finalHash;
+        }
+
+        public static void Base64DataSelfTest(List<SlicedBase64Data> Slices)
+        {
+            foreach (SlicedBase64Data Data in Slices)
+            {
+                if (!Base64Slices.ContainsKey(Data.m_GUID))
+                {
+                    Base64Slices.Add(Data.m_GUID, new string[Data.m_LastSliceIndex + 1]);
+                }
+
+                if (Data.m_SliceIndex <= Data.m_LastSliceIndex)
+                {
+                    Base64Slices[Data.m_GUID][Data.m_SliceIndex] = Data.m_Slice;
+
+                    if (Data.m_SliceIndex == Data.m_LastSliceIndex)
+                    {
+                        string Base64 = "";
+                        string[] StringArray = Base64Slices[Data.m_GUID];
+                        Base64Slices.Remove(Data.m_GUID);
+
+                        for (int i = 0; i < StringArray.Length; i++)
+                        {
+                            if (!string.IsNullOrEmpty(StringArray[i]))
+                            {
+                                Base64 += StringArray[i];
+                            } else
+                            {
+                                Log("[Base64DataSelfTest] Some slices are missing! Doing another request", LoggerColor.Red);
+                                Log("[Base64DataSelfTest] Problem accured on " + i + "/" + Data.m_LastSliceIndex + " slice", LoggerColor.Red);
+                                return;
+                            }
+                        }
+                        bool IsBase64 = IsBase64String(Base64);
+                        string CheckSum = SHA256CheckSum(Base64);
+                        Log("[Base64DataSelfTest] Final string is base64? " + IsBase64);
+                        Log("[Base64DataSelfTest] Final checksum " + CheckSum + " expected " + Data.m_CheckSum);
+                        if (IsBase64 && CheckSum == Data.m_CheckSum)
+                        {
+                            Log("[Base64DataSelfTest] Everything correct");
+                        } else
+                        {
+                            if (!IsBase64)
+                            {
+                                Log("[Base64DataSelfTest] Base64 string corrupted!.", LoggerColor.Red);
+                            } else if (CheckSum == Data.m_CheckSum)
+                            {
+                                Log("[Base64DataSelfTest] Checksum is incorrect!", LoggerColor.Red);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void SendSlicedBase64Data(List<SlicedBase64Data> Slices, int SendTo = 0)
+        {
+#if (!DEDICATED)
+
+            if (MyMod.sendMyPosition)
+            {
+                //Base64DataSelfTest(Slices);
+                foreach (SlicedBase64Data Slice in Slices)
+                {
+                    using (Packet __packet = new Packet((int)ClientPackets.GOTPHOTOSLICE))
+                    {
+                        __packet.Write(Slice);
+                        MyMod.SendUDPData(__packet);
+                    }
+                }
+            }
+            if (MyMod.iAmHost)
+            {
+                foreach (SlicedBase64Data Slice in Slices)
+                {
+                    ServerSend.BASE64SLICE(SendTo, Slice);
+                }
+                
+            }
+#else
+            foreach (SlicedBase64Data Slice in Slices)
+            {
+                ServerSend.BASE64SLICE(SendTo, Slice);
+            }
+#endif
+        }
+        public static void SendSlicedBase64Data(List<SlicedBase64Data> Slices, string LevelGUID)
+        {
+#if (!DEDICATED)
+            if (MyMod.iAmHost)
+            {
+                foreach (SlicedBase64Data Slice in Slices)
+                {
+                    ServerSend.BASE64SLICE(Slice, LevelGUID);
+                }
+            }
+#else
+            foreach (SlicedBase64Data Slice in Slices)
+            {
+                ServerSend.BASE64SLICE(Slice, LevelGUID);
+            }
+#endif
+        }
+
         public static List<SlicedBase64Data> GetBase64Sliced(string FullString, string GUID, SlicedBase64Purpose Purpose)
         {
-            long CheckSum = GetDeterministicId(FullString);
-            byte[] bytesToSlice = Encoding.UTF8.GetBytes(FullString);
-            int CHUNK_SIZE = 700;
-            List<string> SlicedStrings = new List<string>();
+            string CheckSum = SHA256CheckSum(FullString);
+            int Symbols = 175; // 175 symbols * 4 bytes each = 700 bytes
+            int SlicesNum = (int)Math.Ceiling((double)FullString.Length / Symbols);
             List<SlicedBase64Data> Result = new List<SlicedBase64Data>();
-
-            if (bytesToSlice.Length > CHUNK_SIZE)
+            for (int i = 0; i < SlicesNum; i++)
             {
-                List<byte> BytesBuffer = new List<byte>();
-                BytesBuffer.AddRange(bytesToSlice);
+                int startIndex = i * Symbols;
+                int length = Math.Min(Symbols, FullString.Length - startIndex);
+                string SliceString = FullString.Substring(startIndex, length);
 
-                while (BytesBuffer.Count >= CHUNK_SIZE)
-                {
-                    byte[] sliceOfBytes = BytesBuffer.GetRange(0, CHUNK_SIZE - 1).ToArray();
-                    BytesBuffer.RemoveRange(0, CHUNK_SIZE - 1);
-                    string OneSlice = Encoding.UTF8.GetString(sliceOfBytes);
-                    SlicedStrings.Add(OneSlice);
-                }
-
-                if (BytesBuffer.Count < CHUNK_SIZE && BytesBuffer.Count != 0)
-                {
-                    byte[] LastSlice = BytesBuffer.GetRange(0, BytesBuffer.Count).ToArray();
-                    BytesBuffer.RemoveRange(0, BytesBuffer.Count);
-
-                    string OneSlice = Encoding.UTF8.GetString(LastSlice);
-                    SlicedStrings.Add(OneSlice);
-                }
-            } else
-            {
-                SlicedStrings.Add(FullString);
-            }
-
-            for (int i = 0; i < SlicedStrings.Count; i++)
-            {
-                string Slice = SlicedStrings[i];
                 SlicedBase64Data Data = new SlicedBase64Data();
-                Data.m_Slice = Slice;
-                Data.m_Slices = SlicedStrings.Count;
-                Data.m_SliceNum = i;
+                Data.m_Slice = SliceString;
+                Data.m_LastSliceIndex = SlicesNum -1;
+                Data.m_SliceIndex = i;
                 Data.m_CheckSum = CheckSum;
                 Data.m_GUID = GUID;
                 Data.m_Purpose = (int)Purpose;
@@ -3011,14 +3066,14 @@ namespace SkyCoop
 
             if (!Base64Slices.ContainsKey(Data.m_GUID))
             {
-                Base64Slices.Add(Data.m_GUID, new string[Data.m_Slices]);
+                Base64Slices.Add(Data.m_GUID, new string[Data.m_LastSliceIndex+1]);
             }
 
-            if(Data.m_SliceNum <= Base64Slices[Data.m_GUID].Length-1)
+            if(Data.m_SliceIndex <= Data.m_LastSliceIndex)
             {
-                Base64Slices[Data.m_GUID][Data.m_SliceNum] = Data.m_Slice;
+                Base64Slices[Data.m_GUID][Data.m_SliceIndex] = Data.m_Slice;
 
-                if (Data.m_SliceNum == Base64Slices[Data.m_GUID].Length - 1)
+                if (Data.m_SliceIndex == Data.m_LastSliceIndex)
                 {
                     string GUID = Data.m_GUID;
                     string Scene = "";
@@ -3028,7 +3083,7 @@ namespace SkyCoop
                         GUID = Data.m_GUID.Split('|')[0];
                         Scene = Data.m_GUID.Split('|')[1];
                     }
-                    Log("Finishing base64 slices for " + GUID);
+                    Log("Finishing getting base64 slices for " + GUID, LoggerColor.Green);
                     string Base64 = "";
                     string[] StringArray = Base64Slices[Data.m_GUID];
                     Base64Slices.Remove(Data.m_GUID);
@@ -3040,9 +3095,8 @@ namespace SkyCoop
                             Base64 += StringArray[i];
                         } else
                         {
-                            int MaxSlices = Data.m_Slices-1;
                             Log("Some slices are missing! Doing another request", LoggerColor.Red);
-                            Log("Problem accured on "+i+"/"+ MaxSlices + " slice", LoggerColor.Red);
+                            Log("Problem accured on "+i+"/"+ Data.m_LastSliceIndex + " slice", LoggerColor.Red);
                             if (Purpose == SlicedBase64Purpose.Photo)
                             {
                                 RequestPhoto(GUID, FromClient);
@@ -3073,16 +3127,9 @@ namespace SkyCoop
                         }
                     }
                     bool IsBase64 = IsBase64String(Base64);
-                    long CheckSum = GetDeterministicId(Base64);
-                    long CheckSumAlt = -CheckSum - 1;
+                    string CheckSum = SHA256CheckSum(Base64);
                     Log("Final string is base64? " + IsBase64);
                     Log("Final checksum " + CheckSum + " expected " + Data.m_CheckSum);
-                    if (Data.m_CheckSum == CheckSumAlt)
-                    {
-                        // eeh, that fine, skip check sum validation
-                        Log("Final checksum minory diffirent.");
-                        CheckSum = Data.m_CheckSum;
-                    }
 
                     if (IsBase64 && CheckSum == Data.m_CheckSum)
                     {
@@ -3115,11 +3162,7 @@ namespace SkyCoop
                             }
                             if (MyMod.iAmHost)
                             {
-                                List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
-                                foreach (SlicedBase64Data Slice in Slices)
-                                {
-                                    ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
-                                }
+                                SendSlicedBase64Data(GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo), MyMod.playersData[FromClient].m_LevelGuid);
                             }
                         }
 #else
@@ -3127,15 +3170,11 @@ namespace SkyCoop
                         {
                             MPSaveManager.AddPhoto(Base64, true, GUID);
                             MPSaveManager.AddPhoto(Base64, false, GUID);
-                            List<SlicedBase64Data> Slices = GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo);
-                            foreach (SlicedBase64Data Slice in Slices)
-                            {
-                                ServerSend.BASE64SLICE(Slice, MyMod.playersData[FromClient].m_LevelGuid);
-                            }
+                            SendSlicedBase64Data(GetBase64Sliced(Base64, GUID, SlicedBase64Purpose.Photo), MyMod.playersData[FromClient].m_LevelGuid);
                         }
 #endif
 
-                        if(Purpose == SlicedBase64Purpose.Container)
+                        if (Purpose == SlicedBase64Purpose.Container)
                         {
 #if (!DEDICATED)
                             if (MyMod.iAmHost == true)
