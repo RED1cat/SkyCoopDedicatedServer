@@ -2523,6 +2523,16 @@ namespace GameServer
                 SendUDPDataToAll(_packet, Scene);
             }
         }
+        public static void CUSTOMSOUNDEVENT(Vector3 Position, string SOUND, string Prefab, int For)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.CUSTOMSOUNDEVENT))
+            {
+                _packet.Write(Position);
+                _packet.Write(SOUND);
+                _packet.Write(Prefab);
+                SendUDPData(For, _packet);
+            }
+        }
         public static void REQUESTSPECIALEXPEDITION(int ForClient)
         {
             using (Packet _packet = new Packet((int)ServerPackets.REQUESTSPECIALEXPEDITION))

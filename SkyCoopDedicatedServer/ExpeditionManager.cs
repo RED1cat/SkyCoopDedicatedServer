@@ -203,6 +203,17 @@ namespace SkyCoop
                 m_ExpeditionAlias = Alias;
             }
         }
+        public static Expedition GetExpeditionByGUID(string GUID)
+        {
+            foreach (Expedition Exp in m_ActiveExpeditions)
+            {
+                if (Exp.m_GUID == GUID)
+                {
+                    return Exp;
+                }
+            }
+            return null;
+        }
 
         public static bool StartNewExpedition(string LeaderMAC, int Region, string Alias = "", bool NoMessage = false, bool Special = false)
         {
@@ -1139,10 +1150,33 @@ namespace SkyCoop
                     {
                         foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
                         {
-                            if(Spawner.m_Prefab == "Expedition3DAudioEvent" || Spawner.m_Prefab == "Expedition2DAudioEvent")
+                            if(Spawner.m_Prefab == "Expedition3DAudioEvent" || Spawner.m_Prefab == "Expedition2DAudioEvent" || Spawner.m_Prefab == "ExpeditionAudioEvent")
                             {
+                                if (Spawner.m_Prefab == "ExpeditionAudioEvent")
+                                {
+                                    Expedition exp = GetExpeditionByGUID(m_ExpeditionGUID);
+                                    if (exp != null)
+                                    {
+                                        List<int> Players = exp.GetExpeditionPlayersIDs();
+                                        foreach (int PlayerID in Players)
+                                        {
+#if (!DEDICATED)                                            
+                                            if (PlayerID == 0)
+                                            {
+                                                MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
+                                            } else
+                                            {
+                                                ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
+                                            }
+#else
+                                            ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
+#endif
+                                        }
+                                    }
+                                    continue;
+                                }
 #if (!DEDICATED)
-                                if(MyMod.level_guid == m_Scene)
+                                if (MyMod.level_guid == m_Scene)
                                 {
                                     MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
                                 }
@@ -1150,8 +1184,24 @@ namespace SkyCoop
                                 ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, m_Scene);
                                 continue;
                             }
-                            
-                            
+
+                            if(Spawner.m_Prefab == "RockCache")
+                            {
+                                FakeRockCacheVisualData FRCVD = new FakeRockCacheVisualData();
+                                FRCVD.m_GUID = Spawner.m_GUID;
+                                FRCVD.m_Position = Spawner.m_Position;
+                                FRCVD.m_Rotation = Spawner.m_Rotation;
+                                FRCVD.m_Owner = "Unknown";
+#if (!DEDICATED)
+                                if (MyMod.level_guid == m_Scene)
+                                {
+                                    MyMod.AddRockCache(FRCVD);
+                                }
+#endif
+                                MPSaveManager.AddRockCach(FRCVD, 0);
+                                MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
+                                continue;
+                            }
                             UniversalSyncableObject Obj = new UniversalSyncableObject();
                             Obj.m_Prefab = Spawner.m_Prefab;
                             Obj.m_GUID = Spawner.m_GUID;
