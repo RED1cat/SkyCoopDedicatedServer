@@ -321,7 +321,10 @@ namespace SkyCoop
 
         public static void MayNotifyAboutCrashSite(int ClientID)
         {
-            ServerSend.EXPEDITIONRESULT(ClientID, 5);
+            if (!string.IsNullOrEmpty(m_ActiveCrashSiteGUID))
+            {
+                ServerSend.EXPEDITIONRESULT(ClientID, 5);
+            }
         }
 
         public static void StartCrashSite(int CrashSiteID = -1)
@@ -1061,7 +1064,7 @@ namespace SkyCoop
                     }
                 }
 
-                foreach (int Client in GetExpeditionPlayersIDs(true))
+                foreach (int Client in GetExpeditionPlayersIDs())
                 {
                     if(Client == 0)
                     {
