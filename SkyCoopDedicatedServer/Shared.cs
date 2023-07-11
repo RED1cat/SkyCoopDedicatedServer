@@ -31,6 +31,8 @@ namespace SkyCoop
         public static Dictionary<string, int> StunnedRabbits = new Dictionary<string, int>();
         public static List<RegionWeatherControler> RegionWeathers = new List<RegionWeatherControler>();
         public static Dictionary<string, Base64SliceBase> Base64Slices = new Dictionary<string, Base64SliceBase>();
+        public static Dictionary<string, string> m_InterloperFilter = new Dictionary<string, string>();
+        public static List<string> m_InterloperRare = new List<string>();
         public static List<float> HoursOffsetTable = new List<float> { 5, 6, 7, 12, 16.5f, 18, 19.5f };
         public static TimeOfDayStatus CurrentTimeOfDayStatus = TimeOfDayStatus.NightEndToDawn;
         public static bool DSQuit = false;
@@ -3270,6 +3272,101 @@ namespace SkyCoop
 #if (DEDICATED)
             DiscordManager.CrashSiteTimeOver();
 #endif
+        }
+
+        public static void AddInterloperReplace(string Gear, string Replace, bool Rare = false)
+        {
+            if (!m_InterloperFilter.ContainsKey(Gear.ToLower()))
+            {
+                m_InterloperFilter.Add(Gear.ToLower(), Replace);
+                if (Rare)
+                {
+                    m_InterloperRare.Add(Gear.ToLower());
+                }
+            }
+        }
+        public static string GetInterloperReplace(string Gear)
+        {
+#if (!DEDICATED)
+            if (ExperienceModeManager.s_CurrentModeType != ExperienceModeType.Interloper)
+            {
+                return Gear;
+            }
+#else
+            if(Shared.ExperienceForDS != 9)
+            {
+                return Gear;
+            }
+#endif
+            string Replace;
+            if (m_InterloperFilter.TryGetValue(Gear.ToLower(), out Replace))
+            {
+                if (m_InterloperRare.Contains(Gear.ToLower()))
+                {
+                    System.Random RNG = new System.Random(Guid.NewGuid().GetHashCode());
+                    if (RNG.NextDouble() < 0.33f)
+                    {
+                        return Replace;
+                    } else
+                    {
+                        return "";
+                    }
+                }
+                return Replace;
+            }
+            return Gear;
+        }
+        public static void LoadInterloperReplace()
+        {
+
+            // Food
+            AddInterloperReplace("GEAR_AirlineFoodChick", "");
+            AddInterloperReplace("GEAR_AirlineFoodVeg", "");
+            AddInterloperReplace("GEAR_CondensedMilk", "GEAR_Peaches");
+            AddInterloperReplace("GEAR_PeanutButter", "GEAR_MapleSyrup", true);
+            // Weapons
+            AddInterloperReplace("GEAR_Arrow", "");
+            AddInterloperReplace("GEAR_Bow", "");
+            AddInterloperReplace("GEAR_BrokenArrow", "");
+            AddInterloperReplace("GEAR_Revolver", "");
+            AddInterloperReplace("GEAR_RevolverAmmoBox", "");
+            AddInterloperReplace("GEAR_RevolverAmmoCasing", "");
+            AddInterloperReplace("GEAR_RevolverAmmoSingle", "");
+            AddInterloperReplace("GEAR_Rifle", "");
+            AddInterloperReplace("GEAR_RifleAmmoBox", "");
+            AddInterloperReplace("GEAR_RifleAmmoCasing", "");
+            AddInterloperReplace("GEAR_RifleAmmoSingle", "");
+            // Tools / Utilities
+            AddInterloperReplace("GEAR_Flashlight", "");
+            AddInterloperReplace("GEAR_Hatchet", "GEAR_HatchetImprovised", true);
+            AddInterloperReplace("GEAR_HookAndLine", "GEAR_Hook");
+            AddInterloperReplace("GEAR_Knife", "GEAR_KnifeImprovised", true);
+            AddInterloperReplace("GEAR_NewsprintRoll", "GEAR_Tinder");
+            AddInterloperReplace("GEAR_WoodMatches", "GEAR_PackMatches");
+            AddInterloperReplace("GEAR_RifleCleaningKit", "GEAR_SewingKit", true);
+            // Clothing / Boots
+            AddInterloperReplace("GEAR_Balaclava", "GEAR_Toque");
+            AddInterloperReplace("GEAR_ClimbingSocks", "GEAR_WoolSocks");
+            AddInterloperReplace("GEAR_CowichanSweater", "GEAR_FleeceSweater");
+            AddInterloperReplace("GEAR_DownParka", "GEAR_LightParka");
+            AddInterloperReplace("GEAR_FishermanSweater", "GEAR_PlaidShirt");
+            AddInterloperReplace("GEAR_Gauntlets", "GEAR_WorkGloves");
+            AddInterloperReplace("GEAR_GreyMotherBoots", "");
+            AddInterloperReplace("GEAR_HeavyParka", "GEAR_BasicWinterCoat");
+            AddInterloperReplace("GEAR_HeavyWoolSweater", "GEAR_FleeceSweater");
+            AddInterloperReplace("GEAR_InsulatedBoots", "GEAR_LeatherShoes");
+            AddInterloperReplace("GEAR_InsulatedPants", "GEAR_CombatPants");
+            AddInterloperReplace("GEAR_LongUnderwearWool", "GEAR_LongUnderwear");
+            AddInterloperReplace("GEAR_MilitaryParka", "GEAR_DownSkiJacket");
+            AddInterloperReplace("GEAR_Mittens", "GEAR_FleeceMittens");
+            AddInterloperReplace("GEAR_MuklukBoots", "GEAR_WorkBoots");
+            AddInterloperReplace("GEAR_PremiumWinterCoat", "GEAR_DownSkiJacket");
+            AddInterloperReplace("GEAR_QualityWinterCoat", "GEAR_SkiJacket");
+            AddInterloperReplace("GEAR_SkiBoots", "");
+            AddInterloperReplace("GEAR_SkiGloves", "GEAR_BasicGloves");
+            AddInterloperReplace("GEAR_WoolShirt", "GEAR_TeeShirt");
+            AddInterloperReplace("GEAR_WoolWrap", "GEAR_CottonScarf");
+            AddInterloperReplace("GEAR_WoolWrapCap", "GEAR_BasicWoolScarf");
         }
     }
 }

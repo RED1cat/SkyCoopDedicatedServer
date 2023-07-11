@@ -1256,7 +1256,7 @@ namespace GameServer
             }
 
             Shared.RemoveLoadingClient(_fromClient);
-            ExpeditionManager.MayInviteToCrashSite(_fromClient);
+            ExpeditionManager.MayNotifyAboutCrashSite(_fromClient);
         }
         public static void GOTCONTAINERSLICE(int _fromClient, Packet _packet)
         {

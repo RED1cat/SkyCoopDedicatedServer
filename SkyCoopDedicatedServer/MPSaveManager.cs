@@ -462,6 +462,9 @@ namespace SkyCoop
         {
             ExpeditionBuilder.Init();
             ExpeditionManager.InitClues();
+#if (DEDICATED)
+            Shared.LoadInterloperReplace();
+#endif
             int SaveSeed = GetSeed();
             Log("LoadNonUnloadables Seed "+ SaveSeed);
             string LockedDoorsJSON = LoadData("LockedDoors", SaveSeed);

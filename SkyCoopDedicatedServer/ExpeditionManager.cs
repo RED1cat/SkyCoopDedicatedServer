@@ -36,7 +36,7 @@ namespace SkyCoop
             m_Clues.Clear();
 
             m_Clues.Add(new ExpeditionClue("GEAR_SCHopeless","Mountian Crash", "HopelessRescueCrashSite"));
-            m_Clues.Add(new ExpeditionClue("GEAR_SCCacheNote#-1", "Mystery Lake Cache", "HopelessRescueCrashSite"));
+            //m_Clues.Add(new ExpeditionClue("GEAR_SCCacheNote#-1", "Mystery Lake Cache", "HopelessRescueCrashSite"));
         }
         public static bool IsClueGear(string GearName, int ID = 0)
         {
@@ -214,7 +214,26 @@ namespace SkyCoop
             }
             return null;
         }
-
+        public static bool PlayerInExpedition(string MAC)
+        {
+            if (string.IsNullOrEmpty(MAC))
+            {
+                return false;
+            }
+            
+            for (int i = 0; i < m_ActiveExpeditions.Count; i++)
+            {
+                if (m_ActiveExpeditions[i].m_Players.Contains(MAC))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public static bool PlayerInExpedition(int PlayerID)
+        {
+            return PlayerInExpedition(Server.GetMACByID(PlayerID));
+        }
         public static bool StartNewExpedition(string LeaderMAC, int Region, string Alias = "", bool NoMessage = false, bool Special = false)
         {
             DebugLog("Client with MAC "+LeaderMAC+" trying start expedition on region "+Region);
@@ -300,19 +319,9 @@ namespace SkyCoop
             return null;
         }
 
-        public static void MayInviteToCrashSite(int ClientID)
+        public static void MayNotifyAboutCrashSite(int ClientID)
         {
-            string MAC = Server.GetMACByID(ClientID);
-            Expedition m_ActiveCrashSite = GetActiveCrashSite();
-            if (m_ActiveCrashSite != null)
-            {
-                if (!m_ActiveCrashSite.m_Players.Contains(MAC))
-                {
-                    ServerSend.EXPEDITIONRESULT(ClientID, 5);
-                    m_ActiveCrashSite.m_Players.Add(MAC);
-                    return;
-                }
-            }
+            ServerSend.EXPEDITIONRESULT(ClientID, 5);
         }
 
         public static void StartCrashSite(int CrashSiteID = -1)
@@ -321,25 +330,6 @@ namespace SkyCoop
             if (m_ActiveCrashSite != null)
             {
                 return;
-            }
-
-            List<string> MACs = Server.GetMACsOfPlayers();
-            List<string> InviteMACs = new List<string>();
-            foreach (string MAC in MACs)
-            {
-                bool ClientBusy = false;
-                for (int i = 0; i < m_ActiveExpeditions.Count; i++)
-                {
-                    if (m_ActiveExpeditions[i].m_Players.Contains(MAC))
-                    {
-                        ClientBusy = true;
-                        break;
-                    }
-                }
-                if (!ClientBusy)
-                {
-                    InviteMACs.Add(MAC);
-                }
             }
 
             string CrashSiteAlias = GetRandomCrashSiteName(CrashSiteID);
@@ -372,16 +362,11 @@ namespace SkyCoop
                 DebugLog("CrashSite Task[" + i + "] " + Exp.m_Tasks[i].m_Alias + " Type " + Exp.m_Tasks[i].m_Type.ToString());
             }
 
-            foreach (string MAC in InviteMACs)
+            for (int i = 0; i < MyMod.playersData.Count; ++i)
             {
-                int ClientID = Server.GetIDByMAC(MAC);
-                Exp.m_Players.Add(MAC);
-
-                if (ClientID != -1)
-                {
-                    ServerSend.EXPEDITIONRESULT(ClientID, 5);
-                }
+                ServerSend.EXPEDITIONRESULT(i, 5);
             }
+
             m_ActiveExpeditions.Add(Exp);
             m_ActiveCrashSiteGUID = Exp.m_GUID;
             MultiplayerChatMessage Message = new MultiplayerChatMessage();
@@ -658,7 +643,7 @@ namespace SkyCoop
 
         public static void CompleteCrashSite(int RemoveID, List<int> ClosePlayers, int DefaultFinishState = -1)
         {
-            List<int> PlayersIDs = m_ActiveExpeditions[RemoveID].GetExpeditionPlayersIDs();
+            List<int> PlayersIDs = m_ActiveExpeditions[RemoveID].GetExpeditionPlayersIDs(true);
 
             if (RemoveID != -1)
             {
@@ -779,9 +764,33 @@ namespace SkyCoop
             public int m_TasksCompleted = 0;
             public int m_TimeLeft = 7200;
 
-            public List<DataStr.MultiPlayerClientData> GetExpeditionPlayersData()
+            public List<DataStr.MultiPlayerClientData> GetExpeditionPlayersData(bool Everyone = false)
             {
                 List<DataStr.MultiPlayerClientData> Data = new List<DataStr.MultiPlayerClientData>();
+
+                if (Everyone)
+                {
+                    List<int> PlayersIDs = GetExpeditionPlayersIDs(Everyone);
+                    foreach (int ClientID in PlayersIDs)
+                    {
+                        if (ClientID != -1 && ClientID != 0)
+                        {
+                            if (MyMod.playersData[ClientID] != null)
+                            {
+                                Data.Add(MyMod.playersData[ClientID]);
+                            }
+                        } else if (ClientID == 0)
+                        {
+#if (!DEDICATED)
+                            MultiPlayerClientData P = new MultiPlayerClientData();
+                            P.m_LevelGuid = MyMod.level_guid;
+                            P.m_Position = GameManager.GetPlayerTransform().position;
+                            Data.Add(P);
+#endif
+                        }
+                    }
+                    return Data;
+                }
                 foreach (string MAC in m_Players)
                 {
                     int ClientID = Server.GetIDByMAC(MAC);
@@ -804,21 +813,48 @@ namespace SkyCoop
 
                 return Data;
             }
-            public List<int> GetExpeditionPlayersIDs()
+            public List<int> GetExpeditionPlayersIDs(bool Everyone = false)
             {
                 List<int> IDs = new List<int>();
-                foreach (string MAC in m_Players)
+                bool IsCS = IsCrashSite();
+                if (!IsCS)
                 {
-                    int ClientID = Server.GetIDByMAC(MAC);
-                    if (ClientID != -1)
+                    foreach (string MAC in m_Players)
                     {
-                        if (MyMod.playersData[ClientID] != null)
+                        int ClientID = Server.GetIDByMAC(MAC);
+                        if (ClientID != -1)
                         {
-                            IDs.Add(ClientID);
+                            if (MyMod.playersData[ClientID] != null)
+                            {
+                                IDs.Add(ClientID);
+                            }
+                        }
+                    }
+                } else
+                {
+                    if (Everyone)
+                    {
+                        for (int i = 0; i < MyMod.playersData.Count; i++)
+                        {
+                            if (MyMod.playersData[i] != null)
+                            {
+                                IDs.Add(i);
+                            }
+                        }
+                    } else
+                    {
+                        for (int i = 0; i < MyMod.playersData.Count; i++)
+                        {
+                            if (MyMod.playersData[i] != null)
+                            {
+                                if (!PlayerInExpedition(i))
+                                {
+                                    IDs.Add(i);
+                                }
+                            }
                         }
                     }
                 }
-
                 return IDs;
             }
 
@@ -848,6 +884,31 @@ namespace SkyCoop
                 }
             }
 
+            public bool IsCrashSite()
+            {
+                if (m_TimeLeft <= 0)
+                {
+                    if (m_Tasks.Count > 0)
+                    {
+                        ExpeditionTask Task = m_Tasks[m_Tasks.Count - 1];
+                        if (Task.m_Type == ExpeditionTaskType.CRASHSITE)
+                        {
+                            return true;
+                        } else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                if (!string.IsNullOrEmpty(m_ActiveCrashSiteGUID) && m_ActiveCrashSiteGUID == m_GUID)
+                {
+                    return true;
+                } else
+                {
+                    return false;
+                }
+            }
+
             public void UpdateTasks()
             {
                 int NeedToComplete = m_Tasks.Count;
@@ -858,7 +919,7 @@ namespace SkyCoop
                     if (m_Tasks.Count > 0)
                     {
                         ExpeditionTask Task = m_Tasks[m_Tasks.Count - 1];
-                        if (Task.m_Type == ExpeditionTaskType.CRASHSITE)
+                        if (IsCrashSite())
                         {
                             CompleteCrashsite(-2, m_GUID);
                         } else
@@ -872,7 +933,7 @@ namespace SkyCoop
                     return;
                 }
 
-                List<DataStr.MultiPlayerClientData> PlayersData = GetExpeditionPlayersData();
+                List<DataStr.MultiPlayerClientData> PlayersData = GetExpeditionPlayersData(IsCrashSite());
                 ExpeditionCompleteOrder CompleteOrder = ExpeditionCompleteOrder.LINEAL;
                 bool CanUseNextCompleteOrder = true;
                 bool DontUpdateLaterTasks = false;
@@ -1000,7 +1061,7 @@ namespace SkyCoop
                     }
                 }
 
-                foreach (int Client in GetExpeditionPlayersIDs())
+                foreach (int Client in GetExpeditionPlayersIDs(true))
                 {
                     if(Client == 0)
                     {
@@ -1157,7 +1218,7 @@ namespace SkyCoop
                                     Expedition exp = GetExpeditionByGUID(m_ExpeditionGUID);
                                     if (exp != null)
                                     {
-                                        List<int> Players = exp.GetExpeditionPlayersIDs();
+                                        List<int> Players = exp.GetExpeditionPlayersIDs(true);
                                         foreach (int PlayerID in Players)
                                         {
 #if (!DEDICATED)                                            
@@ -1611,6 +1672,13 @@ namespace SkyCoop
                 if (Spawner.RollChance(PlayersInExpedition) || DebugFlag)
                 {
                     string Prefab = Spawner.PickGear();
+
+                    if (string.IsNullOrEmpty(Prefab))
+                    {
+                        return;
+                    }
+
+
                     Vector3 PlaceV3 = Spawner.m_Possition;
                     Quaternion Rotation = Spawner.m_Rotation;
                     int SearchKey;
