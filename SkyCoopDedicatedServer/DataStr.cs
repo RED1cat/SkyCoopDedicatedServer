@@ -237,6 +237,7 @@ namespace SkyCoop
 
             public bool m_IsSafe = false;
             public string m_SteamOrEGSID = "";
+            public bool m_FirstBoot = true;
         }
         public class MultiPlayerClientStatus //: MelonMod
         {

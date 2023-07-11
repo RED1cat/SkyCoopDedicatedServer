@@ -1256,7 +1256,12 @@ namespace GameServer
             }
 
             Shared.RemoveLoadingClient(_fromClient);
-            ExpeditionManager.MayNotifyAboutCrashSite(_fromClient);
+
+            if (MyMod.playersData[_fromClient].m_FirstBoot)
+            {
+                ExpeditionManager.MayNotifyAboutCrashSite(_fromClient);
+                MyMod.playersData[_fromClient].m_FirstBoot = false;
+            }
         }
         public static void GOTCONTAINERSLICE(int _fromClient, Packet _packet)
         {
