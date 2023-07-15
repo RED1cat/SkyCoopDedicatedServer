@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using GameServer;
+using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
+using System;
 
 namespace SkyCoopDedicatedServer
 {
@@ -8,9 +10,17 @@ namespace SkyCoopDedicatedServer
         public static ConsoleMain consoleMain;
         public static NetworkHelper networkPort;
         public static ILogger logger = LoggerFactory.Create(builder => builder.AddNLog()).CreateLogger<Program>();
+        public static bool ServerGettingError = false;
 
-        public static void Main()
+        public static void Main(string[] args)
         {
+            if (args.Length > 0)
+            {
+                if (args[0] == "Error")
+                {
+                    ServerGettingError = true;
+                }
+            }
             consoleMain = new ConsoleMain();
             consoleMain.Initialize();
         }

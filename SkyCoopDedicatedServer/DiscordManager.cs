@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using DiscordWebhook;
 using SkyCoop;
+using SkyCoopDedicatedServer;
 #if (!DEDICATED)
 using MelonLoader.TinyJSON;
 #else
@@ -42,6 +43,12 @@ namespace SkyCoop
             webhook = new Webhook(URL);
             Logger.Log("Webhook started!", Shared.LoggerColor.Magenta);
             Initilized = true;
+
+            if(Program.ServerGettingError == true)
+            {
+                ServerError();
+                Program.ServerGettingError = false;
+            }
         }
 
         public static void SendMessage(string Message)
@@ -320,6 +327,42 @@ namespace SkyCoop
                 username = WebHookName,
                 content = ""
             };
+            try
+            {
+                webhook.PostData(obj);
+            }
+            catch (Exception e)
+            {
+
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+                throw;
+            }
+        }
+        public static void ServerError()
+        {
+            if (!Initilized)
+            {
+                return;
+            }
+
+            WebhookObject obj = new WebhookObject()
+            {
+                embeds = new Embed[]
+                {
+                    new Embed()
+                    {
+                        author = new Author()
+                        {
+                            name = "Test",
+                        },
+                        color = 0xff0015
+                    }
+                },
+
+                username = WebHookName,
+                content = ""
+            };
+
             try
             {
                 webhook.PostData(obj);
