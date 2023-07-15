@@ -353,7 +353,7 @@ namespace SkyCoop
                     {
                         author = new Author()
                         {
-                            name = "Test",
+                            name = "The server made an emergency reboot because of an error",
                         },
                         color = 0xff0015
                     }
