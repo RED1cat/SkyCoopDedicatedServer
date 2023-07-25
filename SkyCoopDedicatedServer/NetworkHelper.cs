@@ -81,16 +81,18 @@ namespace SkyCoopDedicatedServer
         }
         public void СheckingInternetConnection()
         {
+            string ip = GetActualExternalIp();
+            if(ip != GetExternalIp || ip == "0.0.0.0")
+            {
+                attemptsToEstablishAConnection = 5;
+            }
+            
             PingOptions options = new PingOptions();
-            options.DontFragment= true;
-
-            //SkyCoop.Logger.Log($"[NetworkHelper] Attempt to check the Internet connection with the IP address: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Blue);
+            options.DontFragment = true;
 
             PingReply reply = new Ping().Send(addressForCheckingInternetConnection, 5000, Encoding.ASCII.GetBytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), options);
             if(reply.Status == IPStatus.Success)
             {
-                //SkyCoop.Logger.Log("[NetworkHelper] Internet connection is established", SkyCoop.Shared.LoggerColor.Green);
-
                 if(attemptsToEstablishAConnection == 5 || attemptsToEstablishAConnection > 5)
                 {
                     SkyCoop.Logger.Log("[NetworkHelper] Attempt to reopen the port", SkyCoop.Shared.LoggerColor.Green);
@@ -105,6 +107,17 @@ namespace SkyCoopDedicatedServer
             {
                 SkyCoop.Logger.Log($"[NetworkHelper] It was not possible to establish a connection with this IP: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Red);
                 attemptsToEstablishAConnection++;
+            }
+        }
+        public string GetActualExternalIp()
+        {
+            try
+            {
+                return Dns.GetHostEntry("myip.opendns.com").AddressList[0].ToString();
+            }
+            catch
+            {
+                return "0.0.0.0";
             }
         }
     }
