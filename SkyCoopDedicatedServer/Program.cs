@@ -8,7 +8,6 @@ namespace SkyCoopDedicatedServer
     class Program
     {
         public static ConsoleMain consoleMain;
-        public static NetworkHelper networkPort;
         public static ILogger logger = LoggerFactory.Create(builder => builder.AddNLog()).CreateLogger<Program>();
         public static bool ServerGettingError = false;
 

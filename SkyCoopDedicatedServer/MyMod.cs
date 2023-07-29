@@ -88,7 +88,7 @@ namespace SkyCoop
             MPSaveManager.LoadGlobalData();
 
             Shared.HostAServer(config.Ports);
-            Program.networkPort = new NetworkHelper(config.Ports);
+            NetworkHelper.OpenPort(config.Ports);
 
             DiscordManager.Init();
 
