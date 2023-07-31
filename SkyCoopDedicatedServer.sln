@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkyCoopDedicatedServer", "S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkyCoopDedicatedServerKickstarter", "SkyCoopDedicatedServerKickstarter\SkyCoopDedicatedServerKickstarter.csproj", "{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SkyCoopDedicatedServerGraphBuilder", "SkyCoopDedicatedServerGraphBuilder\SkyCoopDedicatedServerGraphBuilder.csproj", "{5B182EC2-212D-4842-978C-6785F7BA012B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Debug|Any CPU.Build.0 = ServerKickstarter|Any CPU
 		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Release|Any CPU.ActiveCfg = ServerKickstarter|Any CPU
 		{112B54AE-8E5F-4957-A3F7-1CAF15ACE835}.Release|Any CPU.Build.0 = ServerKickstarter|Any CPU
-		{5B182EC2-212D-4842-978C-6785F7BA012B}.Debug|Any CPU.ActiveCfg = GraphBuilder|Any CPU
-		{5B182EC2-212D-4842-978C-6785F7BA012B}.Debug|Any CPU.Build.0 = GraphBuilder|Any CPU
-		{5B182EC2-212D-4842-978C-6785F7BA012B}.Release|Any CPU.ActiveCfg = GraphBuilder|Any CPU
-		{5B182EC2-212D-4842-978C-6785F7BA012B}.Release|Any CPU.Build.0 = GraphBuilder|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
