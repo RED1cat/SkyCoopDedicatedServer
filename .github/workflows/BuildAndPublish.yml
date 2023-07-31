@@ -1,0 +1,68 @@
+name: BuildAndPublish
+
+on: push
+
+jobs:
+    build:
+        name: Build for ${{ matrix.os }} ${{ matrix.arch }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                include:
+                    - os: windows-latest
+                      arch: x86
+                    - os: windows-latest
+                      arch: x64
+                    - os: ubuntu-latest
+                      arch: x86
+                    - os: ubuntu-latest
+                      arch: x64
+                    - os: ubuntu-latest
+                      arch: arm
+                    - os: ubuntu-latest
+                      arch: arm64
+
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Build
+              run: dotnet build --configuration debug
+              
+            - name: Get file version
+              uses: mathiasvr/command-output@v2.0.0
+              id: version
+              with:
+                run: strings Output/Debug/SkyCoopDedicatedServer.dll | egrep '^[0-9]+\.[0-9]+\.[0-9]+$'
+              
+            - name: Сreating an archive for Windows ${{ matrix.arch }}
+              if: matrix.os == 'windows-latest'
+              run: Compress-Archive -Path Output/Debug -Destination Windows_${{ matrix.arch }}.zip
+              
+            - name: Сreating an archive for Linux ${{ matrix.arch }}
+              if: matrix.os == 'ubuntu-latest'
+              run: zip -r -q Linux_${{ matrix.arch }}.zip Output/Debug
+              
+            - name: Publishing a release for Windows ${{ matrix.arch }}
+              if: matrix.os == 'windows-latest'
+              uses: svenstaro/upload-release-action@v2
+              with:
+                  repo_token: ${{ secrets.GITHUB_TOKEN }}
+                  file: Windows_${{ matrix.arch }}.zip
+                  asset_name: ${{ matrix.asset_name }}
+                  overwrite: true
+                  release_name: SkyCoop Dedicated Server for mod version ${{ steps.version.outputs.stdout }}
+                  body: ${{ github.event.head_commit.message }}
+                  tag: ${{ steps.version.outputs.stdout }}
+                     
+            - name: Publishing a release for Linux ${{ matrix.arch }}
+              if: matrix.os == 'ubuntu-latest'
+              uses: svenstaro/upload-release-action@v2
+              with:
+                  repo_token: ${{ secrets.GITHUB_TOKEN }}
+                  file: Linux_${{ matrix.arch }}.zip
+                  asset_name: ${{ matrix.asset_name }}
+                  overwrite: true
+                  release_name: SkyCoop Dedicated Server for mod version ${{ steps.version.outputs.stdout }}
+                  body: ${{ github.event.head_commit.message }}
+                  tag: ${{ steps.version.outputs.stdout }}
