@@ -255,6 +255,10 @@ namespace SkyCoop
                         }
 
                         int Amount = RNG.Next(item.Min, item.Max);
+                        if (item.Min == 0 || item.Max == 0 || Amount == 0)
+                        {
+                            continue;
+                        }
                         List<int> IndexesToSpawn = new List<int>();
                         int FailAttemps = 20;
                         while (Amount != IndexesToSpawn.Count)

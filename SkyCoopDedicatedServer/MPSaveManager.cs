@@ -2168,22 +2168,23 @@ namespace SkyCoop
         {
             if (ResourceIndependent.GearSpawnersReady)
             {
-                List<KeyValuePair<string, int>> Festives = FestiveGearsSpawnCooldown.ToList();
-
-
-                for (int i = Festives.Count - 1; i >= 0; i--)
+                if (FestiveGearsSpawnCooldown.Count > 0)
                 {
-                    if (Festives[i].Value < MyMod.MinutesFromStartServer)
+                    List<KeyValuePair<string, int>> Festives = FestiveGearsSpawnCooldown.ToList();
+                    for (int i = Festives.Count - 1; i >= 0; i--)
                     {
-                        Festives.RemoveAt(i);
+                        if (Festives[i].Value < MyMod.MinutesFromStartServer)
+                        {
+                            Festives.RemoveAt(i);
+                        }
                     }
-                }
-                FestiveGearsSpawnCooldown = Festives.ToDictionary(x => x.Key, x => x.Value);
-                if (!FestiveGearsSpawnCooldown.ContainsKey(Scene))
-                {
-                    ResourceIndependent.SpawnSomeGearsOnScene(Scene, "", "GEAR_SCPresent");
-                    ResourceIndependent.SpawnSomeGearsOnScene(Scene, "SANDBOX", "GEAR_SCPresent");
-                    FestiveGearsSpawnCooldown.Add(Scene, MyMod.MinutesFromStartServer + 1440);
+                    FestiveGearsSpawnCooldown = Festives.ToDictionary(x => x.Key, x => x.Value);
+                    if (!FestiveGearsSpawnCooldown.ContainsKey(Scene))
+                    {
+                        ResourceIndependent.SpawnSomeGearsOnScene(Scene, "", "GEAR_SCPresent");
+                        ResourceIndependent.SpawnSomeGearsOnScene(Scene, "SANDBOX", "GEAR_SCPresent");
+                        FestiveGearsSpawnCooldown.Add(Scene, MyMod.MinutesFromStartServer + 1440);
+                    }
                 }
             }
         }

@@ -93,7 +93,7 @@ namespace SkyCoop
             DiscordManager.Init();
 
             Logger.Log("Server running on version "+ BuildInfo.Version);
-            Logger.Log("Build Mark 10");
+            Logger.Log("Build Mark 12");
         }
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
