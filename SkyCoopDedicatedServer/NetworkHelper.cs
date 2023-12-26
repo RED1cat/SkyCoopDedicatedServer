@@ -2,50 +2,28 @@
 using SkyCoop;
 using System.Net;
 using System;
-using System.Net.NetworkInformation;
-using System.Text;
+using System.Collections.Generic;
 
 namespace SkyCoopDedicatedServer
 {
-    class NetworkHelper
+    public static class NetworkHelper
     {
-        INatDevice device;
-        private string externalIp;
-        private int port;
-        bool upnpIsEnable = false;
-        static string addressForCheckingInternetConnection = "8.8.8.8";
-        static int attemptsToEstablishAConnection = 0;
+        static INatDevice device;
+        public static string externalIp;
+        public static int port;
+        public static bool upnpIsEnable = false;
+        static bool tryingRestoreConnection = false;
+        static bool internetAvailability = true;
 
-        public string GetExternalIp
+        public static void OpenPort(int portToOpen)
         {
-            get
-            {
-                return externalIp;
-            }
-        }
-        public int GetPort
-        {
-            get
-            {
-                return port;
-            }
-        }
-        public bool UpnpIsEnable
-        {
-            get
-            {
-                return upnpIsEnable;
-            }
-        }
-        public NetworkHelper(int port)
-        {
-            this.port = port;
+            port = portToOpen;
 
             SkyCoop.Logger.Log("[NetworkHelper] Try open port for upnp", SkyCoop.Shared.LoggerColor.Green);
             NatUtility.DeviceFound += DeviceFound;
             NatUtility.StartDiscovery();
         }
-        private void DeviceFound(object sender, DeviceEventArgs args)
+        private static void DeviceFound(object sender, DeviceEventArgs args)
         {
             device = args.Device;
             externalIp = device.GetExternalIP().ToString();
@@ -62,50 +40,70 @@ namespace SkyCoopDedicatedServer
             SkyCoop.Logger.Log($"[NetworkHelper] External ip= {externalIp}", SkyCoop.Shared.LoggerColor.Green);
             YDNS.UpdateIP();
             upnpIsEnable = true;
+            internetAvailability = true;
+            tryingRestoreConnection = false;
             NatUtility.StopDiscovery();
         }
-        public void TryClosePort()
+        public static void TryClosePort()
         {
             if (upnpIsEnable == true)
             {
-                SkyCoop.Logger.Log("[NetworkHelper] Try close port", SkyCoop.Shared.LoggerColor.Green);
+                if (!tryingRestoreConnection)
+                {
+                    SkyCoop.Logger.Log("[NetworkHelper] Try close port", SkyCoop.Shared.LoggerColor.Green);
+                }
                 try
                 {
                     device.DeletePortMap(new Mapping(Protocol.Udp, port, port));
                 }
                 catch
                 {
-                    SkyCoop.Logger.Log("[NetworkHelper] Can't close port", SkyCoop.Shared.LoggerColor.Red);
+                    if (!tryingRestoreConnection)
+                    {
+                        SkyCoop.Logger.Log("[NetworkHelper] Can't close port", SkyCoop.Shared.LoggerColor.Red);
+                    }
                 }
             }
         }
-        public void СheckingInternetConnection()
+        public static void СheckingInternetConnection()
         {
-            PingOptions options = new PingOptions();
-            options.DontFragment= true;
-
-            //SkyCoop.Logger.Log($"[NetworkHelper] Attempt to check the Internet connection with the IP address: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Blue);
-
-            PingReply reply = new Ping().Send(addressForCheckingInternetConnection, 5000, Encoding.ASCII.GetBytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), options);
-            if(reply.Status == IPStatus.Success)
+            string ip = GetActualExternalIp();
+            if(ip != "0.0.0.0")
             {
-                //SkyCoop.Logger.Log("[NetworkHelper] Internet connection is established", SkyCoop.Shared.LoggerColor.Green);
-
-                if(attemptsToEstablishAConnection == 5 || attemptsToEstablishAConnection > 5)
+                if(ip != externalIp || internetAvailability == false)
                 {
-                    SkyCoop.Logger.Log("[NetworkHelper] Attempt to reopen the port", SkyCoop.Shared.LoggerColor.Green);
+                    if (!tryingRestoreConnection)
+                    {
+                        SkyCoop.Logger.Log("[NetworkHelper] Attempt to reopen the port", SkyCoop.Shared.LoggerColor.Green);
+                    }
 
                     TryClosePort();
-                    Program.networkPort = new NetworkHelper(GameServer.Server.Port);
-
-                    attemptsToEstablishAConnection= 0;
+                    tryingRestoreConnection = true;
+                    OpenPort(port);
                 }
             }
-            if(reply.Status != IPStatus.Success)
+            else
             {
-                SkyCoop.Logger.Log($"[NetworkHelper] It was not possible to establish a connection with this IP: {addressForCheckingInternetConnection}", SkyCoop.Shared.LoggerColor.Red);
-                attemptsToEstablishAConnection++;
+                internetAvailability = false;
             }
+        }
+        public static string GetActualExternalIp()
+        {
+            List<string> services = new List<string>()
+        {
+            "https://ipv4.icanhazip.com",
+            "https://api.ipify.org",
+            "https://ipinfo.io/ip",
+            "https://checkip.amazonaws.com",
+            "https://wtfismyip.com/text",
+            "http://icanhazip.com"
+        };
+            using (var webclient = new WebClient())
+                foreach (var service in services)
+                {
+                    try { return IPAddress.Parse(webclient.DownloadString(service)).ToString(); } catch { }
+                }
+            return "0.0.0.0";
         }
     }
     public static class YDNS

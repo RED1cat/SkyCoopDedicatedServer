@@ -25,6 +25,7 @@ namespace SkyCoopDedicatedServerKickstarter
             }
             Process process = new Process();
             process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardError = true;
             process.StartInfo.FileName = ServerFile;
 
             if (File.Exists(ServerFile) && ServerFile != string.Empty)
@@ -43,10 +44,12 @@ namespace SkyCoopDedicatedServerKickstarter
                         if (process.ExitCode == 0)
                         {
                             Logger.LogError("The server is rebooting");
+                            process.StartInfo.ArgumentList.Clear();
                         }
                         else
                         {
-                            Logger.LogError("The server has an error, an attempt to restart it");
+                            Logger.LogError($"The server has an error, an attempt to restart it. Error: {process.StandardError.ReadToEnd()}");
+                            process.StartInfo.ArgumentList.Add("Error");
                         }
                         process.Start();
                         process.WaitForExit();

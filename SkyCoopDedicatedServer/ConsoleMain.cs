@@ -65,11 +65,11 @@ namespace SkyCoopDedicatedServer
         }
         private void EveryMinute(object obj)
         {
-            Program.networkPort.СheckingInternetConnection();
+           NetworkHelper.СheckingInternetConnection();
         }
         private void OnExiting()
         {
-            Program.networkPort.TryClosePort();
+            NetworkHelper.TryClosePort();
         }
     }
 }
