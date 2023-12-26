@@ -12,7 +12,7 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani";
             public const string Company = null;
-            public const string Version = "0.12.0";
+            public const string Version = "0.12.1";
             public const string DownloadLink = null;
             public const int RandomGenVersion = 5;
         }
@@ -96,7 +96,7 @@ namespace SkyCoop
             //SteamMaster.PingSteamMaster();
             //SteamMaster.SendSignalToMaster();
             Logger.Log("Server running on version "+ BuildInfo.Version);
-            Logger.Log("Build Mark 8");
+            Logger.Log("Build Mark 10");
         }
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
