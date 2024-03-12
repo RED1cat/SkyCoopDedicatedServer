@@ -2910,12 +2910,15 @@ namespace SkyCoop
         }
         public static string GetMacAddress()
         {
-            string macAddr =
-                (
-                    from nic in NetworkInterface.GetAllNetworkInterfaces()
-                    where nic.OperationalStatus == OperationalStatus.Up
-                    select nic.GetPhysicalAddress().ToString()
-                ).FirstOrDefault();
+            string macAddr = string.Empty;
+            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback && nic.GetPhysicalAddress().ToString().Length > 4)
+                {
+                    macAddr = nic.GetPhysicalAddress().ToString();
+                    break;
+                }
+            }
             return macAddr;
         }
 

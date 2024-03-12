@@ -12,7 +12,7 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani & REDcat";
             public const string Company = null;
-            public const string Version = "0.12.1";
+            public const string Version = "0.12.2";
             public const string DownloadLink = null;
             public const int RandomGenVersion = 5;
         }
@@ -93,7 +93,7 @@ namespace SkyCoop
             DiscordManager.Init();
 
             Logger.Log("Server running on version "+ BuildInfo.Version);
-            Logger.Log("Build Mark 12");
+            Logger.Log("Build Mark 13");
         }
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
