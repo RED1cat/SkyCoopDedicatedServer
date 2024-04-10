@@ -10,6 +10,7 @@ using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
 using static SkyCoop.ExpeditionBuilder;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -2627,7 +2628,10 @@ namespace SkyCoop
                 MPSaveManager.SaveGlobalData();
                 MPSaveManager.SaveRecentStuff();
                 MPStats.SaveRecentStuff();
-                
+#if DEDICATED
+                DiscordManager.SaveConfig();
+#endif
+
                 return "Manual saving done!";
             } else if (Low == "today" || Low == "showstats" || Low == "stats" || Low == "statistics" || Low == "statistic")
             {
@@ -3267,7 +3271,7 @@ namespace SkyCoop
         {
 #if (DEDICATED)
             int Players = GetPlayersOnServer();
-            DiscordManager.PlayerJoined(PlayerName, Players);
+            Task.Run(() => DiscordManager.PlayerJoined(PlayerName, Players));
 #endif
         }
         public static void WebhookPlayerLeave(string PlayerName)
@@ -3278,27 +3282,27 @@ namespace SkyCoop
             }
 #if (DEDICATED)
             int Players = GetPlayersOnServer();
-            DiscordManager.PlayerLeave(PlayerName, Players);
+            Task.Run(() => DiscordManager.PlayerLeave(PlayerName, Players));
 #endif
         }
 
         public static void WebhookCrashSiteSpawn(string Text)
         {
 #if (DEDICATED)
-            DiscordManager.CrashSiteSpawn(Text);
+            Task.Run(() => DiscordManager.CrashSiteSpawn(Text));
 #endif
         }
         public static void WebhookCrashSiteFound()
         {
 #if (DEDICATED)
-            DiscordManager.CrashSiteFound();
+            Task.Run(() => DiscordManager.CrashSiteFound());
 #endif
         }
 
         public static void WebhookCrashSiteTimeOver()
         {
 #if (DEDICATED)
-            DiscordManager.CrashSiteTimeOver();
+            Task.Run(() => DiscordManager.CrashSiteTimeOver());
 #endif
         }
 

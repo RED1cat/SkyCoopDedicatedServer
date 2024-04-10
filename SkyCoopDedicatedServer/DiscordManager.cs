@@ -1,377 +1,402 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using DiscordWebhook;
-using SkyCoop;
+using Discord;
+using Discord.WebSocket;
 using SkyCoopDedicatedServer;
-#if (!DEDICATED)
-using MelonLoader.TinyJSON;
-#else
-using TinyJSON;
-#endif
 
 namespace SkyCoop
 {
-    internal class DiscordManager
+    static class DiscordManager
     {
-        public static Webhook webhook = null;
-        public static bool Initilized = false;
-        private static string WebHookName = "Public Server Feed";
+        private static string ConfigPath = AppDomain.CurrentDomain.BaseDirectory + @"/" + "botconfig";
+        private static string ConfigTemplate = "token=\ninfochannelid=\nfeedchannelid=\nlastmessageid=\ntimetoupdatemessage=5";
+        public static bool Connected = false;
+        private static DiscordSocketClient _client;
+        private static string Token;
+        private static ulong InfoChannelId;
+        private static ulong FeedChannelId;
+        private static ulong Messageid;
+        private static int MinuteToUpdateMessage = 5;
+        private static int CurrentMinuteToUpdateMessage = 0;
 
-        public static void Init()
+        private static Task Log(LogMessage msg)
         {
-            string Path = MPSaveManager.GetBaseDirectory() + MPSaveManager.GetSeparator() + "webhook.json";
-            if (System.IO.File.Exists(Path))
+            Logger.Log($"[DiscordManager] {msg.Message}",Shared.LoggerColor.Green);
+
+            return Task.CompletedTask;
+        }
+
+        public static async Task Init()
+        {
+            if (!LoadConfig())
+                return;
+
+            _client = new DiscordSocketClient();
+
+            _client.Log += Log;
+
+            _client.Ready += _client_Ready;
+            _client.Disconnected += _client_Disconnected;
+
+            await _client.LoginAsync(TokenType.Bot, Token);
+            await _client.StartAsync();
+
+            await Task.Delay(-1);
+        }
+
+        private static bool LoadConfig()
+        {
+            if (!File.Exists(ConfigPath))
             {
-                string readText = System.IO.File.ReadAllText(Path);
-                DataStr.WebhookSettings Data = JSON.Load(readText).Make<DataStr.WebhookSettings>();
-                Init(Data.URL, Data.Name);
+                try
+                {
+                    File.WriteAllText(ConfigPath, ConfigTemplate);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log(e.Message, Shared.LoggerColor.Red);
+                }
+                return false;
+            }
+
+            try 
+            {
+                string[] config = File.ReadAllLines(ConfigPath);
+
+                if (config[0].Split('=')[1].Length <= 1 || config[1].Split('=')[1].Length <= 1 || config[2].Split('=')[1].Length <= 1 || !ulong.TryParse(config[1].Split('=')[1], out InfoChannelId) || !ulong.TryParse(config[2].Split('=')[1], out FeedChannelId))
+                {
+                    return false;
+                }
+
+                Token = config[0].Split('=')[1];
+                ulong.TryParse(config[3].Split('=')[1], out Messageid);
+                int.TryParse(config[4].Split('=')[1], out MinuteToUpdateMessage);
+                CurrentMinuteToUpdateMessage = MinuteToUpdateMessage;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
+            }
+
+            return false;
+        }
+
+        public static void SaveConfig()
+        {
+            if (!Connected)
+                return;
+            try
+            { 
+                string[] config = File.ReadAllLines(ConfigPath);
+                config[1] = $"{config[1].Split('=')[0]}={InfoChannelId}";
+                config[2] = $"{config[2].Split('=')[0]}={FeedChannelId}";
+                config[3] = $"{config[3].Split('=')[0]}={Messageid}";
+
+                try
+                {
+                    File.WriteAllLines(ConfigPath, config);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log(e.Message, Shared.LoggerColor.Red);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e.Message, Shared.LoggerColor.Red);
             }
         }
 
-        public static void Init(string URL, string Name)
+        private static Task _client_Ready()
         {
-            if (Initilized)
-            {
-                return;
-            }
-            WebHookName = Name;
-            webhook = new Webhook(URL);
-            Logger.Log("Webhook started!", Shared.LoggerColor.Magenta);
-            Initilized = true;
+            Connected = true;
 
-            if(Program.ServerGettingError == true)
+            if (Program.ServerGettingError)
             {
-                ServerError();
+                Task.Run(ServerError);
                 Program.ServerGettingError = false;
             }
+
+            return Task.CompletedTask;
         }
 
-        public static void SendMessage(string Message)
+        private static Task _client_Disconnected(Exception arg)
         {
-            if (!Initilized)
-            {
-                return;
-            }
-            WebhookObject obj = new WebhookObject()
-            {
-                username = WebHookName,
-                content = Message
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
+            Connected = false;
 
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
-            }
+            return Task.CompletedTask;
         }
 
-        public static void PlayerJoined(string PlayerName, int Players)
+        public static async Task ServerInfoUpdate(string serverName, int players, int maxPlayers, string serverIp, string serverVersion, bool recreate = false, bool online = true)
         {
-            if (!Initilized)
-            {
+            if (!Connected)
                 return;
-            }
 
-            WebhookObject obj = new WebhookObject()
+            CurrentMinuteToUpdateMessage++;
+
+            if (CurrentMinuteToUpdateMessage >= MinuteToUpdateMessage || !online || recreate)
             {
-                embeds = new Embed[]
+                CurrentMinuteToUpdateMessage = 0;
+
+                string onlineMsg = ":green_circle: Online";
+                if (!online)
+                    onlineMsg = ":red_circle: Offline";
+
+                string messageTemplate = $"**{serverName}**\r\nCurrent status: {onlineMsg}\r\nCurrent players: {players}/{maxPlayers}\r\nServer IP address: `{serverIp}`\r\nMod version: **{serverVersion}**\r\nGame version: **2.01-2.02**\r\nLast update message: {DateTime.Now}";
+
+
+                if (await _client.GetChannelAsync(InfoChannelId) is IMessageChannel chnl) //get channel
                 {
-                    new Embed()
+                    if (Messageid == 0)
                     {
-                        author = new Author()
+                        if (await chnl.SendMessageAsync(messageTemplate) is IUserMessage nmsg)
                         {
-                            name = "Current online: "+Players,
-                        },
-                        color = 0x00FFFF,
-                        fields = new Field[]
-                        {
-                            new Field()
-                            {
-                                name = PlayerName,
-                                value = "Joined the server"
-                            }
+                            Messageid = nmsg.Id;
                         }
                     }
-                },
-                
-                
-                username = WebHookName,
-                content = ""
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
 
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
-            }
-        }
-
-        public static void PlayerLeave(string PlayerName, int Players)
-        {
-            if (!Initilized)
-            {
-                return;
-            }
-
-            WebhookObject obj = new WebhookObject()
-            {
-                embeds = new Embed[]
-                {
-                    new Embed()
+                    if (await chnl.GetMessageAsync(Messageid) is IUserMessage msg) //get message to edit
                     {
-                        author = new Author()
+                        if (recreate)
                         {
-                            name = "Current online: "+Players,
-                        },
-                        color = 0xff0015,
-                        fields = new Field[]
-                        {
-                            new Field()
+                            await msg.DeleteAsync();
+                            if (await chnl.SendMessageAsync(messageTemplate) is IUserMessage nmsg)
                             {
-                                name = PlayerName,
-                                value = "Leave the server"
+                                Messageid = nmsg.Id;
                             }
                         }
-                    }
-                },
-
-                username = WebHookName,
-                content = ""
-            };
-
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
-
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
-            }
-        }
-
-        public static void TodayStats(string Stats)
-        {
-            if (!Initilized)
-            {
-                return;
-            }
-
-            WebhookObject obj = new WebhookObject()
-            {
-                embeds = new Embed[]
-                {
-                    new Embed()
-                    {
-                        author = new Author()
+                        else
                         {
-                            name = "Day is over ",
-                        },
-                        color = 0xfbff00,
-                        fields = new Field[]
-                        {
-                            new Field()
-                            {
-                                name = "Stats of the day:",
-                                value = Stats
-                            }
+                            await msg.ModifyAsync(m => m.Content = messageTemplate);
                         }
                     }
-                },
-
-                username = WebHookName,
-                content = ""
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
-
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
+                }
             }
         }
 
-        public static void CrashSiteSpawn(string Text)
+        public static async Task SendMessage(string Message)
         {
-            if (!Initilized)
-            {
+            if (!Connected)
                 return;
-            }
 
-            WebhookObject obj = new WebhookObject()
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
             {
-                embeds = new Embed[]
+                EmbedBuilder embed = new EmbedBuilder()
                 {
-                    new Embed()
+                    Author = new EmbedAuthorBuilder()
                     {
-                        author = new Author()
+                        Name = MyMod.CustomServerName
+                    },
+                    Color = 0xfbff00,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
                         {
-                            name = "Another plane crash on Great Bear Island!",
-                        },
-                        color = 0xfbff00,
-                        fields = new Field[]
-                        {
-                            new Field()
-                            {
-                                name = Text,
-                                value = ""
-                            }
+                            Name = "Message:",
+                            Value = Message
                         }
                     }
-                },
+                };
 
-                username = WebHookName,
-                content = ""
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
-
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
+                await chnl.SendMessageAsync(embed: embed.Build());
             }
         }
-        public static void CrashSiteFound()
-        {
-            if (!Initilized)
-            {
-                return;
-            }
 
-            WebhookObject obj = new WebhookObject()
+        public static async Task PlayerJoined(string PlayerName, int Players)
+        {
+            if (!Connected)
+                return;
+
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
             {
-                embeds = new Embed[]
-                {
-                    new Embed()
+                EmbedBuilder embed = new EmbedBuilder() 
+                { 
+                    Author = new EmbedAuthorBuilder()
                     {
-                        author = new Author()
+                        Name = MyMod.CustomServerName 
+                    },
+                    Color = 0x00FFFF,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
                         {
-                            name = "Crash Site Has Been Found!",
-                        },
-                        color = 0xfbff00,
-                        fields = new Field[]
-                        {
-                            new Field()
-                            {
-                                name = "Someone managed to find crash site.",
-                                value = ""
-                            }
+                            Name = $"Current online: {Players}",
+                            Value = $"{PlayerName}\r\nJoined the server"
                         }
                     }
-                },
+                };
 
-                username = WebHookName,
-                content = ""
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
-
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
+                await chnl.SendMessageAsync(embed:embed.Build());
             }
         }
 
-        public static void CrashSiteTimeOver()
+        public static async Task PlayerLeave(string PlayerName, int Players)
         {
-            if (!Initilized)
-            {
+            if (!Connected)
                 return;
-            }
 
-            WebhookObject obj = new WebhookObject()
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
             {
-                embeds = new Embed[]
+                EmbedBuilder embed = new EmbedBuilder()
                 {
-                    new Embed()
+                    Author = new EmbedAuthorBuilder()
                     {
-                        author = new Author()
+                        Name = MyMod.CustomServerName 
+                    },
+                    Color = 0xff0015,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
                         {
-                            name = "Crash Site Has Not Been Found!",
-                        },
-                        color = 0xff0015,
-                        fields = new Field[]
-                        {
-                            new Field()
-                            {
-                                name = "Time is up, no one has found the crash site.",
-                                value = ""
-                            }
+                            Name = $"Current online: {Players}",
+                            Value = $"{PlayerName}\r\nLeave the server"
                         }
                     }
-                },
+                };
 
-                username = WebHookName,
-                content = ""
-            };
-            try
-            {
-                webhook.PostData(obj);
-            }
-            catch (Exception e)
-            {
-
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
+                await chnl.SendMessageAsync(embed: embed.Build());
             }
         }
-        public static void ServerError()
+
+        public static async Task TodayStats(string Stats)
         {
-            if (!Initilized)
-            {
+            if (!Connected)
                 return;
-            }
 
-            WebhookObject obj = new WebhookObject()
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
             {
-                embeds = new Embed[]
+                EmbedBuilder embed = new EmbedBuilder()
                 {
-                    new Embed()
+                    Author = new EmbedAuthorBuilder()
                     {
-                        author = new Author()
+                        Name = MyMod.CustomServerName
+                    },
+                    Color = 0xfbff00,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
                         {
-                            name = "The server made an emergency reboot because of an error",
-                        },
-                        color = 0xff0015
+                            Name = "Day is over\r\nStats of the day:",
+                            Value = Stats
+                        }
                     }
-                },
+                };
 
-                username = WebHookName,
-                content = ""
-            };
-
-            try
-            {
-                webhook.PostData(obj);
+                await chnl.SendMessageAsync(embed: embed.Build());
             }
-            catch (Exception e)
-            {
+        }
 
-                Logger.Log(e.Message, Shared.LoggerColor.Red);
-                throw;
+        public static async Task CrashSiteSpawn(string Text)
+        {
+            if (!Connected)
+                return;
+
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                {
+                    Author = new EmbedAuthorBuilder()
+                    {
+                        Name = MyMod.CustomServerName 
+                    },
+                    Color = 0xfbff00,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
+                        {
+                            Name = "Another plane crash on Great Bear Island!",
+                            Value = Text
+                        }
+                    }
+                };
+
+                await chnl.SendMessageAsync(embed: embed.Build());
+            }
+        }
+        public static async Task CrashSiteFound()
+        {
+            if (!Connected)
+                return;
+
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                {
+                    Author = new EmbedAuthorBuilder()
+                    {
+                        Name = MyMod.CustomServerName
+                    },
+                    Color = 0xfbff00,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
+                        {
+                            Name = "Crash Site Has Been Found!",
+                            Value = "Someone managed to find crash site."
+                        }
+                    }
+                };
+
+                await chnl.SendMessageAsync(embed: embed.Build());
+            }
+        }
+
+        public static async Task CrashSiteTimeOver()
+        {
+            if (!Connected)
+                return;
+
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                {
+                    Author = new EmbedAuthorBuilder()
+                    {
+                        Name = MyMod.CustomServerName
+                    },
+                    Color = 0xff0015,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
+                        {
+                            Name = "Crash Site Has Not Been Found!",
+                            Value = "Time is up, no one has found the crash site."
+                        }
+                    }
+                };
+
+                await chnl.SendMessageAsync(embed: embed.Build());
+            }
+        }
+        public static async Task ServerError()
+        {
+            if (!Connected)
+                return;
+
+            if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                {
+                    Author = new EmbedAuthorBuilder()
+                    {
+                        Name = MyMod.CustomServerName
+                    },
+                    Color = 0xff0015,
+                    Fields = new List<EmbedFieldBuilder>()
+                    {
+                        new EmbedFieldBuilder()
+                        {
+                            Name = "The server made an emergency reboot because of an error",
+                            Value = ":skull_crossbones:"
+                        }
+                    }
+                };
+
+                await chnl.SendMessageAsync(embed: embed.Build());
             }
         }
     }

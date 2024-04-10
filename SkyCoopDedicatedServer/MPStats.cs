@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static SkyCoop.MPSaveManager;
+using SkyCoopDedicatedServer;
 #if (DEDICATED)
 using System.Numerics;
 using TinyJSON;
@@ -54,7 +55,8 @@ namespace SkyCoop
             if (SendWebhook)
             {
 #if (DEDICATED)
-                DiscordManager.TodayStats(StatsString);
+                Task.Run(() => DiscordManager.TodayStats(StatsString));
+                Task.Run(() => DiscordManager.ServerInfoUpdate(MyMod.CustomServerName, MyMod.PlayersOnServer, MyMod.MaxPlayers, $"{NetworkHelper.externalIp}:{NetworkHelper.port}", MyMod.BuildInfo.Version, recreate: true));
 #endif
             }
         }

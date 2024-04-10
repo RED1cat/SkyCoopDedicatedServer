@@ -80,9 +80,15 @@ Dedicated server for the [SkyCoop](https://github.com/Filigrani/SkyCoop) mod for
     * `true` or `false`
   * `SavingPeriod` - The period after which the server data will be saved.
   * `RestartPerioud` - Unused or outdated.
+## Configuring Server bot `botconfig`:
+The server has the ability to send various notifications about its status at the expense of the discord bot.
+  * `token` - The bot's discord token.
+  * `infochannelid` - The ID of the channel where the server will send information about itself.
+  * `feedchannelid` - The ID of the channel where the server will send information about the connected players and statistics.
+  * `timetoupdatemessage` - The time in minutes after which the server information will be updated.
 ## Server Commands:
-  * `webhook` - It's unfinished at the moment.
-  * `webstats` - It's unfinished at the moment.
+  * `dsbot` - Sends a message via the bot's discord.
+  * `botstats` - Sends the current server statistics via the bot's discord.
   * `crashsite` - Causes an airplane to crash in a random region.
   * `whencrashsite` - Displays when the next plane crash or the statistics of the current one.
   * `canclecrashsite` - Cancels the current crash site.

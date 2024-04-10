@@ -44,7 +44,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="DiscordWebhooks" Version="1.0.4" />
+    <PackageReference Include="Discord.Net" Version="3.14.1" />
     <PackageReference Include="Fody" Version="6.6.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

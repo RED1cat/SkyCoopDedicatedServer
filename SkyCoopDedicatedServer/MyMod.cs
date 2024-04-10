@@ -1,6 +1,7 @@
 ﻿using SkyCoopDedicatedServer;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SkyCoop
 {
@@ -90,24 +91,21 @@ namespace SkyCoop
             Shared.HostAServer(config.Ports);
             NetworkHelper.OpenPort(config.Ports);
 
-            DiscordManager.Init();
-
             Logger.Log("Server running on version "+ BuildInfo.Version);
             Logger.Log("Build Mark 13");
         }
 
         public static string ExecuteCommand(string CMD, int _fromClient = -1)
         {
-            if(CMD.StartsWith("webhook "))
+            if(CMD.StartsWith("dsbot "))
             {
-                string Message = CMD.Replace("webhook ", "");
-                DiscordManager.SendMessage(Message);
-                return "Webhook Message: "+ Message+", sent";
+                string Message = CMD.Replace("dsbot ", "");
+                Task.Run(() => DiscordManager.SendMessage(Message));
+                return "dsbot Message: " + Message+", sent";
             }
-            if (CMD.StartsWith("webstats"))
+            if (CMD.StartsWith("botstats"))
             {
-                string Message = CMD.Replace("webhook ", "");
-                DiscordManager.TodayStats(MPStats.TodayStats.GetString(false, true, true));
+                Task.Run(() => DiscordManager.TodayStats(MPStats.TodayStats.GetString(false, true, true)));
                 return "Sent";
             }
             if (CMD.StartsWith("crashsite") && !CMD.StartsWith("crashsite "))

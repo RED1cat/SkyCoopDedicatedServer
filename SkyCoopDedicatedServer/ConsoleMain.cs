@@ -13,6 +13,7 @@ namespace SkyCoopDedicatedServer
         {
             Task.Factory.StartNew(ReadConsole);
             MyMod.Initialize();
+            Task.Run(DiscordManager.Init);
 
             Timer timer1 = new Timer(EverySecond, null, 1000, 1000);
             Timer timer2 = new Timer(EveryGameMinute, null, 5000, 5000);
@@ -62,13 +63,17 @@ namespace SkyCoopDedicatedServer
         private void DsSave(object obj)
         {
             MPSaveManager.SaveGlobalData();
+            DiscordManager.SaveConfig();
         }
         private void EveryMinute(object obj)
         {
            NetworkHelper.СheckingInternetConnection();
+           Task.Run(() => DiscordManager.ServerInfoUpdate(MyMod.CustomServerName, MyMod.PlayersOnServer, MyMod.MaxPlayers, $"{NetworkHelper.externalIp}:{NetworkHelper.port}", MyMod.BuildInfo.Version));
         }
         private void OnExiting()
         {
+            Task task = Task.Run(() => DiscordManager.ServerInfoUpdate(MyMod.CustomServerName, MyMod.PlayersOnServer, MyMod.MaxPlayers, $"{NetworkHelper.externalIp}:{NetworkHelper.port}", MyMod.BuildInfo.Version, online: false));
+            while (!task.IsCompleted) { } //I know it's a terrible solution.
             NetworkHelper.TryClosePort();
         }
     }
