@@ -12,7 +12,8 @@ namespace SkyCoop
     {
         private static string ConfigPath = AppDomain.CurrentDomain.BaseDirectory + @"/" + "botconfig";
         private static string ConfigTemplate = "token=\ninfochannelid=\nfeedchannelid=\nlastmessageid=\ntimetoupdatemessage=5";
-        public static bool Connected = false;
+        private static bool Ready = false;
+        private static bool Connected = false;
         private static DiscordSocketClient _client;
         private static string Token;
         private static ulong InfoChannelId;
@@ -37,7 +38,9 @@ namespace SkyCoop
 
             _client.Log += Log;
 
+            
             _client.Ready += _client_Ready;
+            _client.Connected += _client_Connected;
             _client.Disconnected += _client_Disconnected;
 
             await _client.LoginAsync(TokenType.Bot, Token);
@@ -87,7 +90,7 @@ namespace SkyCoop
 
         public static void SaveConfig()
         {
-            if (!Connected)
+            if (!Ready)
                 return;
             try
             { 
@@ -113,13 +116,20 @@ namespace SkyCoop
 
         private static Task _client_Ready()
         {
-            Connected = true;
+            Ready = true;
 
             if (Program.ServerGettingError)
             {
                 Task.Run(ServerError);
                 Program.ServerGettingError = false;
             }
+
+            return Task.CompletedTask;
+        }
+
+        private static Task _client_Connected()
+        {
+            Connected = true;
 
             return Task.CompletedTask;
         }
@@ -133,7 +143,7 @@ namespace SkyCoop
 
         public static async Task ServerInfoUpdate(string serverName, int players, int maxPlayers, string serverIp, string serverVersion, bool recreate = false, bool online = true)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             CurrentMinuteToUpdateMessage++;
@@ -180,7 +190,7 @@ namespace SkyCoop
 
         public static async Task SendMessage(string Message)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -208,7 +218,7 @@ namespace SkyCoop
 
         public static async Task PlayerJoined(string PlayerName, int Players)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -236,7 +246,7 @@ namespace SkyCoop
 
         public static async Task PlayerLeave(string PlayerName, int Players)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -264,7 +274,7 @@ namespace SkyCoop
 
         public static async Task TodayStats(string Stats)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -292,7 +302,7 @@ namespace SkyCoop
 
         public static async Task CrashSiteSpawn(string Text)
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -319,7 +329,7 @@ namespace SkyCoop
         }
         public static async Task CrashSiteFound()
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -347,7 +357,7 @@ namespace SkyCoop
 
         public static async Task CrashSiteTimeOver()
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
@@ -374,7 +384,7 @@ namespace SkyCoop
         }
         public static async Task ServerError()
         {
-            if (!Connected)
+            if (!Ready || !Connected)
                 return;
 
             if (await _client.GetChannelAsync(FeedChannelId) is IMessageChannel chnl) //get channel
