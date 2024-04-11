@@ -156,7 +156,9 @@ namespace SkyCoop
                 if (!online)
                     onlineMsg = ":red_circle: Offline";
 
-                string messageTemplate = $"**{serverName}**\r\nCurrent status: {onlineMsg}\r\nCurrent players: {players}/{maxPlayers}\r\nServer IP address: `{serverIp}`\r\nMod version: **{serverVersion}**\r\nGame version: **2.01-2.02**\r\nLast update message: {DateTime.Now}";
+                string TimeStap = GetTimeStap();
+
+                string messageTemplate = $"**{serverName}**\r\nCurrent status: {onlineMsg}\r\nCurrent players: {players}/{maxPlayers}\r\nServer IP address: `{serverIp}`\r\nMod version: **{serverVersion}**\r\nGame version: **2.01-2.02**\r\nLast update message: {TimeStap}";
 
 
                 if (await _client.GetChannelAsync(InfoChannelId) is IMessageChannel chnl) //get channel
@@ -408,6 +410,13 @@ namespace SkyCoop
 
                 await chnl.SendMessageAsync(embed: embed.Build());
             }
+        }
+
+        public static string GetTimeStap()
+        {
+            DateTime currentTime = DateTime.UtcNow;
+            long unixTime = ((DateTimeOffset)currentTime).ToUnixTimeSeconds();
+            return "<t:"+unixTime+ ":R>";
         }
     }
 }
