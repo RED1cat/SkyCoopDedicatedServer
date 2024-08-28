@@ -109,7 +109,10 @@ namespace GameServer
             ServerSend.SERVERCFG(_fromClient);
             ServerSend.ROPELIST(_fromClient);
             ServerSend.ALLSHELTERS(_fromClient);
-
+            foreach (ExpeditionManager.SpecialExpeditionItem item in ExpeditionManager.m_SpecialItems)
+            {
+                ServerSend.REGISTERSPEICALITEM(item, _fromClient);
+            }
 #if (!DEDICATED)
             if (!MyMod.DedicatedServerAppMode)
             {
@@ -1260,6 +1263,8 @@ namespace GameServer
                 ServerSend.LOADINGSCENEDROPSDONE(_fromClient, true);
             }
 
+            ExpeditionManager.MaySpawnSpeicalExpeditionItem(_fromClient, Scene);
+
             Shared.RemoveLoadingClient(_fromClient);
 
             if (MyMod.playersData[_fromClient].m_FirstBoot)
@@ -1895,6 +1900,15 @@ namespace GameServer
         {
             MPStats.ExpeditionsProgressData Data = MPStats.GetExpeditionsProgress(Server.GetMACByID(_fromClient));
             ServerSend.REQUESTEXPEDITIONSPROGRESS(_fromClient, Data);
+        }
+        public static void REQUESTSPECIALITEMS(int _fromClient, Packet _packet)
+        {
+            ServerSend.REQUESTSPECIALITEMS(ExpeditionManager.GetAllSpeicalItemsOfPlayer(Server.GetMACByID(_fromClient)), _fromClient);
+        }
+        public static void PICKUPSPECAILITEM(int _fromClient, Packet _packet)
+        {
+            string Item = _packet.ReadString();
+            ExpeditionManager.GivePlayerSpeicalItem(_fromClient, Item);
         }
     }
 }

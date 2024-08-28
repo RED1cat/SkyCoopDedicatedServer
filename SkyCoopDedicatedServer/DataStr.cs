@@ -756,8 +756,11 @@ namespace SkyCoop
             {
                 if(Index <= m_Slices.Length - 1)
                 {
+                    if (string.IsNullOrEmpty(m_Slices[Index]))
+                    {
+                        m_SlicesGot++;
+                    }
                     m_Slices[Index] = Slice;
-                    m_SlicesGot++;
                 }
             }
 

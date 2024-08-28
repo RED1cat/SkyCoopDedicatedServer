@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using GameServer;
 using System.Security.Policy;
@@ -28,26 +29,65 @@ namespace SkyCoop
         public static List<ExpeditionInvite> m_Invites = new List<ExpeditionInvite>();
         public static int NextCrashSiteIn = 3600 *2;
         public static bool Debug = true;
-        public static List<ExpeditionClue> m_Clues = new List<ExpeditionClue>();
-        public static float m_ClueChance = 0.05f;
+        public static List<SpecialExpeditionItem> m_SpecialItems = new List<SpecialExpeditionItem>();
+        public static Dictionary<string, List<string>> m_SpecialItemsOwners = new Dictionary<string, List<string>>();
+
+        public static SpecialExpeditionItem GetSpecialItem(string ReferenceName)
+        {
+            for (int i = 0; i < m_SpecialItems.Count; i++)
+            {
+                SpecialExpeditionItem Item = m_SpecialItems[i];
+                if (Item.m_GearReferenceName == ReferenceName)
+                {
+                    return Item;
+                }
+            }
+            return null;
+        }
+
+        public static void AddSpecialItem(string JSONString)
+        {
+            JSONString = MPSaveManager.VectorsFixUp(JSONString);
+            AddSpecialItem(JSON.Load(JSONString).Make<SpecialExpeditionItem>());
+        }
+        public static void AddSpecialItem(SpecialExpeditionItem NewItem)
+        {
+            if (GetSpecialItem(NewItem.m_GearReferenceName) == null)
+            {
+                m_SpecialItems.Add(NewItem);
+            }
+            Log("Registered Special Expedition Item "+ NewItem.m_GearReferenceName);
+        }
 
         public static void InitClues()
         {
-            m_Clues.Clear();
+            m_SpecialItems.Clear();
 
-            m_Clues.Add(new ExpeditionClue("GEAR_SCHopeless","Mountian Crash", "HopelessRescueCrashSite"));
-            //m_Clues.Add(new ExpeditionClue("GEAR_SCCacheNote#-1", "Mystery Lake Cache", "HopelessRescueCrashSite"));
+
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods");
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates");
+            MPSaveManager.CreateFolderIfNotExist(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates" + MPSaveManager.GetSeparator() + "SpecialGears");
+
+            DirectoryInfo d = new DirectoryInfo(MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates" + MPSaveManager.GetSeparator() + "SpecialGears");
+            FileInfo[] Files = d.GetFiles("*.json");
+            foreach (FileInfo file in Files)
+            {
+                byte[] FileData = File.ReadAllBytes(file.FullName);
+
+                string JSONString = UTF8Encoding.UTF8.GetString(FileData);
+                if (string.IsNullOrEmpty(JSONString))
+                {
+                    continue;
+                }
+                AddSpecialItem(JSONString);
+            }
         }
-        public static bool IsClueGear(string GearName, int ID = 0)
+        public static bool IsClueGear(string GearName)
         {
             string SearchName = GearName.ToLower();
-            if (ID != 0)
+            foreach (SpecialExpeditionItem SpecailItem in m_SpecialItems)
             {
-                SearchName = GearName.ToLower() + "#"+ID;
-            }
-            foreach (ExpeditionClue Clue in m_Clues)
-            {
-                if(SearchName == Clue.m_ExpeditionItem.ToLower())
+                if(SearchName == SpecailItem.m_GearReferenceName.ToLower())
                 {
                     return true;
                 }
@@ -62,6 +102,7 @@ namespace SkyCoop
             public string m_UnavailableGearSpawners = "";
             public string m_GearSpawnerGears = "";
             public int NextCrashSiteIn = 3600 * 2;
+            public Dictionary<string, List<string>> m_SpecialItemsOwners = new Dictionary<string, List<string>>();
         }
 
         public static string Save()
@@ -76,11 +117,13 @@ namespace SkyCoop
             Data.m_UnavailableGearSpawners = JSON.Dump(m_UnavailableGearSpawners);
             Data.m_GearSpawnerGears = JSON.Dump(m_GearSpawnerGears);
             Data.NextCrashSiteIn = NextCrashSiteIn;
+            Data.m_SpecialItemsOwners = m_SpecialItemsOwners;
             return JSON.Dump(Data);
         }
 
         public static void Load(string JSONString)
         {
+            ApplyWorldEdits();
             if (string.IsNullOrEmpty(JSONString))
             {
                 return;
@@ -131,6 +174,11 @@ namespace SkyCoop
             {
                 m_GearSpawnerGears = JSON.Load(Data.m_GearSpawnerGears).Make<Dictionary<int, string>>();
             }
+            if (Data.m_SpecialItemsOwners != null)
+            {
+                m_SpecialItemsOwners = Data.m_SpecialItemsOwners;
+            }
+
             NextCrashSiteIn = Data.NextCrashSiteIn;
         }
 
@@ -190,18 +238,21 @@ namespace SkyCoop
             public string m_InviterName = "";
             public int m_Timeout = 60;
         }
-        public class ExpeditionClue
+        public class SpecialExpeditionItem
         {
-            public string m_ExpeditionItem = "";
-            public string m_ExpeditionName = "";
+            public string m_GearReferenceName = "";
+
+            public string m_GearName = "";
+            public string m_GearDescription = "";
+            
             public string m_ExpeditionAlias = "";
 
-            public ExpeditionClue(string GearName, string DisplayName, string Alias)
-            {
-                m_ExpeditionItem = GearName;
-                m_ExpeditionName = DisplayName;
-                m_ExpeditionAlias = Alias;
-            }
+            public string m_ModelPrefab = "";
+            public string m_GearIcon = "";
+
+            public Vector3 m_Position = new Vector3(0, 0, 0);
+            public Quaternion m_Rotation = new Quaternion(0, 0, 0, 0);
+            public string m_Scene = "";
         }
         public static Expedition GetExpeditionByGUID(string GUID)
         {
@@ -1134,6 +1185,125 @@ namespace SkyCoop
             }
         }
 
+        public static void SpawnObjectsFromSpawners( List<UniversalSyncableObjectSpawner> m_ObjectSpawners, string m_ExpeditionGUID, string m_Scene, bool AddContainersLoot, ExpeditionTask Task = null)
+        {
+            if (m_ObjectSpawners.Count > 0)
+            {
+                foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
+                {
+                    if (Spawner.m_Prefab == "Expedition3DAudioEvent" || Spawner.m_Prefab == "Expedition2DAudioEvent" || Spawner.m_Prefab == "ExpeditionAudioEvent")
+                    {
+                        if (Spawner.m_Prefab == "ExpeditionAudioEvent")
+                        {
+                            Expedition exp = GetExpeditionByGUID(m_ExpeditionGUID);
+                            if (exp != null)
+                            {
+                                List<int> Players = exp.GetExpeditionPlayersIDs(true);
+                                foreach (int PlayerID in Players)
+                                {
+#if (!DEDICATED)
+                                    if (PlayerID == 0)
+                                    {
+                                        MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
+                                    } else
+                                    {
+                                        ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
+                                    }
+#else
+                                    ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
+#endif
+                                }
+                            }
+                            continue;
+                        }
+#if (!DEDICATED)
+                        if (MyMod.level_guid == m_Scene)
+                        {
+                            MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
+                        }
+#endif
+                        ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, m_Scene);
+                        continue;
+                    }
+
+                    if (Spawner.m_Prefab == "RockCache")
+                    {
+                        FakeRockCacheVisualData FRCVD = new FakeRockCacheVisualData();
+                        FRCVD.m_GUID = Spawner.m_GUID;
+                        FRCVD.m_Position = Spawner.m_Position;
+                        FRCVD.m_Rotation = Spawner.m_Rotation;
+                        FRCVD.m_Owner = "Unknown";
+#if (!DEDICATED)
+                        if (MyMod.level_guid == m_Scene)
+                        {
+                            MyMod.AddRockCache(FRCVD);
+                        }
+#endif
+                        MPSaveManager.AddRockCach(FRCVD, 0);
+                        MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
+                        continue;
+                    }
+                    UniversalSyncableObject Obj = new UniversalSyncableObject();
+                    Obj.m_Prefab = Spawner.m_Prefab;
+                    Obj.m_GUID = Spawner.m_GUID;
+                    Obj.m_Position = Spawner.m_Position;
+                    Obj.m_Rotation = Spawner.m_Rotation;
+
+                    Obj.m_ExpeditionBelong = m_ExpeditionGUID;
+                    Obj.m_Scene = m_Scene;
+                    Obj.m_CreationTime = MyMod.MinutesFromStartServer;
+                    Obj.m_RemoveTime = 0;
+                    Obj.m_InteractiveData = Spawner.m_InteractiveData;
+                    Obj.m_ObjectGroup = Spawner.m_ObjectGroup;
+
+                    if (Obj.m_Prefab == "ExpeditionInteractive")
+                    {
+                        if (Task != null)
+                        {
+                            if (Obj.m_InteractiveData.m_Impact == ExpeditionInteractiveImpact.EVERY)
+                            {
+                                Task.m_RequiredInteractionsEvery.Add(Obj.m_GUID, false);
+                                Task.m_RequiredInteractionsEveryDone = false;
+                            } else if (Obj.m_InteractiveData.m_Impact == ExpeditionInteractiveImpact.ONEOF)
+                            {
+                                Task.m_RequiredInteractionsAny.Add(Obj.m_GUID);
+                                Task.m_RequiredInteractionsAnyDone = false;
+                            }
+                        }
+                    }
+                    // Add
+                    MPSaveManager.AddUniversalSyncableObject(Obj);
+                    if (AddContainersLoot)
+                    {
+                        // Wipe previous data.
+                        MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID);
+                        for (int i = 1; i < 10; i++)
+                        {
+                            MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID + i);
+                        }
+                        // Add new loot
+                        if (!string.IsNullOrEmpty(Spawner.m_Content))
+                        {
+                            MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
+                            MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 1, true);
+                        } else
+                        {
+                            MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 2, true);
+                        }
+                    }
+
+                    // Spawn and sync
+#if (!DEDICATED)
+                    if (MyMod.level_guid == m_Scene)
+                    {
+                        MyMod.SpawnUniversalSyncableObject(Obj);
+                    }
+#endif
+                    ServerSend.ADDUNIVERSALSYNCABLE(Obj);
+                }
+            }
+        }
+
         public class ExpeditionTask
         {
             public ExpeditionTaskType m_Type = ExpeditionTaskType.ENTERSCENE;
@@ -1211,114 +1381,7 @@ namespace SkyCoop
                 if (!m_ObjectsSpawned)
                 {
                     DebugLog("Task " + m_Alias + " SpawnObjects");
-                    if (m_ObjectSpawners.Count > 0)
-                    {
-                        foreach (UniversalSyncableObjectSpawner Spawner in m_ObjectSpawners)
-                        {
-                            if(Spawner.m_Prefab == "Expedition3DAudioEvent" || Spawner.m_Prefab == "Expedition2DAudioEvent" || Spawner.m_Prefab == "ExpeditionAudioEvent")
-                            {
-                                if (Spawner.m_Prefab == "ExpeditionAudioEvent")
-                                {
-                                    Expedition exp = GetExpeditionByGUID(m_ExpeditionGUID);
-                                    if (exp != null)
-                                    {
-                                        List<int> Players = exp.GetExpeditionPlayersIDs(true);
-                                        foreach (int PlayerID in Players)
-                                        {
-#if (!DEDICATED)                                            
-                                            if (PlayerID == 0)
-                                            {
-                                                MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
-                                            } else
-                                            {
-                                                ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
-                                            }
-#else
-                                            ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, PlayerID);
-#endif
-                                        }
-                                    }
-                                    continue;
-                                }
-#if (!DEDICATED)
-                                if (MyMod.level_guid == m_Scene)
-                                {
-                                    MyMod.PlayCustomSoundEvent(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab);
-                                }
-#endif
-                                ServerSend.CUSTOMSOUNDEVENT(Spawner.m_Position, Spawner.m_Content, Spawner.m_Prefab, m_Scene);
-                                continue;
-                            }
-
-                            if(Spawner.m_Prefab == "RockCache")
-                            {
-                                FakeRockCacheVisualData FRCVD = new FakeRockCacheVisualData();
-                                FRCVD.m_GUID = Spawner.m_GUID;
-                                FRCVD.m_Position = Spawner.m_Position;
-                                FRCVD.m_Rotation = Spawner.m_Rotation;
-                                FRCVD.m_Owner = "Unknown";
-#if (!DEDICATED)
-                                if (MyMod.level_guid == m_Scene)
-                                {
-                                    MyMod.AddRockCache(FRCVD);
-                                }
-#endif
-                                MPSaveManager.AddRockCach(FRCVD, 0);
-                                MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
-                                continue;
-                            }
-                            UniversalSyncableObject Obj = new UniversalSyncableObject();
-                            Obj.m_Prefab = Spawner.m_Prefab;
-                            Obj.m_GUID = Spawner.m_GUID;
-                            Obj.m_Position = Spawner.m_Position;
-                            Obj.m_Rotation = Spawner.m_Rotation;
-
-                            Obj.m_ExpeditionBelong = m_ExpeditionGUID;
-                            Obj.m_Scene = m_Scene;
-                            Obj.m_CreationTime = MyMod.MinutesFromStartServer;
-                            Obj.m_RemoveTime = 0;
-                            Obj.m_InteractiveData = Spawner.m_InteractiveData;
-                            Obj.m_ObjectGroup = Spawner.m_ObjectGroup;
-
-                            if(Obj.m_Prefab == "ExpeditionInteractive")
-                            {
-                                if (Obj.m_InteractiveData.m_Impact == ExpeditionInteractiveImpact.EVERY)
-                                {
-                                    m_RequiredInteractionsEvery.Add(Obj.m_GUID, false);
-                                    m_RequiredInteractionsEveryDone = false;
-                                } else if (Obj.m_InteractiveData.m_Impact == ExpeditionInteractiveImpact.ONEOF)
-                                {
-                                    m_RequiredInteractionsAny.Add(Obj.m_GUID);
-                                    m_RequiredInteractionsAnyDone = false;
-                                }
-                            }
-                            // Add
-                            MPSaveManager.AddUniversalSyncableObject(Obj);
-                            // Wipe previous data.
-                            MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID);
-                            for (int i = 1; i < 10; i++)
-                            {
-                                MPSaveManager.RemoveContainer(m_Scene, Spawner.m_GUID + i);
-                            }
-                            // Add new loot
-                            if (!string.IsNullOrEmpty(Spawner.m_Content))
-                            {
-                                MPSaveManager.SaveContainer(m_Scene, Spawner.m_GUID, Spawner.m_Content);
-                                MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 1, true);
-                            } else
-                            {
-                                MPSaveManager.SetConstainerState(m_Scene, Spawner.m_GUID, 2, true);
-                            }
-                            // Spawn and sync
-#if (!DEDICATED)
-                            if (MyMod.level_guid == m_Scene)
-                            {
-                                MyMod.SpawnUniversalSyncableObject(Obj);
-                            }
-#endif
-                            ServerSend.ADDUNIVERSALSYNCABLE(Obj);
-                        }
-                    }
+                    SpawnObjectsFromSpawners(m_ObjectSpawners, m_ExpeditionGUID, m_Scene, true, this);
                 }
                 m_ObjectsSpawned = true;
             }
@@ -1732,6 +1795,15 @@ namespace SkyCoop
                 }
             }
         }
+        public static void ApplyWorldEdits()
+        {
+            List<string> WorldEdits = GetWorldEdits();
+            foreach (string Alias in WorldEdits)
+            {
+                ExpeditionTaskTemplate TaksTemp = JSON.Load(GetExpeditionJsonByAlias(Alias)).Make<ExpeditionTaskTemplate>();
+                SpawnObjectsFromSpawners(TaksTemp.m_Objects, "WorldEdit", TaksTemp.m_SceneName, false);
+            }
+        }
 
         public static void RemoveObjectGroup(string group)
         {
@@ -1751,6 +1823,85 @@ namespace SkyCoop
 #endif
                     }
                 }
+            }
+        }
+
+        public static List<string> GetAllSpeicalItemsOfPlayer(string MAC)
+        {
+            List<string> Belongings = new List<string>();
+            if (m_SpecialItemsOwners.TryGetValue(MAC, out Belongings))
+            {
+                return Belongings;
+            }
+            return new List<string>();
+        }
+
+        public static bool PlayerHasSpecialItem(string MAC, string Item)
+        {
+            List<string> Belongings = GetAllSpeicalItemsOfPlayer(MAC);
+            foreach (string CheckItem in Belongings)
+            {
+                if (CheckItem == Item)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool PlayerCanRequestSepcialExpedition(string MAC, string ExpeditionName)
+        {
+            foreach (SpecialExpeditionItem item in m_SpecialItems)
+            {
+                if(item.m_ExpeditionAlias == ExpeditionName)
+                {
+                    return PlayerHasSpecialItem(MAC, item.m_GearReferenceName);
+                }
+            }
+            return false;
+        }
+
+        public static void MaySpawnSpeicalExpeditionItem(int ClientID, string Scene)
+        {
+            foreach (SpecialExpeditionItem item in m_SpecialItems)
+            {
+                if(item.m_Scene == Scene)
+                {
+                    if (PlayerHasSpecialItem(Server.GetMACByID(ClientID), item.m_GearReferenceName) == false)
+                    {
+                        DroppedGearItemDataPacket Data = new DroppedGearItemDataPacket();
+                        Data.m_Position = item.m_Position;
+                        Data.m_Rotation = item.m_Rotation;
+                        Data.m_LevelGUID = item.m_Scene;
+                        Data.m_Extra.m_GearName = item.m_ModelPrefab;
+                        Data.m_Extra.m_Variant = -2;
+                        Data.m_Extra.m_ExpeditionNote = item.m_GearName;
+                        Data.m_Extra.m_PhotoGUID = item.m_GearReferenceName;
+                        if (ClientID == 0)
+                        {
+#if (!DEDICATED)
+                            MyMod.FakeDropItem(-1, Data.m_Position, Data.m_Rotation, 0, Data.m_Extra);
+#endif
+                        } else
+                        {
+                            ServerSend.DROPITEM(0, Data, false, ClientID);
+                        }
+                        
+                        Log("Created special item "+ item.m_GearName + " for client "+ ClientID);
+                    }
+                }
+            }
+        }
+
+        public static void GivePlayerSpeicalItem(int ClientID, string Item)
+        {
+            string MAC = Server.GetMACByID(ClientID);
+            if(m_SpecialItemsOwners.ContainsKey(MAC))
+            {
+                m_SpecialItemsOwners[MAC].Add(Item);
+            } else
+            {
+                m_SpecialItemsOwners.Add(MAC, new List<string>() { Item });
             }
         }
     }

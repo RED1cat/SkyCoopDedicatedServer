@@ -511,10 +511,7 @@ namespace SkyCoop
             {
                 UniversalSyncableObjects = JSON.Load(UniversalSyncablesJSON).Make<Dictionary<string, Dictionary<string, UniversalSyncableObject>>>();
             }
-            if (!string.IsNullOrEmpty(ExpeditionManagerJSON))
-            {
-                ExpeditionManager.Load(ExpeditionManagerJSON);
-            }
+            ExpeditionManager.Load(ExpeditionManagerJSON);
         }
 
         public static string GenerateSeededGUID(int gameSeed, Vector3 v3)
@@ -1967,6 +1964,16 @@ namespace SkyCoop
 
             SaveData(GUID, Base64, 0, GetPathForName(SaveFolder + GetSeparator() + GUID, SaveSeed));
             return GUID;
+        }
+
+        public static void AddSpecialItem(string JSON, string Name)
+        {
+            int SaveSeed = GetSeed();
+            string SaveFolder = "SpecialItems";
+
+            CreateFolderIfNotExist(GetPathForName(SaveFolder, SaveSeed));
+
+            SaveData(Name, JSON, 0, GetPathForName(SaveFolder + GetSeparator() + Name, SaveSeed));
         }
 
         public static void CopyPhotoToExpeditionCache(string GUID)

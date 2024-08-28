@@ -2565,5 +2565,21 @@ namespace GameServer
                 SendUDPData(ForClient, _packet);
             }
         }
+        public static void REGISTERSPEICALITEM(ExpeditionManager.SpecialExpeditionItem Item, int OnlyFor)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.REGISTERSPEICALITEM))
+            {
+                _packet.Write(Item);
+                SendUDPData(OnlyFor, _packet);
+            }
+        }
+        public static void REQUESTSPECIALITEMS(List<string> Items, int OnlyFor)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.REQUESTSPECIALITEMS))
+            {
+                _packet.Write(Items);
+                SendUDPData(OnlyFor, _packet);
+            }
+        }
     }
 }

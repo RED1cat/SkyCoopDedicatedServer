@@ -10,7 +10,6 @@ using static SkyCoop.DataStr;
 using System.Net.NetworkInformation;
 using static SkyCoop.ExpeditionBuilder;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 #if (!DEDICATED)
 using UnityEngine;
 using MelonLoader;
@@ -1534,6 +1533,14 @@ namespace SkyCoop
             {
                 SendChatCommandToHost(Command);
                 return true;
+            } else if (Command == "!refman")
+            {
+                SanityManager.SpawnRefMan();
+                return true;
+            } else if (Command.Contains("refman") && Command.Contains("ref man") && Command.Contains("oscar"))
+            {
+                SanityManager.MaySpawnRefMan(0.1f);
+                return false;
             } else if (Command.StartsWith("!spawn "))
             {
                 if (Supporters.MyID == "76561198152259224" || Supporters.MyID == "76561198867520214")
@@ -2628,10 +2635,7 @@ namespace SkyCoop
                 MPSaveManager.SaveGlobalData();
                 MPSaveManager.SaveRecentStuff();
                 MPStats.SaveRecentStuff();
-#if DEDICATED
-                DiscordManager.SaveConfig();
-#endif
-
+                
                 return "Manual saving done!";
             } else if (Low == "today" || Low == "showstats" || Low == "stats" || Low == "statistics" || Low == "statistic")
             {
@@ -3271,7 +3275,7 @@ namespace SkyCoop
         {
 #if (DEDICATED)
             int Players = GetPlayersOnServer();
-            Task.Run(() => DiscordManager.PlayerJoined(PlayerName, Players));
+            DiscordManager.PlayerJoined(PlayerName, Players);
 #endif
         }
         public static void WebhookPlayerLeave(string PlayerName)
@@ -3282,27 +3286,27 @@ namespace SkyCoop
             }
 #if (DEDICATED)
             int Players = GetPlayersOnServer();
-            Task.Run(() => DiscordManager.PlayerLeave(PlayerName, Players));
+            DiscordManager.PlayerLeave(PlayerName, Players);
 #endif
         }
 
         public static void WebhookCrashSiteSpawn(string Text)
         {
 #if (DEDICATED)
-            Task.Run(() => DiscordManager.CrashSiteSpawn(Text));
+            DiscordManager.CrashSiteSpawn(Text);
 #endif
         }
         public static void WebhookCrashSiteFound()
         {
 #if (DEDICATED)
-            Task.Run(() => DiscordManager.CrashSiteFound());
+            DiscordManager.CrashSiteFound();
 #endif
         }
 
         public static void WebhookCrashSiteTimeOver()
         {
 #if (DEDICATED)
-            Task.Run(() => DiscordManager.CrashSiteTimeOver());
+            DiscordManager.CrashSiteTimeOver();
 #endif
         }
 

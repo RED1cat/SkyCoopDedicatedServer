@@ -128,6 +128,36 @@ namespace SkyCoop
             Initilized = true;
         }
 
+        public static List<string> GetWorldEdits()
+        {
+            List<string> WorldEdits = new List<string>();
+            if (Directory.Exists(MPSaveManager.GetBaseDirectory() + "Mods"))
+            {
+                string ExpeditionFolder = MPSaveManager.GetBaseDirectory() + "Mods" + MPSaveManager.GetSeparator() + "ExpeditionTemplates";
+
+                if (Directory.Exists(ExpeditionFolder))
+                {
+                    DirectoryInfo d = new DirectoryInfo(ExpeditionFolder);
+                    FileInfo[] Files = d.GetFiles("*.json");
+                    foreach (FileInfo file in Files)
+                    {
+                        if (!file.Name.StartsWith("WorldEdit"))
+                        {
+                            continue;
+                        }
+                        byte[] FileData = File.ReadAllBytes(file.FullName);
+                        string JSONString = UTF8Encoding.UTF8.GetString(FileData);
+                        if (string.IsNullOrEmpty(JSONString))
+                        {
+                            continue;
+                        }
+                        WorldEdits.Add(file.Name.Replace(".json", ""));
+                    }
+                }
+            }
+            return WorldEdits;
+        }
+
         public static string GetRandomCrashSiteName(int Index = -1)
         {
             List<string> CrashSites = new List<string>();

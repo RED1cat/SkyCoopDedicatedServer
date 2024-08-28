@@ -447,6 +447,8 @@ namespace GameServer
                 { (int)ClientPackets.INTERACTIONDONE, ServerHandle.INTERACTIONDONE},
                 { (int)ClientPackets.REMOVEOBJECTGROUP, ServerHandle.REMOVEOBJECTGROUP},
                 { (int)ClientPackets.REQUESTSPECIALEXPEDITION, ServerHandle.REQUESTSPECIALEXPEDITION},
+                { (int)ClientPackets.PICKUPSPECAILITEM, ServerHandle.PICKUPSPECAILITEM},
+                { (int)ClientPackets.REQUESTSPECIALITEMS, ServerHandle.REQUESTSPECIALITEMS},
             };
             Log("Initialized packets.");
         }

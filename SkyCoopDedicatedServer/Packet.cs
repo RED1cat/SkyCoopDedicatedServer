@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using SkyCoop;
 using static SkyCoop.DataStr;
+using static SkyCoop.ExpeditionManager;
 #if (DEDICATED)
 using System.Numerics;
 #else
@@ -199,6 +200,9 @@ namespace GameServer
         REQUESTSPECIALEXPEDITION,
         REQUESTSPHOTOAGAIN,
         REQUESTEXPEDITIONSPROGRESS,
+        REGISTERSPEICALITEM,
+        REQUESTSPECIALITEMS,
+        PICKUPSPECAILITEM,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -387,6 +391,9 @@ namespace GameServer
         REQUESTSPECIALEXPEDITION,
         REQUESTSPHOTOAGAIN,
         REQUESTEXPEDITIONSPROGRESS,
+        REGISTERSPEICALITEM,
+        REQUESTSPECIALITEMS,
+        PICKUPSPECAILITEM,
     }
 
     public class Packet : IDisposable
@@ -1760,6 +1767,34 @@ namespace GameServer
             obj.m_InteractiveData = ReadInteractiveData();
             return obj;
         }
+        public void Write(SpecialExpeditionItem obj)
+        {
+            Write(obj.m_GearReferenceName);
+            WriteUnicodeString(obj.m_GearName);
+            WriteUnicodeString(obj.m_GearDescription);
+            Write(obj.m_ExpeditionAlias);
+            Write(obj.m_ModelPrefab);
+            Write(obj.m_GearIcon);
+            Write(obj.m_Position);
+            Write(obj.m_Rotation);
+            Write(obj.m_Scene);
+        }
+
+        public SpecialExpeditionItem ReadSpecialExpeditionItem()
+        {
+            SpecialExpeditionItem obj = new SpecialExpeditionItem();
+            obj.m_GearReferenceName = ReadString();
+            obj.m_GearName = ReadUnicodeString();
+            obj.m_GearDescription = ReadUnicodeString();
+            obj.m_ExpeditionAlias = ReadString();
+            obj.m_ModelPrefab = ReadString();
+            obj.m_GearIcon = ReadString();
+            obj.m_Position = ReadVector3();
+            obj.m_Rotation = ReadQuaternion();
+            obj.m_Scene = ReadString();
+            return obj;
+        }
+
 
         private bool disposed = false;
 
