@@ -13,7 +13,7 @@ namespace SkyCoop
             public const string Description = "Multiplayer mod";
             public const string Author = "Filigrani & REDcat";
             public const string Company = null;
-            public const string Version = "0.13.0";
+            public const string Version = "0.13.1";
             public const string DownloadLink = null;
             public const int RandomGenVersion = 5;
         }
