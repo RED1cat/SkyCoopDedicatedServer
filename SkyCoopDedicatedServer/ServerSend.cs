@@ -2581,5 +2581,14 @@ namespace GameServer
                 SendUDPData(OnlyFor, _packet);
             }
         }
+
+        public static void ANIMALSTOPSFEEDING(string GUID)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.ANIMALSTOPSFEEDING))
+            {
+                _packet.Write(GUID);
+                SendUDPDataToAll(_packet);
+            }
+        }
     }
 }

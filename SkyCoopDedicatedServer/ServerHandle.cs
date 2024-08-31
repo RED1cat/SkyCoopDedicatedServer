@@ -1910,5 +1910,20 @@ namespace GameServer
             string Item = _packet.ReadString();
             ExpeditionManager.GivePlayerSpeicalItem(_fromClient, Item);
         }
+
+        public static void ANIMALDESTORYGEAR(int _fromClient, Packet _packet)
+        {
+            int Hash = _packet.ReadInt();
+            string Scene = _packet.ReadString();
+            Log("Animal trying to destory gear " + Hash);
+            Shared.AnimalDestoryGear(Hash, Scene);
+        }
+
+        public static void ANIMALBITECORPSE(int _fromClient, Packet _packet)
+        {
+            string GUID = _packet.ReadString();
+            string GUID_FEEDING = _packet.ReadString();
+            Shared.OnAnimalCorpseChanged(GUID, 0.016f, 0, 0, GUID_FEEDING);
+        }
     }
 }

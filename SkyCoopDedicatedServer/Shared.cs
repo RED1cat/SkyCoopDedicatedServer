@@ -1311,6 +1311,22 @@ namespace SkyCoop
             }
         }
 
+        public static void AnimalDestoryGear(int Hash, string Scene)
+        {
+            ServerSend.PICKDROPPEDGEAR(-1, Hash, true);
+#if (!DEDICATED)
+            GameObject gearObj;
+            MyMod.DroppedGearsObjs.TryGetValue(Hash, out gearObj);
+            if (gearObj != null)
+            {
+                MyMod.DroppedGearsObjs.Remove(Hash);
+                MyMod.TrackableDroppedGearsObjs.Remove(Hash);
+                UnityEngine.Object.Destroy(gearObj);
+            }
+#endif
+            MPSaveManager.RequestSpecificGear(Hash, Scene, true);
+        }
+
         public static void ClientTryPickupItem(int Hash, int sendTo, string Scene, bool place)
         {
             ServerSend.PICKDROPPEDGEAR(sendTo, Hash, true);
@@ -1537,9 +1553,17 @@ namespace SkyCoop
             {
                 SanityManager.SpawnRefMan();
                 return true;
-            } else if (Command.Contains("refman") && Command.Contains("ref man") && Command.Contains("oscar"))
+            } else if (Command.Contains("refman") 
+                || Command.Contains("ref man") 
+                || Command.Contains("oscar")
+                || Command.Contains("vendigo")
+                || (Command.Contains("white") && Command.Contains("man"))
+                || (Command.Contains("белый") && Command.Contains("мужик"))
+                || Command.Contains("вендиго")
+                || Command.Contains("вендизель")
+                || (Command.Contains("сервак") && Command.Contains("говно")))
             {
-                SanityManager.MaySpawnRefMan(0.1f);
+                SanityManager.MaySpawnRefMan(0.35f);
                 return false;
             } else if (Command.StartsWith("!spawn "))
             {
@@ -2005,7 +2029,7 @@ namespace SkyCoop
             return (float)val;
         }
 
-        public static void OnAnimalCorpseChanged(string GUID, float MeatTaken, int GutsTaken, int HideTaken)
+        public static void OnAnimalCorpseChanged(string GUID, float MeatTaken, int GutsTaken, int HideTaken, string Feeding = "")
         {
             DataStr.AnimalKilled Animal;
             if (AnimalsKilled.TryGetValue(GUID, out Animal))
@@ -2013,6 +2037,30 @@ namespace SkyCoop
                 Animal.m_Meat = Animal.m_Meat - MeatTaken;
                 Animal.m_Guts = Animal.m_Guts - GutsTaken;
                 Animal.m_Hide = Animal.m_Hide - HideTaken;
+
+                if (!string.IsNullOrEmpty(Feeding))
+                {
+                    if (Animal.m_Meat <= 0)
+                    {
+                        Animal.m_Meat = 0;
+                        Animal.m_Guts = 0;
+                        Animal.m_Hide = 0;
+                        ServerSend.ANIMALSTOPSFEEDING(Feeding);
+                        Log("Animal " + Feeding + " finished eating");
+#if (!DEDICATED)
+                        GameObject Obj = ObjectGuidManager.Lookup(Feeding);
+                        if (Obj == null)
+                        {
+                            BaseAi BI = Obj.GetComponent<BaseAi>();
+                            if (BI)
+                            {
+                                BI.m_TargetBodyHarvest = null;
+                            }
+                        }
+#endif
+                    }
+                }
+
                 AnimalsKilled.Remove(GUID);
                 AnimalsKilled.Add(GUID, Animal);
                 MPSaveManager.AnimalsKilledChanged = true;

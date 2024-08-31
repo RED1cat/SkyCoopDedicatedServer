@@ -203,6 +203,9 @@ namespace GameServer
         REGISTERSPEICALITEM,
         REQUESTSPECIALITEMS,
         PICKUPSPECAILITEM,
+        ANIMALDESTORYGEAR,
+        ANIMALBITECORPSE,
+        ANIMALSTOPSFEEDING,
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -394,6 +397,9 @@ namespace GameServer
         REGISTERSPEICALITEM,
         REQUESTSPECIALITEMS,
         PICKUPSPECAILITEM,
+        ANIMALDESTORYGEAR,
+        ANIMALBITECORPSE,
+        ANIMALSTOPSFEEDING,
     }
 
     public class Packet : IDisposable
