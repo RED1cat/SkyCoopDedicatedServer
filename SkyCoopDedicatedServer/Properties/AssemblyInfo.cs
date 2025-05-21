@@ -2,12 +2,12 @@
 using System.Runtime.InteropServices;
 
 
-[assembly: AssemblyTitle(SkyCoop.MyMod.BuildInfo.Description)]
-[assembly: AssemblyDescription(SkyCoop.MyMod.BuildInfo.Description)]
-[assembly: AssemblyCompany(SkyCoop.MyMod.BuildInfo.Company)]
-[assembly: AssemblyProduct(SkyCoop.MyMod.BuildInfo.Name)]
-[assembly: AssemblyCopyright("Created by " + SkyCoop.MyMod.BuildInfo.Author)]
-[assembly: AssemblyTrademark(SkyCoop.MyMod.BuildInfo.Company)]
+[assembly: AssemblyTitle("Multiplayer mod")]
+[assembly: AssemblyDescription("Multiplayer mod")]
+[assembly: AssemblyCompany("Shakal Company")]
+[assembly: AssemblyProduct("Sky Co-op Dedicated Server")]
+[assembly: AssemblyCopyright("Created by Filigrani & REDcat")]
+[assembly: AssemblyTrademark("Shakal Company")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion(SkyCoop.MyMod.BuildInfo.Version)]
-[assembly: AssemblyFileVersion(SkyCoop.MyMod.BuildInfo.Version)]
+[assembly: AssemblyVersion("1.0.0")]
+[assembly: AssemblyFileVersion("1.0.0")]
