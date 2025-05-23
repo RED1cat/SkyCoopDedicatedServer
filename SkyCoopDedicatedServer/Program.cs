@@ -42,9 +42,9 @@ namespace SkyCoopDedicatedServer
                 catch (Exception e)
                 {
                     Server.m_Instance.Stop();
-                    Server = null;
+                    Server.Dispose();
                     Ready = false;
-                    Log(ConsoleColor.Red, $"Server get error:\n{e.Message}");
+                    Log(ConsoleColor.Red, $"Server get error:\n{e.ToString()}");
                     Log(ConsoleColor.DarkRed, "Trying restart server");
 
                     Thread.Sleep(5000);
@@ -62,10 +62,14 @@ namespace SkyCoopDedicatedServer
                 {
                     switch (command)
                     {
+                        case "stop":
                         case "shutdown":
-                            Server.m_Instance.DisconnectAll();
-                            Server.m_Instance.Stop();
+                            Server.Dispose();
                             Environment.Exit(0);
+                            break;
+                        case "restart":
+                            Server.Dispose();
+                            Ready = false;
                             break;
                         default:
                             Console.WriteLine($"Unknown command: {command}");
