@@ -20,6 +20,8 @@ namespace SkyCoopDedicatedServer
                 {
                     if (!Ready)
                     {
+                        Thread.Sleep(5000);
+
                         Ready = true;
                         Server = new Server();
                         Server.StartServer();
@@ -43,11 +45,10 @@ namespace SkyCoopDedicatedServer
                 {
                     Server.m_Instance.Stop();
                     Server.Dispose();
+                    Server = null;
                     Ready = false;
                     Log(ConsoleColor.Red, $"Server get error:\n{e.ToString()}");
                     Log(ConsoleColor.DarkRed, "Trying restart server");
-
-                    Thread.Sleep(5000);
                 }
             }
         }
@@ -57,18 +58,22 @@ namespace SkyCoopDedicatedServer
             while (Ready) 
             {
                 string command = string.Empty;
-                command = Console.ReadLine();
+                command = Console.ReadLine().ToLower();
                 if (!string.IsNullOrEmpty(command))
                 {
                     switch (command)
                     {
+                        case "quit":
+                        case "exit":
                         case "stop":
                         case "shutdown":
                             Server.Dispose();
                             Environment.Exit(0);
                             break;
+                        case "reboot":
                         case "restart":
                             Server.Dispose();
+                            Server = null;
                             Ready = false;
                             break;
                         default:
