@@ -2,7 +2,12 @@
 using SkyCoopServer;
 using System.Threading.Tasks;
 using System.Threading;
+using Terminal.Gui.App;
+using Terminal.Gui.Views;
+using Terminal.Gui.ViewBase;
+using Terminal.Gui.Drivers;
 using static SkyCoopDedicatedServer.Logger;
+using LiteNetLib;
 
 namespace SkyCoopDedicatedServer
 {
@@ -10,11 +15,47 @@ namespace SkyCoopDedicatedServer
     {
         public static Server Server;
         public static bool Ready;
-        public static Task ConsoleTask;
+        public static Label TopInfoLabel;
+        public static Window TopWindow;
 
         public static void Main(string[] args)
         {
-            while (true) 
+            Window top = GuiInit();
+            Task.Run(ServerWorker);
+
+            Application.Run(top);
+        }
+
+        public static void ExecuteCommand(string cmd)
+        {
+            switch (cmd)
+            {
+                case "quit":
+                case "exit":
+                case "stop":
+                case "shutdown":
+                    if(Server != null)
+                        Server.Dispose();
+                    Ready = false;
+                    Application.Shutdown();
+                    Environment.Exit(0);
+                    break;
+                case "reboot":
+                case "restart":
+                    if(Server != null)
+                        Server.Dispose();
+                    Server = null;
+                    Ready = false;
+                    break;
+                default:
+                    Log($"Unknown command: {cmd}");
+                    break;
+            }
+        }
+
+        public static void ServerWorker()
+        {
+            while (true)
             {
                 try
                 {
@@ -25,7 +66,6 @@ namespace SkyCoopDedicatedServer
                         Ready = true;
                         Server = new Server();
                         Server.StartServer();
-                        ConsoleTask = Task.Factory.StartNew(ConsoleWork);
                     }
 
                     if (Ready)
@@ -38,6 +78,18 @@ namespace SkyCoopDedicatedServer
                             SkyCoopServer.Logger.Logsbuffer.Remove(log);
 
                             Log(log.m_Color, log.m_Message);
+                        }
+
+                        if(TopInfoLabel != null)
+                        {
+                            string statmsg = string.Empty;
+                            foreach (NetPeer peer in Server.m_Instance.ConnectedPeerList.ToArray())
+                            {
+                                DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
+                                statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
+                            }
+                            TopInfoLabel.Text = statmsg;
+                            TopWindow.Height = 2 + Server.m_Instance.ConnectedPeersCount;
                         }
                     }
                 }
@@ -53,35 +105,82 @@ namespace SkyCoopDedicatedServer
             }
         }
 
-        public static void ConsoleWork()
+        public static Window GuiInit()
         {
-            while (Ready) 
+            Application.Init();
+            Window top = new Window();
+
+            Window topWindow = new Window()
             {
-                string command = string.Empty;
-                command = Console.ReadLine().ToLower();
-                if (!string.IsNullOrEmpty(command))
+                Title = "Server Info",
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(), 
+                Height = 3
+            };
+            Label topInfoLabel = new Label()
+            {
+                X = 0,
+                Y = 0
+            };
+            topWindow.Add(topInfoLabel);
+
+            Window centerWindow = new Window()
+            {
+                Title = "Logs",
+                X = 0,
+                Y = Pos.Bottom(topWindow),
+                Width = Dim.Fill(),
+                Height = Dim.Fill() - 3
+            };
+            TextView centerTextView = new TextView()
+            {
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = Dim.Fill(),
+                ReadOnly = true,
+                WordWrap = true
+            };
+            centerWindow.Add(centerTextView);
+
+            FrameView bottomFrameView = new FrameView()
+            {
+                Title = "Input Command",
+                X = 0,
+                Y = Pos.Bottom(centerWindow),
+                Width = Dim.Fill(),
+                Height = 3
+            };
+            TextField bottomTextField = new TextField()
+            {
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill()
+            };
+            bottomFrameView.Add(bottomTextField);
+
+            bottomTextField.KeyDown += (sender, args) =>
+            {
+                if (args.KeyCode == KeyCode.Enter)
                 {
-                    switch (command)
+                    string cmd = bottomTextField.Text.ToString();
+                    if (!string.IsNullOrWhiteSpace(cmd))
                     {
-                        case "quit":
-                        case "exit":
-                        case "stop":
-                        case "shutdown":
-                            Server.Dispose();
-                            Environment.Exit(0);
-                            break;
-                        case "reboot":
-                        case "restart":
-                            Server.Dispose();
-                            Server = null;
-                            Ready = false;
-                            break;
-                        default:
-                            Console.WriteLine($"Unknown command: {command}");
-                            break;
+                        Log(cmd);
+                        ExecuteCommand(cmd);
                     }
+                    bottomTextField.Text = "";
+                    args.Handled = true;
                 }
-            }
+            };
+
+            top.Add(topWindow, centerWindow,  bottomFrameView);
+            LogView = centerTextView;
+            TopInfoLabel = topInfoLabel;
+            TopWindow = topWindow;
+
+            return top;
         }
     }
 }
