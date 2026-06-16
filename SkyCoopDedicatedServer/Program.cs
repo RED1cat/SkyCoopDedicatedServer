@@ -6,6 +6,7 @@ using Terminal.Gui.App;
 using Terminal.Gui.Views;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Drivers;
+using Terminal.Gui.Drawing;
 using static SkyCoopDedicatedServer.Logger;
 using LiteNetLib;
 
@@ -16,7 +17,7 @@ namespace SkyCoopDedicatedServer
         public static Server Server;
         public static bool Ready;
         public static Label TopInfoLabel;
-        public static Window TopWindow;
+        public static FrameView TopWindow;
 
         public static void Main(string[] args)
         {
@@ -66,6 +67,21 @@ namespace SkyCoopDedicatedServer
                         Ready = true;
                         Server = new Server();
                         Server.StartServer();
+
+                        Server.m_Listener.NetworkLatencyUpdateEvent += (NetPeer npeer, int latency) => 
+                        {
+                            if (TopInfoLabel != null)
+                            {
+                                string statmsg = string.Empty;
+                                foreach (NetPeer peer in Server.m_Instance.ConnectedPeerList.ToArray())
+                                {
+                                    DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
+                                    statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
+                                }
+                                TopInfoLabel.Text = statmsg;
+                                TopWindow.Height = 2 + Server.m_Instance.ConnectedPeersCount;
+                            }
+                        };
                     }
 
                     if (Ready)
@@ -78,18 +94,6 @@ namespace SkyCoopDedicatedServer
                             SkyCoopServer.Logger.Logsbuffer.Remove(log);
 
                             Log(log.m_Color, log.m_Message);
-                        }
-
-                        if(TopInfoLabel != null)
-                        {
-                            string statmsg = string.Empty;
-                            foreach (NetPeer peer in Server.m_Instance.ConnectedPeerList.ToArray())
-                            {
-                                DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
-                                statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
-                            }
-                            TopInfoLabel.Text = statmsg;
-                            TopWindow.Height = 2 + Server.m_Instance.ConnectedPeersCount;
                         }
                     }
                 }
@@ -109,8 +113,9 @@ namespace SkyCoopDedicatedServer
         {
             Application.Init();
             Window top = new Window();
+            top.SetScheme(new Scheme(new Terminal.Gui.Drawing.Attribute(Color.BrightBlue, Color.Black)));
 
-            Window topWindow = new Window()
+            FrameView topWindow = new FrameView()
             {
                 Title = "Server Info",
                 X = 0,
@@ -118,6 +123,7 @@ namespace SkyCoopDedicatedServer
                 Width = Dim.Fill(), 
                 Height = 3
             };
+
             Label topInfoLabel = new Label()
             {
                 X = 0,
@@ -125,7 +131,7 @@ namespace SkyCoopDedicatedServer
             };
             topWindow.Add(topInfoLabel);
 
-            Window centerWindow = new Window()
+            FrameView centerWindow = new FrameView()
             {
                 Title = "Logs",
                 X = 0,
@@ -133,6 +139,7 @@ namespace SkyCoopDedicatedServer
                 Width = Dim.Fill(),
                 Height = Dim.Fill() - 3
             };
+
             TextView centerTextView = new TextView()
             {
                 X = 0,
@@ -143,6 +150,7 @@ namespace SkyCoopDedicatedServer
                 WordWrap = true
             };
             centerWindow.Add(centerTextView);
+            
 
             FrameView bottomFrameView = new FrameView()
             {
@@ -174,7 +182,6 @@ namespace SkyCoopDedicatedServer
                     args.Handled = true;
                 }
             };
-
             top.Add(topWindow, centerWindow,  bottomFrameView);
             LogView = centerTextView;
             TopInfoLabel = topInfoLabel;
