@@ -30,5 +30,10 @@ namespace SkyCoopDedicatedServer
                 });
             }
         }
+
+        public static void HandleServerLog(SkyCoopServer.Logger.LogData Data)
+        {
+            Log(Data.m_Color, Data.m_Message);
+        }
     }
 }

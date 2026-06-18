@@ -22,6 +22,9 @@ namespace SkyCoopDedicatedServer
         public static void Main(string[] args)
         {
             Window top = GuiInit();
+
+            Server.OnLogEvent += Logger.HandleServerLog;
+
             Task.Run(ServerWorker);
 
             Application.Run(top);
@@ -87,14 +90,6 @@ namespace SkyCoopDedicatedServer
                     if (Ready)
                     {
                         Server.Update();
-
-                        if (SkyCoopServer.Logger.Logsbuffer.Count > 0)
-                        {
-                            SkyCoopServer.Logger.LogData log = SkyCoopServer.Logger.Logsbuffer[0];
-                            SkyCoopServer.Logger.Logsbuffer.Remove(log);
-
-                            Log(log.m_Color, log.m_Message);
-                        }
                     }
                 }
                 catch (Exception e)
