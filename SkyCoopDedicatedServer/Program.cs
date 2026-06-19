@@ -2,13 +2,18 @@
 using SkyCoopServer;
 using System.Threading.Tasks;
 using System.Threading;
+using static SkyCoopDedicatedServer.Logger;
+using LiteNetLib;
+using System.Collections.Generic;
+
+
+#if RELEASE
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Drivers;
 using Terminal.Gui.Drawing;
-using static SkyCoopDedicatedServer.Logger;
-using LiteNetLib;
+#endif
 
 namespace SkyCoopDedicatedServer
 {
@@ -16,18 +21,32 @@ namespace SkyCoopDedicatedServer
     {
         public static Server Server;
         public static bool Ready;
+
+#if RELEASE
         public static Label TopInfoLabel;
         public static FrameView TopWindow;
+#endif
 
         public static void Main(string[] args)
         {
+#if RELEASE
             Window top = GuiInit();
+#endif
 
             Server.OnLogEvent += Logger.HandleServerLog;
 
             Task.Run(ServerWorker);
 
+#if DEBUG
+            while (true)
+            {
+                string cmd = Console.ReadLine();
+                if(cmd != null)
+                    ExecuteCommand(cmd);
+            }
+#elif RELEASE
             Application.Run(top);
+#endif
         }
 
         public static void ExecuteCommand(string cmd)
@@ -38,21 +57,44 @@ namespace SkyCoopDedicatedServer
                 case "exit":
                 case "stop":
                 case "shutdown":
-                    if(Server != null)
+                    if (Server != null)
+                    {
                         Server.Dispose();
+                    }
                     Ready = false;
+#if RELEASE
                     Application.Shutdown();
+#endif
                     Environment.Exit(0);
                     break;
                 case "reboot":
                 case "restart":
-                    if(Server != null)
+                    if (Server != null)
+                    {
                         Server.Dispose();
+                    }
                     Server = null;
                     Ready = false;
                     break;
+                case "players":
+                    if(Server != null & Ready)
+                    {
+                        string statmsg = string.Empty;
+                        List<NetPeer> peers = new List<NetPeer>();
+                        Server.m_Instance.GetConnectedPeers(peers);
+                        foreach (NetPeer peer in peers.ToArray())
+                        {
+                            DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
+                            statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
+                        }
+                        Log($"Players info:\n{statmsg}");
+                    }
+                    break;
                 default:
-                    Log($"Unknown command: {cmd}");
+                    if (Server != null & Ready)
+                    {
+                        ServerHandle.ProcessCMD(Server, cmd);
+                    }
                     break;
             }
         }
@@ -71,12 +113,15 @@ namespace SkyCoopDedicatedServer
                         Server = new Server();
                         Server.StartServer();
 
+#if RELEASE
                         Server.m_Listener.NetworkLatencyUpdateEvent += (NetPeer npeer, int latency) => 
                         {
                             if (TopInfoLabel != null)
                             {
                                 string statmsg = string.Empty;
-                                foreach (NetPeer peer in Server.m_Instance.ConnectedPeerList.ToArray())
+                                List<NetPeer> peers = new List<NetPeer>();
+                                Server.m_Instance.GetConnectedPeers(peers);
+                                foreach (NetPeer peer in peers.ToArray())
                                 {
                                     DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
                                     statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
@@ -85,6 +130,7 @@ namespace SkyCoopDedicatedServer
                                 TopWindow.Height = 2 + Server.m_Instance.ConnectedPeersCount;
                             }
                         };
+#endif
                     }
 
                     if (Ready)
@@ -104,6 +150,7 @@ namespace SkyCoopDedicatedServer
             }
         }
 
+#if RELEASE
         public static Window GuiInit()
         {
             Application.Init();
@@ -184,5 +231,6 @@ namespace SkyCoopDedicatedServer
 
             return top;
         }
+#endif
     }
 }
