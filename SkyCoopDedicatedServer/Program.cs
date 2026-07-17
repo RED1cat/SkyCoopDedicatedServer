@@ -112,6 +112,14 @@ namespace SkyCoopDedicatedServer
                         {
                             Log(ConsoleColor.Red, $"Input NAME of the player! {cmd} NameOfPlayer");
                         }
+                        if (Args.Count >= 2)
+                        {
+                            Server.DisconnectPlayer(Args[0], Args[1].Replace('_', ' '));
+                        }
+                        else
+                        {
+                            Server.DisconnectPlayer(Args[0]);
+                        }
                         Server.DisconnectPlayer(Args[0]);
                     }
                     break;
@@ -122,8 +130,16 @@ namespace SkyCoopDedicatedServer
                         if (Args.Count == 0)
                         {
                             Log(ConsoleColor.Red, $"Input ID of the player! {cmd} 0");
+                            return;
                         }
-                        Server.DisconnectPlayer(int.Parse(Args[0]));
+                        if(Args.Count >= 2)
+                        {
+                            Server.DisconnectPlayer(int.Parse(Args[0]), Args[1].Replace('_',' '));
+                        }
+                        else
+                        {
+                            Server.DisconnectPlayer(int.Parse(Args[0]));
+                        }
                     }
                     break;
                 default:
