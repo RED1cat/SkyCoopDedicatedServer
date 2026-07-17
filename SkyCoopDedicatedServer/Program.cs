@@ -51,17 +51,31 @@ namespace SkyCoopDedicatedServer
 
         public static void ExecuteCommand(string cmd)
         {
+            List<string> Args = new List<string>();
+            
+            if(cmd.Contains(' ')) // ' ' дешелве чем " " ибо так мы обявляем не стринг а один символ если ты не знал.
+            {
+                string[] CommandAndArgs = cmd.Split(' ');
+                cmd = CommandAndArgs[0];
+
+                if(CommandAndArgs.Length > 1)
+                {
+                    Args.AddRange(CommandAndArgs);
+                    Args.RemoveAt(0);
+                }
+            }
+
+            cmd.ToLower();
             switch (cmd)
             {
                 case "quit":
                 case "exit":
                 case "stop":
                 case "shutdown":
-                    if (Server != null)
+                    if (Server != null && Server.m_IsReady)
                     {
-                        Server.Dispose();
+                        Server.DisconnectAllPlayers("Server shutdown", true);
                     }
-                    Ready = false;
 #if RELEASE
                     Application.Shutdown();
 #endif
@@ -69,9 +83,9 @@ namespace SkyCoopDedicatedServer
                     break;
                 case "reboot":
                 case "restart":
-                    if (Server != null)
+                    if (Server != null && Server.m_IsReady)
                     {
-                        Server.Dispose();
+                        Server.DisconnectAllPlayers("Server restarting", true);
                     }
                     Server = null;
                     Ready = false;
@@ -88,6 +102,28 @@ namespace SkyCoopDedicatedServer
                             statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
                         }
                         Log($"Players info:\n{statmsg}");
+                    }
+                    break;
+                case "kick":
+                case "disconnect":
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        if(Args.Count == 0)
+                        {
+                            Log(ConsoleColor.Red, $"Input NAME of the player! {cmd} NameOfPlayer");
+                        }
+                        Server.DisconnectPlayer(Args[0]);
+                    }
+                    break;
+                case "kickid":
+                case "disconnectid":
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        if (Args.Count == 0)
+                        {
+                            Log(ConsoleColor.Red, $"Input ID of the player! {cmd} 0");
+                        }
+                        Server.DisconnectPlayer(int.Parse(Args[0]));
                     }
                     break;
                 default:
