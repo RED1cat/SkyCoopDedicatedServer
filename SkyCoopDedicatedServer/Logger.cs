@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 
 #if RELEASE
 using Terminal.Gui.App;
@@ -12,12 +13,16 @@ namespace SkyCoopDedicatedServer
 #if RELEASE
         public static TextView LogView = null;
 #endif
+        static ILogger FileLogger = LogManager.GetCurrentClassLogger();
+        
         public static void Log(ConsoleColor color, string message)
         {
 #if DEBUG
             Console.ForegroundColor = color;
             Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {message}");
             Console.ForegroundColor = ConsoleColor.White;
+
+            FileLogger.Log(LogLevel.Info, message);
 #elif RELEASE
             if (LogView != null)
             {
@@ -34,6 +39,8 @@ namespace SkyCoopDedicatedServer
         {
 #if DEBUG
             Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {message}");
+
+            FileLogger.Log(LogLevel.Info, message);
 #elif RELEASE
             if( LogView != null)
             {

@@ -41,12 +41,18 @@
   <ItemGroup>
     <PackageReference Include="LiteNetLib" Version="2.1.4" />
     <PackageReference Include="Mono.Nat" Version="3.0.4" />
+    <PackageReference Include="NLog" Version="6.1.4" />
     <PackageReference Include="Terminal.Gui" Version="2.4.6" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SkyCoopServer">
       <HintPath>..\..\SkyCoop\Output\Debug\SkyCoopServer.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
