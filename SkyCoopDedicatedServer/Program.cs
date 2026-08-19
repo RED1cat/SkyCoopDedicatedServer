@@ -81,7 +81,11 @@ namespace SkyCoopDedicatedServer
                 case "exit":
                 case "stop":
                 case "shutdown":
-                    Server.DisconnectAllPlayers("Server shutdown", true);
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        Server.SaveToFile();
+                        Server.DisconnectAllPlayers("Server shutdown", true);
+                    }
 #if RELEASE
                     Application.Shutdown();
 #endif
@@ -91,11 +95,20 @@ namespace SkyCoopDedicatedServer
 
                 case "reboot":
                 case "restart":
-                    Server.DisconnectAllPlayers("Server restarting", true);
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        Server.SaveToFile();
+                        Server.DisconnectAllPlayers("Server restarting", true);
+                    }
                     Server = null;
                     Ready = false;
                     break;
-
+                case "save":
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        Server.SaveToFile();
+                    }
+                    break;
                 case "players":
                     string statmsg = string.Empty;
                     List<NetPeer> peers = new List<NetPeer>();
@@ -270,6 +283,7 @@ namespace SkyCoopDedicatedServer
                 }
                 catch (Exception e)
                 {
+                    Server.SaveToFile();
                     Server.m_Instance.Stop();
                     Server.Dispose();
                     Server = null;
