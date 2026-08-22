@@ -2,6 +2,7 @@
 using SkyCoopServer;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static SkyCoopDedicatedServer.Logger;
@@ -129,7 +130,7 @@ namespace SkyCoopDedicatedServer
                     string statmsg = string.Empty;
                     List<NetPeer> peers = new List<NetPeer>();
                     Server.m_Instance.GetConnectedPeers(peers);
-                    peers.Sort();
+                    
                     foreach (NetPeer peer in peers.ToArray())
                     {
                         DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
@@ -248,6 +249,14 @@ namespace SkyCoopDedicatedServer
                     else
                     {
                         Server.DisconnectPlayer(int.Parse(Args[0]));
+                    }
+                    break;
+
+                case "sceneloaded":
+                    Log(ConsoleColor.DarkYellow, "Scene now loaded:");
+                    foreach(var scene in Server.m_ScenesData.m_LoadedScenes.Values.ToList())
+                    {
+                        Log(ConsoleColor.DarkYellow, scene.m_SceneName);
                     }
                     break;
 
