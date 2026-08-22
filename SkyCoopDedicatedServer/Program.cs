@@ -47,6 +47,7 @@ namespace SkyCoopDedicatedServer
                     ServerExp = args[i + 1];
                 }
             }
+            FilesManager.InitFolders();
 
             Server.OnLogEvent += Logger.HandleServerLog;
 
