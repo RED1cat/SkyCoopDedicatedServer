@@ -22,6 +22,9 @@ namespace SkyCoopDedicatedServer
         public static Server Server;
         public static bool Ready;
 
+        public static int ServerSeed = 0;
+        public static string ServerExp = string.Empty;
+
 #if RELEASE
         public static Label TopInfoLabel;
         public static FrameView TopWindow;
@@ -32,6 +35,18 @@ namespace SkyCoopDedicatedServer
 #if RELEASE
             Window top = GuiInit();
 #endif
+            for(int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-seed" && i != args.Length - 1) 
+                {
+                    int.TryParse(args[i + 1], out ServerSeed);
+                }
+
+                if(args[i] == "-exp" && i != args.Length - 1)
+                {
+                    ServerExp = args[i + 1];
+                }
+            }
 
             Server.OnLogEvent += Logger.HandleServerLog;
 
@@ -253,7 +268,7 @@ namespace SkyCoopDedicatedServer
                         Thread.Sleep(5000);
 
                         Ready = true;
-                        Server = new Server();
+                        Server = new Server(ServerSeed, ServerExp);
                         Server.StartServer();
 
 #if RELEASE
