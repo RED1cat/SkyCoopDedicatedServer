@@ -14,16 +14,8 @@ namespace SkyCoopDedicatedServer
         public static Server Server;
         public static bool Ready;
 
-#if RELEASE
-        public static Label TopInfoLabel;
-        public static FrameView TopWindow;
-#endif
-
         public static void Main(string[] args)
         {
-#if RELEASE
-            Window top = GuiInit();
-#endif
             FilesManager.InitFolders();
             
             Server.OnLogEvent += Logger.HandleServerLog;
@@ -37,7 +29,7 @@ namespace SkyCoopDedicatedServer
                 NLog.LogManager.GetLogger("Application").Error(e.ExceptionObject as Exception, $"Server exception: {(e.ExceptionObject as Exception).Message}.\nTrace:{(e.ExceptionObject as Exception).StackTrace}");
                 NLog.LogManager.Flush();
             };
-
+#if DEBUG
             while (true)
             {
                 string cmd = Console.ReadLine();
@@ -74,9 +66,14 @@ namespace SkyCoopDedicatedServer
                 case "exit":
                 case "stop":
                 case "shutdown":
-                    Server.SaveToFile();
-                    Server.DisconnectAllPlayers("Server shutdown", true);
-
+                    if (Server != null && Server.m_IsReady)
+                    {
+                        Server.SaveToFile();
+                        Server.DisconnectAllPlayers("Server shutdown", true);
+                    }
+#if RELEASE
+                    Application.Shutdown();
+#endif
                     NLog.LogManager.Shutdown();
                     Environment.Exit(0);
                     break;
