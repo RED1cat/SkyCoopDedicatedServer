@@ -7,15 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using static SkyCoopDedicatedServer.Logger;
 
-
-#if RELEASE
-using Terminal.Gui.App;
-using Terminal.Gui.Views;
-using Terminal.Gui.ViewBase;
-using Terminal.Gui.Drivers;
-using Terminal.Gui.Drawing;
-#endif
-
 namespace SkyCoopDedicatedServer
 {
     class Program
@@ -26,16 +17,8 @@ namespace SkyCoopDedicatedServer
         public static int ServerSeed = 0;
         public static string ServerExp = string.Empty;
 
-#if RELEASE
-        public static Label TopInfoLabel;
-        public static FrameView TopWindow;
-#endif
-
         public static void Main(string[] args)
         {
-#if RELEASE
-            Window top = GuiInit();
-#endif
             for(int i = 0; i < args.Length; i++)
             {
                 if (args[i] == "-seed" && i != args.Length - 1) 
@@ -49,30 +32,30 @@ namespace SkyCoopDedicatedServer
                 }
             }
             FilesManager.InitFolders();
-
+            
             Server.OnLogEvent += Logger.HandleServerLog;
-
+            
             Task.Run(ServerWorker);
 
+            AppDomain.CurrentDomain.ProcessExit += (S, e) => {
+                Log($"{Environment.ExitCode}");
+            };
             AppDomain.CurrentDomain.UnhandledException += (s, e) => { //И почему я об этой штуки узнаю так поздно(
                 NLog.LogManager.GetLogger("Application").Error(e.ExceptionObject as Exception, $"DedicatedServer has exception: {(e.ExceptionObject as Exception).Message}.\nTrace:{(e.ExceptionObject as Exception).StackTrace}");
                 NLog.LogManager.Flush();
             };
-#if DEBUG
+
             while (true)
             {
                 string cmd = Console.ReadLine();
                 if(cmd != null)
                     ExecuteCommand(cmd);
             }
-#elif RELEASE
-            Application.Run(top);
-#endif
         }
 
         public static void ExecuteCommand(string cmd)
         {
-            if(Server == null || Ready == false)
+            if(Server == null || Ready == false) //это типа шутка да?
             {
                 Log(ConsoleColor.Red, "Server not Ready!");
                 return;
@@ -98,34 +81,29 @@ namespace SkyCoopDedicatedServer
                 case "exit":
                 case "stop":
                 case "shutdown":
-                    if (Server != null && Server.m_IsReady)
-                    {
-                        Server.SaveToFile();
-                        Server.DisconnectAllPlayers("Server shutdown", true);
-                    }
-#if RELEASE
-                    Application.Shutdown();
-#endif
+                    Server.SaveToFile();
+                    Server.DisconnectAllPlayers("Server shutdown", true);
+
                     NLog.LogManager.Shutdown();
                     Environment.Exit(0);
                     break;
 
                 case "reboot":
                 case "restart":
-                    if (Server != null && Server.m_IsReady)
-                    {
-                        Server.SaveToFile();
-                        Server.DisconnectAllPlayers("Server restarting", true);
-                    }
+                    Server.SaveToFile();
+                    Server.DisconnectAllPlayers("Server restarting", true);
+
                     Server = null;
                     Ready = false;
                     break;
+
                 case "save":
                     if (Server != null && Server.m_IsReady)
                     {
                         Server.SaveToFile();
                     }
                     break;
+
                 case "players":
                     string statmsg = string.Empty;
                     List<NetPeer> peers = new List<NetPeer>();
@@ -280,25 +258,6 @@ namespace SkyCoopDedicatedServer
                         Ready = true;
                         Server = new Server(ServerSeed, ServerExp);
                         Server.StartServer();
-
-#if RELEASE
-                        Server.m_Listener.NetworkLatencyUpdateEvent += (NetPeer npeer, int latency) => 
-                        {
-                            if (TopInfoLabel != null)
-                            {
-                                string statmsg = string.Empty;
-                                List<NetPeer> peers = new List<NetPeer>();
-                                Server.m_Instance.GetConnectedPeers(peers);
-                                foreach (NetPeer peer in peers.ToArray())
-                                {
-                                    DataStr.PlayerData player = Server.m_PlayersData.GetPlayer(peer.Id);
-                                    statmsg += $"[{peer.Id}] Name:{player.m_PlayerName} GameState:{player.m_GamePlayState.ToString()} Scene:{player.m_Scene} Ping:{peer.Ping} PacketLost:{peer.Statistics.PacketLossPercent}%\n";
-                                }
-                                TopInfoLabel.Text = statmsg;
-                                TopWindow.Height = 2 + Server.m_Instance.ConnectedPeersCount;
-                            }
-                        };
-#endif
                     }
 
                     if (Ready)
@@ -318,88 +277,5 @@ namespace SkyCoopDedicatedServer
                 }
             }
         }
-
-#if RELEASE
-        public static Window GuiInit()
-        {
-            Application.Init();
-            Window top = new Window();
-            top.SetScheme(new Scheme(new Terminal.Gui.Drawing.Attribute(Color.BrightBlue, Color.Black)));
-
-            FrameView topWindow = new FrameView()
-            {
-                Title = "Server Info",
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill(), 
-                Height = 3
-            };
-
-            Label topInfoLabel = new Label()
-            {
-                X = 0,
-                Y = 0
-            };
-            topWindow.Add(topInfoLabel);
-
-            FrameView centerWindow = new FrameView()
-            {
-                Title = "Logs",
-                X = 0,
-                Y = Pos.Bottom(topWindow),
-                Width = Dim.Fill(),
-                Height = Dim.Fill() - 3
-            };
-
-            TextView centerTextView = new TextView()
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill(),
-                Height = Dim.Fill(),
-                ReadOnly = true,
-                WordWrap = true
-            };
-            centerWindow.Add(centerTextView);
-            
-
-            FrameView bottomFrameView = new FrameView()
-            {
-                Title = "Input Command",
-                X = 0,
-                Y = Pos.Bottom(centerWindow),
-                Width = Dim.Fill(),
-                Height = 3
-            };
-            TextField bottomTextField = new TextField()
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill()
-            };
-            bottomFrameView.Add(bottomTextField);
-
-            bottomTextField.KeyDown += (sender, args) =>
-            {
-                if (args.KeyCode == KeyCode.Enter)
-                {
-                    string cmd = bottomTextField.Text.ToString();
-                    if (!string.IsNullOrWhiteSpace(cmd))
-                    {
-                        Log(cmd);
-                        ExecuteCommand(cmd);
-                    }
-                    bottomTextField.Text = "";
-                    args.Handled = true;
-                }
-            };
-            top.Add(topWindow, centerWindow,  bottomFrameView);
-            LogView = centerTextView;
-            TopInfoLabel = topInfoLabel;
-            TopWindow = topWindow;
-
-            return top;
-        }
-#endif
     }
 }

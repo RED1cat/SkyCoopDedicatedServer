@@ -41,8 +41,7 @@
   <ItemGroup>
     <PackageReference Include="LiteNetLib" Version="2.1.4" />
     <PackageReference Include="Mono.Nat" Version="3.0.4" />
-    <PackageReference Include="NLog" Version="6.1.4" />
-    <PackageReference Include="Terminal.Gui" Version="2.4.6" />
+    <PackageReference Include="NLog" Version="6.2.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SkyCoopServer">
