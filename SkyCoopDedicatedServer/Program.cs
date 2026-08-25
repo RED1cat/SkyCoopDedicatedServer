@@ -14,23 +14,16 @@ namespace SkyCoopDedicatedServer
         public static Server Server;
         public static bool Ready;
 
-        public static int ServerSeed = 0;
-        public static string ServerExp = string.Empty;
+#if RELEASE
+        public static Label TopInfoLabel;
+        public static FrameView TopWindow;
+#endif
 
         public static void Main(string[] args)
         {
-            for(int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "-seed" && i != args.Length - 1) 
-                {
-                    int.TryParse(args[i + 1], out ServerSeed);
-                }
-
-                if(args[i] == "-exp" && i != args.Length - 1)
-                {
-                    ServerExp = args[i + 1];
-                }
-            }
+#if RELEASE
+            Window top = GuiInit();
+#endif
             FilesManager.InitFolders();
             
             Server.OnLogEvent += Logger.HandleServerLog;
@@ -41,7 +34,7 @@ namespace SkyCoopDedicatedServer
                 Log($"{Environment.ExitCode}");
             };
             AppDomain.CurrentDomain.UnhandledException += (s, e) => { //И почему я об этой штуки узнаю так поздно(
-                NLog.LogManager.GetLogger("Application").Error(e.ExceptionObject as Exception, $"DedicatedServer has exception: {(e.ExceptionObject as Exception).Message}.\nTrace:{(e.ExceptionObject as Exception).StackTrace}");
+                NLog.LogManager.GetLogger("Application").Error(e.ExceptionObject as Exception, $"Server exception: {(e.ExceptionObject as Exception).Message}.\nTrace:{(e.ExceptionObject as Exception).StackTrace}");
                 NLog.LogManager.Flush();
             };
 
@@ -57,7 +50,7 @@ namespace SkyCoopDedicatedServer
         {
             if(Server == null || Ready == false) //это типа шутка да?
             {
-                Log(ConsoleColor.Red, "Server not Ready!");
+                Log(ConsoleColor.Red, "Server is not Ready!");
                 return;
             }
 
@@ -231,7 +224,10 @@ namespace SkyCoopDedicatedServer
                     break;
 
                 case "sceneloaded":
-                    Log(ConsoleColor.DarkYellow, "Scene now loaded:");
+                case "scenesloaded":
+                case "loadedscenes":
+                case "scenes":
+                    Log(ConsoleColor.DarkYellow, "Scenes loaded:");
                     foreach(var scene in Server.m_ScenesData.m_LoadedScenes.Values.ToList())
                     {
                         Log(ConsoleColor.DarkYellow, scene.m_SceneName);
@@ -252,11 +248,11 @@ namespace SkyCoopDedicatedServer
                 {
                     if (!Ready)
                     {
-                        Log(ConsoleColor.DarkGreen, "Starting server!");
+                        Log(ConsoleColor.DarkGreen, "Starting server...");
                         Thread.Sleep(5000);
 
                         Ready = true;
-                        Server = new Server(ServerSeed, ServerExp);
+                        Server = new Server(FilesManager.LoadServerCFG());
                         Server.StartServer();
                     }
 
@@ -272,8 +268,8 @@ namespace SkyCoopDedicatedServer
                     Server.Dispose();
                     Server = null;
                     Ready = false;
-                    Log(ConsoleColor.Red, $"Server get error:\n{e.ToString()}");
-                    Log(ConsoleColor.DarkRed, "Trying restart server");
+                    Log(ConsoleColor.Red, $"Server error:\n{e.ToString()}");
+                    Log(ConsoleColor.DarkRed, "Trying to restart server");
                 }
             }
         }
