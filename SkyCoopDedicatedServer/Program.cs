@@ -29,7 +29,6 @@ namespace SkyCoopDedicatedServer
                 NLog.LogManager.GetLogger("Application").Error(e.ExceptionObject as Exception, $"Server exception: {(e.ExceptionObject as Exception).Message}.\nTrace:{(e.ExceptionObject as Exception).StackTrace}");
                 NLog.LogManager.Flush();
             };
-#if DEBUG
             while (true)
             {
                 string cmd = Console.ReadLine();
@@ -71,9 +70,6 @@ namespace SkyCoopDedicatedServer
                         Server.SaveToFile();
                         Server.DisconnectAllPlayers("Server shutdown", true);
                     }
-#if RELEASE
-                    Application.Shutdown();
-#endif
                     NLog.LogManager.Shutdown();
                     Environment.Exit(0);
                     break;
